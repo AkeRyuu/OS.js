@@ -1165,6 +1165,16 @@
    */
   Window.prototype._emit = function(k, args) {
     if ( !this._destroyed ) {
+      try {
+        OSjs.Helpers.EventHistory.pushAPIEvent({
+          action: 'window:' + k,
+          ref: this._wid,
+          args: args
+        });
+      } catch ( e ) {
+        console.warn(e, e.stack);
+      }
+
       if ( this._evHandler ) {
         return this._evHandler.emit(k, args);
       }

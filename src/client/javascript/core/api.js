@@ -383,6 +383,15 @@
       throw new Error('Cannot API::open() without a path');
     }
 
+    try {
+      OSjs.Helpers.EventHistory.pushAPIEvent({
+        method: 'open',
+        args: [file, launchArgs]
+      });
+    } catch ( e ) {
+      console.warn(e, e.stack);
+    }
+
     var settingsManager = OSjs.Core.getSettingsManager();
     var wm = OSjs.Core.getWindowManager();
     var args = {file: file};
@@ -540,6 +549,15 @@
     if ( _LAUNCHING.indexOf(name) !== -1 ) {
       console.warn('Application', name, 'is already launching...');
       return;
+    }
+
+    try {
+      OSjs.Helpers.EventHistory.pushAPIEvent({
+        method: 'launch',
+        args: [name, args]
+      });
+    } catch ( e ) {
+      console.warn(e, e.stack);
     }
 
     var err;

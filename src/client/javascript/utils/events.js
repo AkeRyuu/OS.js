@@ -295,7 +295,17 @@
      * This is the wrapper for using addEventListener
      */
     function addEventHandler(el, n, t, callback, handler, useCapture, realType) {
-      var args = [t, handler, useCapture];
+      function fakeHandler(ev) {
+        handler.apply(this, arguments);
+
+        try {
+          OSjs.Helpers.EventHistory.pushEvent(ev, el, t);
+        } catch ( e ) {
+          console.warn(e, e.stack);
+        }
+      }
+
+      var args = [t, fakeHandler, useCapture];
 
       el.addEventListener.apply(el, args);
 
