@@ -27,51 +27,51 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, DialogWindow) {
-  'use strict';
+'use strict';
+
+const API = require('core/api.js');
+const Utils = require('utils/misc.js');
+const DialogWindow = require('core/dialog.js');
+const PackageManager = require('core/package-manager.js');
+
+/**
+ * An 'Application Chooser' dialog
+ *
+ * @example
+ *
+ * OSjs.API.createDialog('ApplicationChooser', {}, fn);
+ */
+class ApplicationChooserDialog extends DialogWindow {
 
   /**
-   * An 'Application Chooser' dialog
-   *
-   * @example
-   *
-   * OSjs.API.createDialog('ApplicationChooser', {}, fn);
-   *
    * @param  {Object}          args              An object with arguments
    * @param  {String}          args.title        Dialog title
    * @param  {String}          args.message      Dialog message
    * @param  {OSjs.VFS.File}   args.file         The file to open
    * @param  {CallbackDialog}  callback          Callback when done
-   *
-   * @constructor ApplicationChooser
-   * @memberof OSjs.Dialogs
    */
-  function ApplicationChooserDialog(args, callback) {
-    args = Utils.argumentDefaults(args, {});
+  constructor(args, callback) {
+    args = Object.assign({}, {}, args);
 
-    DialogWindow.apply(this, ['ApplicationChooserDialog', {
+    super('ApplicationChooserDialog', {
       title: args.title || API._('DIALOG_APPCHOOSER_TITLE'),
       width: 400,
       height: 400
-    }, args, callback]);
+    }, args, callback);
   }
 
-  ApplicationChooserDialog.prototype = Object.create(DialogWindow.prototype);
-  ApplicationChooserDialog.constructor = DialogWindow;
+  init() {
+    const root = super.init(...arguments);
 
-  ApplicationChooserDialog.prototype.init = function() {
-    var self = this;
-    var root = DialogWindow.prototype.init.apply(this, arguments);
+    const cols = [{label: API._('LBL_NAME')}];
+    const rows = [];
+    const metadata = PackageManager.getPackages();
 
-    var cols = [{label: API._('LBL_NAME')}];
-    var rows = [];
-    var metadata = OSjs.Core.getPackageManager().getPackages();
-
-    (this.args.list || []).forEach(function(name) {
-      var iter = metadata[name];
+    (this.args.list || []).forEach((name) => {
+      const iter = metadata[name];
 
       if ( iter && iter.type === 'application' ) {
-        var label = [iter.name];
+        const label = [iter.name];
         if ( iter.description ) {
           label.push(iter.description);
         }
@@ -84,12 +84,12 @@
       }
     });
 
-    this._find('ApplicationList').set('columns', cols).add(rows).on('activate', function(ev) {
-      self.onClose(ev, 'ok');
+    this._find('ApplicationList').set('columns', cols).add(rows).on('activate', (ev) => {
+      this.onClose(ev, 'ok');
     });
 
-    var file = '<unknown file>';
-    var label = '<unknown mime>';
+    let file = '<unknown file>';
+    let label = '<unknown mime>';
     if ( this.args.file ) {
       file = Utils.format('{0} ({1})', this.args.file.filename, this.args.file.mime);
       label = API._('DIALOG_APPCHOOSER_SET_DEFAULT', this.args.file.mime);
@@ -99,20 +99,21 @@
     this._find('SetDefault').set('label', label);
 
     return root;
-  };
+  }
 
-  ApplicationChooserDialog.prototype.onClose = function(ev, button) {
-    var result = null;
+  onClose(ev, button) {
+    let result = null;
 
     if ( button === 'ok' ) {
-      var useDefault = this._find('SetDefault').get('value');
-      var selected = this._find('ApplicationList').get('value');
+      const useDefault = this._find('SetDefault').get('value');
+      const selected = this._find('ApplicationList').get('value');
+
       if ( selected && selected.length ) {
         result = selected[0].data.className;
       }
 
       if ( !result ) {
-        OSjs.API.createDialog('Alert', {
+        API.createDialog('Alert', {
           message: API._('DIALOG_APPCHOOSER_NO_SELECTION')
         }, null, this);
 
@@ -125,12 +126,12 @@
     }
 
     this.closeCallback(ev, button, result);
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Dialogs.ApplicationChooser = Object.seal(ApplicationChooserDialog);
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.API, OSjs.Utils, OSjs.Core.DialogWindow);
+module.exports = ApplicationChooserDialog;

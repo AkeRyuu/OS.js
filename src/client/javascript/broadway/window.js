@@ -27,36 +27,41 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
+'use strict';
 
-(function(Application, Window, Utils, VFS, GUI, API) {
-  'use strict';
+const Events = require('utils/events.js');
+const Window = require('core/window.js');
+const Broadway = require('broadway/broadway.js');
+
+/**
+ * @namespace Broadway
+ * @memberof OSjs
+ */
+
+/////////////////////////////////////////////////////////////////////////////
+// API
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Broadway Window
+ *
+ * @abstract
+ * @constructor
+ * @memberof OSjs.Broadway
+ * @extends OSjs.Core.Window
+ */
+class BroadwayWindow extends Window {
 
   /**
-   * @namespace Broadway
-   * @memberof OSjs
-   */
-
-  /////////////////////////////////////////////////////////////////////////////
-  // API
-  /////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Broadway Window
-   *
    * @param {Number}  id      Window ID
    * @param {Number}  x       X Position
    * @param {Number}  y       Y Position
    * @param {Number}  w       Width
    * @param {Number}  h       Height
    * @param {Node}    canvas  Canvas DOM Node
-   *
-   * @abstract
-   * @constructor
-   * @memberof OSjs.Broadway
-   * @extends OSjs.Core.Window
    */
-  function BroadwayWindow(id, x, y, w, h, canvas) {
-    Window.apply(this, ['BroadwayWindow' + String(id), {
+  constructor(id, x, y, w, h, canvas) {
+    super('BroadwayWindow' + String(id), {
       width: w,
       height: h,
       title: 'Broadway Window ' + String(id),
@@ -68,106 +73,103 @@
       allow_session: false,
       //allow_close: false,
       key_capture: true // IMPORTANT
-    }]);
+    });
 
     this._broadwayId = id;
     this._canvas = canvas;
   }
 
-  BroadwayWindow.prototype = Object.create(Window.prototype);
-
-  BroadwayWindow.prototype.init = function() {
-    var self = this;
-    var root = Window.prototype.init.apply(this, arguments);
+  init() {
+    const root = super.init(...arguments);
 
     this._canvas.width = this._dimension.w;
     this._canvas.height = this._dimension.h;
 
-    function getMousePos(ev) {
-      var wm = OSjs.Core.getWindowManager();
-      var theme = wm ? wm.getStyleTheme(true) : null;
-      var topMargin = theme ? (theme.style.window.margin) : 26;
+    const getMousePos = (ev) => {
+      const wm = require('core/windowmanager.js').instance;
+      const theme = wm ? wm.getStyleTheme(true) : null;
+      const topMargin = theme ? (theme.style.window.margin) : 26;
 
       return {
-        x: ev.pageX - self._position.x,
-        y: ev.pageY - self._position.y - topMargin
+        x: ev.pageX - this._position.x,
+        y: ev.pageY - this._position.y - topMargin
       };
-    }
+    };
 
-    function inject(type, ev) {
-      var pos = getMousePos(ev);
-      return OSjs.Broadway.GTK.inject(self._broadwayId, type, ev, {
-        wx: self._position.x,
-        wy: self._position.y,
+    const inject = (type, ev) => {
+      const pos = getMousePos(ev);
+      return Broadway.inject(this._broadwayId, type, ev, {
+        wx: this._position.x,
+        wy: this._position.y,
         mx: parseInt(pos.x, 0),
         my: parseInt(pos.y, 0)
       });
-    }
+    };
 
-    Utils.$bind(root, 'mouseover', function(ev) {
+    Events.$bind(root, 'mouseover', function(ev) {
       return inject('mouseover', ev);
     });
-    Utils.$bind(root, 'mouseout', function(ev) {
+    Events.$bind(root, 'mouseout', function(ev) {
       return inject('mouseout', ev);
     });
-    Utils.$bind(root, 'mousemove', function(ev) {
+    Events.$bind(root, 'mousemove', function(ev) {
       return inject('mousemove', ev);
     });
-    Utils.$bind(root, 'mousedown', function(ev) {
+    Events.$bind(root, 'mousedown', function(ev) {
       return inject('mousedown', ev);
     });
-    Utils.$bind(root, 'mouseup', function(ev) {
+    Events.$bind(root, 'mouseup', function(ev) {
       return inject('mouseup', ev);
     });
-    Utils.$bind(root, 'DOMMouseScroll', function(ev) {
+    Events.$bind(root, 'DOMMouseScroll', function(ev) {
       return inject('mousewheel', ev);
     });
-    Utils.$bind(root, 'mousewheel', function(ev) {
+    Events.$bind(root, 'mousewheel', function(ev) {
       return inject('mousewheel', ev);
     });
 
     root.appendChild(this._canvas);
     return root;
-  };
+  }
 
-  BroadwayWindow.prototype.destroy = function() {
-    Window.prototype.destroy.apply(this, arguments);
+  destroy() {
+    super.destroy(...arguments);
     this._canvas = null;
-  };
+  }
 
-  BroadwayWindow.prototype._inited = function() {
-    Window.prototype._inited.apply(this, arguments);
+  _inited() {
+    super._inited(...arguments);
 
     this._onChange('move', true);
-  };
+  }
 
-  BroadwayWindow.prototype._close = function() {
-    if ( !Window.prototype._close.apply(this, arguments) ) {
+  _close() {
+    if ( !super._close(...arguments) ) {
       return false;
     }
 
-    OSjs.Broadway.GTK.close(this._broadwayId);
+    Broadway.close(this._broadwayId);
 
     return true;
-  };
+  }
 
-  BroadwayWindow.prototype._resize = function(w, h) {
-    if ( !Window.prototype._resize.apply(this, [w, h, true]) ) {
+  _resize(w, h) {
+    if ( !super._resize(w, h, true) ) {
       return false;
     }
 
     function resizeCanvas(canvas, w, h) {
-      var tmpCanvas = canvas.ownerDocument.createElement('canvas');
+      const tmpCanvas = canvas.ownerDocument.createElement('canvas');
       tmpCanvas.width = canvas.width;
       tmpCanvas.height = canvas.height;
-      var tmpContext = tmpCanvas.getContext('2d');
+      const tmpContext = tmpCanvas.getContext('2d');
       tmpContext.globalCompositeOperation = 'copy';
       tmpContext.drawImage(canvas, 0, 0, tmpCanvas.width, tmpCanvas.height);
 
       canvas.width = w;
       canvas.height = h;
 
-      var context = canvas.getContext('2d');
+      const context = canvas.getContext('2d');
 
       context.globalCompositeOperation = 'copy';
       context.drawImage(tmpCanvas, 0, 0, tmpCanvas.width, tmpCanvas.height);
@@ -178,28 +180,28 @@
     }
 
     return true;
-  };
+  }
 
-  BroadwayWindow.prototype._onKeyEvent = function(ev, type) {
-    OSjs.Broadway.GTK.inject(this._broadwayId, type, ev);
-  };
+  _onKeyEvent(ev, type) {
+    Broadway.inject(this._broadwayId, type, ev);
+  }
 
-  BroadwayWindow.prototype._onChange = function(ev, byUser) {
+  _onChange(ev, byUser) {
     if ( !byUser ) {
       return;
     }
 
     if ( ev === 'move' ) {
-      OSjs.Broadway.GTK.move(this._broadwayId, this._position.x, this._position.y);
+      Broadway.move(this._broadwayId, this._position.x, this._position.y);
     } else if ( ev === 'resize' ) {
-      OSjs.Broadway.GTK.resize(this._broadwayId, this._dimension.w, this._dimension.h);
+      Broadway.resize(this._broadwayId, this._dimension.w, this._dimension.h);
     }
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Broadway.Window = BroadwayWindow;
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.VFS, OSjs.GUI, OSjs.API);
+module.exports = BroadwayWindow;

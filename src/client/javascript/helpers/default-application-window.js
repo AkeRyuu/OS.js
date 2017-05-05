@@ -29,80 +29,80 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-(function(Application, Window, Utils, VFS, API, GUI) {
-  'use strict';
+'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // Default Application Window Helper
-  /////////////////////////////////////////////////////////////////////////////
+const API = require('core/api.js');
+const VFS = require('vfs/fs.js');
+const Window = require('core/window.js');
+const Scheme = require('gui/scheme.js');
 
-  /**
-   * This is a helper to more easily create an application.
-   *
-   * Use in combination with 'DefaultApplication'
-   *
-   * @summary Helper for making Applications with file interaction.
-   *
-   * @constructor
-   * @memberof OSjs.Helpers
-   * @see OSjs.Helpers.DefaultApplication
-   * @see OSjs.Core.Window
-   */
-  function DefaultApplicationWindow(name, app, args, scheme, file) {
-    Window.apply(this, arguments);
+/////////////////////////////////////////////////////////////////////////////
+// Default Application Window Helper
+/////////////////////////////////////////////////////////////////////////////
 
+/**
+ * This is a helper to more easily create an application.
+ *
+ * Use in combination with 'DefaultApplication'
+ *
+ * @summary Helper for making Applications with file interaction.
+ *
+ * @constructor
+ * @memberof OSjs.Helpers
+ * @see OSjs.Helpers.DefaultApplication
+ * @see OSjs.Core.Window
+ */
+class DefaultApplicationWindow extends Window {
+
+  constructor(name, app, args, scheme, file) {
+    super(...arguments);
     this.hasClosingDialog = false;
     this.currentFile = file ? new VFS.File(file) : null;
     this.hasChanged = false;
   }
 
-  DefaultApplicationWindow.prototype = Object.create(Window.prototype);
-  DefaultApplicationWindow.constructor = Window;
-
   /*
    * Destroy
    */
-  DefaultApplicationWindow.prototype.destroy = function() {
-    Window.prototype.destroy.apply(this, arguments);
-
+  destroy() {
+    super.destroy(...arguments);
     this.currentFile = null;
-  };
+  }
 
   /*
    * Initialize
    */
-  DefaultApplicationWindow.prototype.init = function(wm, app, scheme) {
-    var root = Window.prototype.init.apply(this, arguments);
+  init(wm, app, scheme) {
+    const root = super.init(...arguments);
     return root;
-  };
+  }
 
   /*
    * Applies default Window GUI stuff
    */
-  DefaultApplicationWindow.prototype._inited = function() {
-    var result = Window.prototype._inited.apply(this, arguments);
-    var self = this;
-    var app = this._app;
+  _inited() {
+    const result = Window.prototype._inited.apply(this, arguments);
+    const app = this._app;
 
-    var menuMap = {
-      MenuNew: function() {
-        app.newDialog(self.currentFile, self);
+    const menuMap = {
+      MenuNew: () => {
+        app.newDialog(this.currentFile, this);
       },
-      MenuSave: function() {
-        app.saveDialog(self.currentFile, self);
+      MenuSave: () => {
+        app.saveDialog(this.currentFile, this);
       },
-      MenuSaveAs: function() {
-        app.saveDialog(self.currentFile, self, true);
+      MenuSaveAs: () => {
+        app.saveDialog(this.currentFile, this, true);
       },
-      MenuOpen: function() {
-        app.openDialog(self.currentFile, self);
+      MenuOpen: () => {
+        app.openDialog(this.currentFile, this);
       },
-      MenuClose: function() {
-        self._close();
+      MenuClose: () => {
+        this._close();
       }
     };
 
-    this._find('SubmenuFile').on('select', function(ev) {
+    this._find('SubmenuFile').on('select', (ev) => {
       if ( menuMap[ev.detail.id] ) {
         menuMap[ev.detail.id]();
       }
@@ -118,47 +118,46 @@
     }
 
     return result;
-  };
+  }
 
   /*
    * On Drag-And-Drop Event
    */
-  DefaultApplicationWindow.prototype._onDndEvent = function(ev, type, item, args) {
+  _onDndEvent(ev, type, item, args) {
     if ( !Window.prototype._onDndEvent.apply(this, arguments) ) {
       return;
     }
 
     if ( type === 'itemDrop' && item ) {
-      var data = item.data;
+      const data = item.data;
       if ( data && data.type === 'file' && data.mime ) {
         this._app.openFile(new VFS.File(data), this);
       }
     }
-  };
+  }
 
   /*
    * On Close
    */
-  DefaultApplicationWindow.prototype._close = function() {
-    var self = this;
+  _close() {
     if ( this.hasClosingDialog ) {
       return;
     }
 
     if ( this.hasChanged ) {
       this.hasClosingDialog = true;
-      this.checkHasChanged(function(discard) {
-        self.hasClosingDialog = false;
+      this.checkHasChanged((discard) => {
+        this.hasClosingDialog = false;
         if ( discard ) {
-          self.hasChanged = false; // IMPORTANT
-          self._close();
+          this.hasChanged = false; // IMPORTANT
+          this._close();
         }
       });
       return;
     }
 
     Window.prototype._close.apply(this, arguments);
-  };
+  }
 
   /**
    * Checks if current file has changed
@@ -168,7 +167,7 @@
    *
    * @param   {Function}      cb        Callback => fn(discard_changes)
    */
-  DefaultApplicationWindow.prototype.checkHasChanged = function(cb) {
+  checkHasChanged(cb) {
     if ( this.hasChanged ) {
       API.createDialog('Confirm', {
         buttons: ['yes', 'no'],
@@ -180,7 +179,7 @@
     }
 
     cb(true);
-  };
+  }
 
   /**
    * Show opened/created file
@@ -193,9 +192,9 @@
    * @param   {OSjs.VFS.File}       file        File
    * @param   {Mixed}               content     File contents
    */
-  DefaultApplicationWindow.prototype.showFile = function(file, content) {
+  showFile(file, content) {
     this.updateFile(file);
-  };
+  }
 
   /**
    * Updates current view for given File
@@ -205,11 +204,11 @@
    *
    * @param   {OSjs.VFS.File}       file        File
    */
-  DefaultApplicationWindow.prototype.updateFile = function(file) {
+  updateFile(file) {
     this.currentFile = file || null;
     this.hasChanged = false;
 
-    if ( this._scheme && (this._scheme instanceof GUI.Scheme) ) {
+    if ( this._scheme && (this._scheme instanceof Scheme) ) {
       this._find('MenuSave').set('disabled', !file);
     }
 
@@ -218,7 +217,7 @@
     } else {
       this._setTitle();
     }
-  };
+  }
 
   /**
    * Gets file data
@@ -230,14 +229,14 @@
    *
    * @return  {Mixed} File contents
    */
-  DefaultApplicationWindow.prototype.getFileData = function() {
+  getFileData() {
     return null;
-  };
+  }
 
   /**
    * Window key
    */
-  DefaultApplicationWindow.prototype._onKeyEvent = function(ev, type, shortcut) {
+  _onKeyEvent(ev, type, shortcut) {
     if ( shortcut === 'SAVE' ) {
       this._app.saveDialog(this.currentFile, this, !this.currentFile);
       return false;
@@ -250,13 +249,11 @@
     }
 
     return Window.prototype._onKeyEvent.apply(this, arguments);
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Helpers.DefaultApplicationWindow = DefaultApplicationWindow;
-
-})(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.VFS, OSjs.API, OSjs.GUI);
-
+module.exports = DefaultApplicationWindow;

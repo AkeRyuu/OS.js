@@ -27,16 +27,24 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, DialogWindow) {
-  'use strict';
+'use strict';
+
+const API = require('core/api.js');
+const DialogWindow = require('core/dialog.js');
+
+/**
+ * An 'Font Selection' dialog
+ *
+ * @example
+ *
+ * OSjs.API.createDialog('Font', {}, fn);
+ *
+ * @constructor Font
+ * @memberof OSjs.Dialogs
+ */
+class FontDialog extends DialogWindow {
 
   /**
-   * An 'Font Selection' dialog
-   *
-   * @example
-   *
-   * OSjs.API.createDialog('Font', {}, fn);
-   *
    * @param  {Object}          args                                An object with arguments
    * @param  {String}          args.title                          Dialog title
    * @param  {String}          [args.fontName=internal]            Current font name
@@ -49,12 +57,9 @@
    * @param  {String}          [args.text]                         Preview text
    * @param  {String}          [args.unit=px]                      Size unit
    * @param  {CallbackDialog}  callback                            Callback when done
-   *
-   * @constructor Font
-   * @memberof OSjs.Dialogs
    */
-  function FontDialog(args, callback) {
-    args = Utils.argumentDefaults(args, {
+  constructor(args, callback) {
+    args = Object.assign({}, {
       fontName: API.getConfig('Fonts.default'),
       fontSize: 12,
       fontColor: '#000000',
@@ -64,17 +69,17 @@
       maxSize: 30,
       text: 'The quick brown fox jumps over the lazy dog',
       unit: 'px'
-    });
+    }, args);
 
     if ( args.unit === 'null' || args.unit === 'unit' ) {
       args.unit = '';
     }
 
-    DialogWindow.apply(this, ['FontDialog', {
+    super('FontDialog', {
       title: args.title || API._('DIALOG_FONT_TITLE'),
       width: 400,
       height: 300
-    }, args, callback]);
+    }, args, callback);
 
     this.selection = {
       fontName: args.fontName,
@@ -82,40 +87,36 @@
     };
   }
 
-  FontDialog.prototype = Object.create(DialogWindow.prototype);
-  FontDialog.constructor = DialogWindow;
+  init() {
+    const root = super.init(...arguments);
 
-  FontDialog.prototype.init = function() {
-    var root = DialogWindow.prototype.init.apply(this, arguments);
+    const preview = this._find('FontPreview');
+    const sizes = [];
+    const fonts = [];
 
-    var self = this;
-    var preview = this._find('FontPreview');
-    var sizes = [];
-    var fonts = [];
-
-    for ( var i = this.args.minSize; i < this.args.maxSize; i++ ) {
+    for ( let i = this.args.minSize; i < this.args.maxSize; i++ ) {
       sizes.push({value: i, label: i});
     }
-    for ( var j = 0; j < this.args.fonts.length; j++ ) {
+    for ( let j = 0; j < this.args.fonts.length; j++ ) {
       fonts.push({value: this.args.fonts[j], label: this.args.fonts[j]});
     }
 
-    function updatePreview() {
-      preview.querySelector('textarea').style.fontFamily = self.selection.fontName;
-      preview.querySelector('textarea').style.fontSize = self.selection.fontSize;
-    }
+    const updatePreview = () => {
+      preview.querySelector('textarea').style.fontFamily = this.selection.fontName;
+      preview.querySelector('textarea').style.fontSize = this.selection.fontSize;
+    };
 
-    var listFonts = this._find('FontName');
+    const listFonts = this._find('FontName');
     listFonts.add(fonts).set('value', this.args.fontName);
-    listFonts.on('change', function(ev) {
-      self.selection.fontName = ev.detail;
+    listFonts.on('change', (ev) => {
+      this.selection.fontName = ev.detail;
       updatePreview();
     });
 
-    var listSizes = this._find('FontSize');
+    const listSizes = this._find('FontSize');
     listSizes.add(sizes).set('value', this.args.fontSize);
-    listSizes.on('change', function(ev) {
-      self.selection.fontSize = ev.detail + self.args.unit;
+    listSizes.on('change', (ev) => {
+      this.selection.fontSize = ev.detail + this.args.unit;
       updatePreview();
     });
 
@@ -130,17 +131,18 @@
     updatePreview();
 
     return root;
-  };
+  }
 
-  FontDialog.prototype.onClose = function(ev, button) {
-    var result = button === 'ok' ? this.selection : null;
+  onClose(ev, button) {
+    const result = button === 'ok' ? this.selection : null;
     this.closeCallback(ev, button, result);
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Dialogs.Font = Object.seal(FontDialog);
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.API, OSjs.Utils, OSjs.Core.DialogWindow);
+module.exports = FontDialog;
+

@@ -27,51 +27,25 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(Utils, API, VFS) {
-  'use strict';
+'use strict';
 
-  /**
-   * @namespace HTTP
-   * @memberof OSjs.VFS.Transports
-   */
+/**
+ * @namespace HTTP
+ * @memberof OSjs.VFS.Transports
+ */
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  /*
-   * Default HTTP VFS Transport Module
-   */
-  VFS.Transports.HTTP = {
-    module: {
-      read: function(item, callback, options) {
-        VFS.Transports.OSjs.fetch(item.path, item.mime, callback, options);
-      }
+/*
+ * Default HTTP VFS Transport Module
+ */
+module.exports = {
+  module: {
+    read: function(item, callback, options) {
+      const BaseTransport = require('vfs/transports/osjs.js');
+      return BaseTransport.fetch(item.path, item.mime, callback, options);
     }
-  };
-
-  /*
-   * A hidden mountpoint for making HTTP requests via VFS
-   */
-  OSjs.Core.getMountManager()._add({
-    readOnly: true,
-    name: 'HTTP',
-    transport: 'HTTP',
-    description: 'HTTP',
-    visible: false,
-    searchable: false,
-    unmount: function(cb) {
-      cb(false, false);
-    },
-    mounted: function() {
-      return true;
-    },
-    enabled: function() {
-      return true;
-    },
-    root: 'http:///',
-    icon: 'places/google-drive.png',
-    match: /^https?\:\/\//
-  });
-
-})(OSjs.Utils, OSjs.API, OSjs.VFS);
+  }
+};

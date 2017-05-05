@@ -28,112 +28,107 @@
  * @licence Simplified BSD License
  */
 
-(function(API, Utils) {
-  'use strict';
+'use strict';
 
-  var _storageInstance;
+/**
+ * @module core/storage
+ */
 
-  /**
-   * Storage Base Class
-   *
-   * @abstract
-   * @constructor Storage
-   * @memberof OSjs.Core
-   */
-  function Storage() {
+const API = require('core/api.js');
+const Utils = require('utils/misc.js');
+const Connection = require('core/connection.js');
+const Application = require('core/application.js');
+const SettingsManager = require('core/settings-manager.js');
+
+let _instance;
+
+/**
+ * Storage Base Class
+ *
+ * @abstract
+ */
+class Storage {
+
+  static get instance() {
+    return _instance;
+  }
+
+  constructor() {
+    /* eslint consistent-this: "warn" */
+    _instance = this;
+
     this.saveTimeout = null;
-
-    /*eslint consistent-this: "off"*/
-    _storageInstance = this;
   }
 
   /**
    * Initializes the Storage
    *
-   * @function init
-   * @memberof OSjs.Core.Storage#
-   *
    * @param   {CallbackHandler}      callback        Callback function
    */
-  Storage.prototype.init = function(callback) {
+  init(callback) {
     callback(null, true);
-  };
+  }
 
   /**
    * Destroys the Storage
-   *
-   * @function destroy
-   * @memberof OSjs.Core.Storage#
    */
-  Storage.prototype.destroy = function() {
-  };
+  destroy() {
+    _instance = null;
+  }
 
   /**
    * Internal for saving settings
-   *
-   * @function _settings
-   * @memberof OSjs.Core.Storage#
    *
    * @param   {String}               [pool]          Settings pool
    * @param   {Object}               storage         Settings storage data
    * @param   {CallbackHandler}      callback        Callback function
    */
-  Storage.prototype._settings = function(pool, storage, callback) {
-    API.call('settings', {pool: pool, settings: Utils.cloneObject(storage)}, callback);
-  };
+  _settings(pool, storage, callback) {
+    Connection.request('settings', {pool: pool, settings: Utils.cloneObject(storage)}, callback);
+  }
 
   /**
    * Default method to save given settings pool
-   *
-   * @function saveSettings
-   * @memberof OSjs.Core.Storage#
    *
    * @param   {String}           [pool]        Pool Name
    * @param   {Mixed}            storage       Storage data
    * @param   {CallbackHandler}  callback      Callback function
    */
-  Storage.prototype.saveSettings = function(pool, storage, callback) {
-    var self = this;
+  saveSettings(pool, storage, callback) {
     clearTimeout(this.saveTimeout);
-    this.saveTimeout = setTimeout(function() {
-      self._settings(pool, storage, callback);
-      clearTimeout(self.saveTimeout);
+    this.saveTimeout = setTimeout(() => {
+      this._settings(pool, storage, callback);
+      clearTimeout(this.saveTimeout);
     }, 250);
-  };
+  }
 
   /**
    * Default method for saving current sessions
    *
-   * @function saveSession
-   * @memberof OSjs.Core.Storage#
-   *
    * @param   {CallbackHandler}  callback      Callback function
    */
-  Storage.prototype.saveSession = function(callback) {
-    var data = [];
-    API.getProcesses().forEach(function(proc, i) {
-      if ( proc && (proc instanceof OSjs.Core.Application) ) {
+  saveSession(callback) {
+    const data = [];
+    API.getProcesses().forEach((proc, i) => {
+      if ( proc && (proc instanceof Application) ) {
         data.push(proc._getSessionData());
       }
     });
-    OSjs.Core.getSettingsManager().set('UserSession', null, data, callback);
-  };
+    SettingsManager.set('UserSession', null, data, callback);
+  }
 
   /**
    * Get last saved sessions
    *
-   * @function getLastSession
-   * @memberof OSjs.Core.Storage#
-   *
    * @param   {CallbackHandler}  callback      Callback function
    */
-  Storage.prototype.getLastSession = function(callback) {
+  getLastSession(callback) {
     callback = callback || function() {};
 
-    var res = OSjs.Core.getSettingsManager().get('UserSession');
-    var list = [];
-    (res || []).forEach(function(iter, i) {
-      var args = iter.args;
+    const res = SettingsManager.get('UserSession');
+    const list = [];
+    (res || []).forEach((iter, i) => {
+      const args = iter.args;
       args.__resume__ = true;
       args.__windows__ = iter.windows || [];
 
@@ -141,47 +136,31 @@
     });
 
     callback(false, list);
-  };
+  }
 
   /**
    * Default method to restore last running session
    *
-   * @function loadSession
-   * @memberof OSjs.Core.Storage#
-   *
    * @param   {Function}  callback      Callback function => fn()
    */
-  Storage.prototype.loadSession = function(callback) {
+  loadSession(callback) {
     callback = callback || function() {};
 
     console.info('Storage::loadSession()');
 
-    this.getLastSession(function onGetLastSession(err, list) {
+    this.getLastSession((err, list) => {
       if ( err ) {
         callback();
       } else {
         API.launchList(list, null, null, callback);
       }
     });
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Core.Storage = Storage;
-
-  /**
-   * Get running 'Storage' instance
-   *
-   * @function getStorage
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.Storage}
-   */
-  OSjs.Core.getStorage = function Core_getStorage() {
-    return _storageInstance;
-  };
-
-})(OSjs.API, OSjs.Utils);
+module.exports = Storage;
 

@@ -27,33 +27,39 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, DialogWindow) {
-  'use strict';
+'use strict';
+
+const API = require('core/api.js');
+const DialogWindow = require('core/dialog.js');
+
+/**
+ * An 'Error' dialog
+ *
+ * @example
+ *
+ * OSjs.API.createDialog('Error', {}, fn);
+ *
+ * @constructor Error
+ * @memberof OSjs.Dialogs
+ */
+class ErrorDialog extends DialogWindow {
 
   /**
-   * An 'Error' dialog
-   *
-   * @example
-   *
-   * OSjs.API.createDialog('Error', {}, fn);
-   *
    * @param  {Object}          args              An object with arguments
    * @param  {String}          args.title        Dialog title
    * @param  {String}          args.message      Dialog message
    * @param  {String}          args.error        Error message
    * @param  {Error}           [args.exception]  Exception
    * @param  {CallbackDialog}  callback          Callback when done
-   *
-   * @constructor Error
-   * @memberof OSjs.Dialogs
    */
-  function ErrorDialog(args, callback) {
-    args = Utils.argumentDefaults(args, {});
+  constructor(args, callback) {
+    args = Object.assign({}, {}, args);
 
     console.error('ErrorDialog::constructor()', args);
 
-    var exception = args.exception || {};
-    var error = '';
+    const exception = args.exception || {};
+
+    let error = '';
     if ( exception.stack ) {
       error = exception.stack;
     } else {
@@ -68,12 +74,12 @@
       }
     }
 
-    DialogWindow.apply(this, ['ErrorDialog', {
+    super('ErrorDialog', {
       title: args.title || API._('DIALOG_ERROR_TITLE'),
       icon: 'status/dialog-error.png',
       width: 400,
       height: error ? 400 : 200
-    }, args, callback]);
+    }, args, callback);
 
     this._sound = 'ERROR';
     this._soundVolume = 1.0;
@@ -81,16 +87,11 @@
     this.traceMessage = error;
   }
 
-  ErrorDialog.prototype = Object.create(DialogWindow.prototype);
-  ErrorDialog.constructor = DialogWindow;
-
-  ErrorDialog.prototype.init = function() {
-    var self = this;
-
-    var root = DialogWindow.prototype.init.apply(this, arguments);
+  init() {
+    const root = super.init(...arguments);
     root.setAttribute('role', 'alertdialog');
 
-    var msg = DialogWindow.parseMessage(this.args.message);
+    const msg = DialogWindow.parseMessage(this.args.message);
     this._find('Message').empty().append(msg);
     this._find('Summary').set('value', this.args.error);
     this._find('Trace').set('value', this.traceMessage);
@@ -100,14 +101,14 @@
     }
 
     if ( this.args.bugreport ) {
-      this._find('ButtonBugReport').on('click', function() {
-        var title = '';
-        var body = [];
+      this._find('ButtonBugReport').on('click', () => {
+        let title = '';
+        let body = [];
 
         if ( API.getConfig('BugReporting.options.issue') ) {
-          var obj = {};
-          var keys = ['userAgent', 'platform', 'language', 'appVersion'];
-          keys.forEach(function(k) {
+          const obj = {};
+          const keys = ['userAgent', 'platform', 'language', 'appVersion'];
+          keys.forEach((k) => {
             obj[k] = navigator[k];
           });
 
@@ -115,9 +116,9 @@
           body = [
             '**' + API.getConfig('BugReporting.options.message').replace('%VERSION%', API.getConfig('Version')) +  ':**',
             '\n',
-            '> ' + self.args.message,
+            '> ' + this.args.message,
             '\n',
-            '> ' + (self.args.error || 'Unknown error'),
+            '> ' + (this.args.error || 'Unknown error'),
             '\n',
             '## Expected behaviour',
             '\n',
@@ -130,12 +131,12 @@
             '```\n' + JSON.stringify(obj) + '\n```'
           ];
 
-          if ( self.traceMessage ) {
-            body.push('\n## Stack Trace \n```\n' + self.traceMessage + '\n```\n');
+          if ( this.traceMessage ) {
+            body.push('\n## Stack Trace \n```\n' + this.traceMessage + '\n```\n');
           }
         }
 
-        var url = API.getConfig('BugReporting.url')
+        const url = API.getConfig('BugReporting.url')
           .replace('%TITLE%', encodeURIComponent(title))
           .replace('%BODY%', encodeURIComponent(body.join('\n')));
 
@@ -146,12 +147,13 @@
     }
 
     return root;
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Dialogs.Error = Object.seal(ErrorDialog);
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.API, OSjs.Utils, OSjs.Core.DialogWindow);
+module.exports = ErrorDialog;
+

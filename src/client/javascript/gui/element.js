@@ -27,124 +27,126 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, VFS, GUI) {
-  'use strict';
+'use strict';
+
+const API = require('core/api.js');
+const DOM = require('utils/dom.js');
+const GUI = require('utils/gui.js');
+
+/**
+ * @namespace Elements
+ * @memberof OSjs.GUI
+ */
+
+let REGISTRY = {};
+
+/*
+ * Wrapper for getting which element to focus/blur
+ */
+function getFocusElement(inst) {
+  const tagMap = {
+    'gui-switch': 'button',
+    'gui-list-view': 'textarea',
+    'gui-tree-view': 'textarea',
+    'gui-icon-view': 'textarea',
+    'gui-input-modal': 'button'
+  };
+
+  if ( tagMap[inst.tagName] ) {
+    return inst.$element.querySelector(tagMap[inst.tagName]);
+  }
+  return inst.$element.firstChild || inst.$element;
+}
+
+/*
+ * Internal for parsing GUI elements
+ */
+function parseDynamic(node, win, args) {
+  args = args || {};
+
+  const translator = args._ || API._;
+
+  node.querySelectorAll('*[data-label]').forEach(function(el) {
+    const label = translator(el.getAttribute('data-label'));
+    el.setAttribute('data-label', label);
+  });
+
+  node.querySelectorAll('gui-label, gui-button, gui-list-view-column, gui-select-option, gui-select-list-option').forEach(function(el) {
+    if ( !el.children.length && !el.getAttribute('data-no-translate') ) {
+      const lbl = GUI.getValueLabel(el);
+      el.appendChild(document.createTextNode(translator(lbl)));
+    }
+  });
+
+  node.querySelectorAll('gui-button').forEach(function(el) {
+    const label = GUI.getValueLabel(el);
+    if ( label ) {
+      el.appendChild(document.createTextNode(API._(label)));
+    }
+  });
+
+  node.querySelectorAll('*[data-icon]').forEach(function(el) {
+    const image = GUI.getIcon(el, win);
+    el.setAttribute('data-icon', image);
+  });
+
+  node.querySelectorAll('*[data-src]').forEach(function(el) {
+    const old = el.getAttribute('data-src') || '';
+    if ( win._app && old.match(/^app:\/\//) ) {
+      const source = API.getApplicationResource(win._app, old.replace('app://', ''));
+      el.setAttribute('data-src', source);
+    }
+  });
+}
+
+/*
+ * Wrapper for creating a new element instance
+ */
+function createElementInstance(tagName, el, q, buildArgs) {
+  tagName = tagName || el.tagName.toLowerCase();
+
+  let instance;
+  if ( REGISTRY[tagName] ) {
+    /*eslint new-cap: 0*/
+    instance = new REGISTRY[tagName].component(el, q);
+    if ( buildArgs ) {
+      instance.build.apply(instance, buildArgs);
+    }
+  }
+
+  return instance;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// GUI ELEMENT CLASS
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Base UIElement Class
+ *
+ * @summary The Class used for all UI Elements.
+ *
+ * @link https://os-js.org/manual/gui/elements/
+ *
+ * @constructor Element
+ * @memberof OSjs.GUI
+ */
+class UIElement {
 
   /**
-   * @namespace Elements
-   * @memberof OSjs.GUI
-   */
-
-  var REGISTRY = {};
-
-  /*
-   * Wrapper for getting which element to focus/blur
-   */
-  function getFocusElement(inst) {
-    var tagMap = {
-      'gui-switch': 'button',
-      'gui-list-view': 'textarea',
-      'gui-tree-view': 'textarea',
-      'gui-icon-view': 'textarea',
-      'gui-input-modal': 'button'
-    };
-
-    if ( tagMap[inst.tagName] ) {
-      return inst.$element.querySelector(tagMap[inst.tagName]);
-    }
-    return inst.$element.firstChild || inst.$element;
-  }
-
-  /*
-   * Internal for parsing GUI elements
-   */
-  function parseDynamic(node, win, args) {
-    args = args || {};
-
-    var translator = args._ || API._;
-
-    node.querySelectorAll('*[data-label]').forEach(function(el) {
-      var label = translator(el.getAttribute('data-label'));
-      el.setAttribute('data-label', label);
-    });
-
-    node.querySelectorAll('gui-label, gui-button, gui-list-view-column, gui-select-option, gui-select-list-option').forEach(function(el) {
-      if ( !el.children.length && !el.getAttribute('data-no-translate') ) {
-        var lbl = GUI.Helpers.getValueLabel(el);
-        el.appendChild(document.createTextNode(translator(lbl)));
-      }
-    });
-
-    node.querySelectorAll('gui-button').forEach(function(el) {
-      var label = GUI.Helpers.getValueLabel(el);
-      if ( label ) {
-        el.appendChild(document.createTextNode(API._(label)));
-      }
-    });
-
-    node.querySelectorAll('*[data-icon]').forEach(function(el) {
-      var image = GUI.Helpers.getIcon(el, win);
-      el.setAttribute('data-icon', image);
-    });
-
-    node.querySelectorAll('*[data-src]').forEach(function(el) {
-      var old = el.getAttribute('data-src') || '';
-      if ( win._app && old.match(/^app:\/\//) ) {
-        var source = API.getApplicationResource(win._app, old.replace('app://', ''));
-        el.setAttribute('data-src', source);
-      }
-    });
-  }
-
-  /*
-   * Wrapper for creating a new element instance
-   */
-  function createElementInstance(tagName, el, q, buildArgs) {
-    tagName = tagName || el.tagName.toLowerCase();
-
-    var instance;
-    if ( REGISTRY[tagName] ) {
-      /*eslint new-cap: 0*/
-      instance = new REGISTRY[tagName].component(el, q);
-      if ( buildArgs ) {
-        instance.build.apply(instance, buildArgs);
-      }
-    }
-
-    return instance;
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-  // GUI ELEMENT CLASS
-  /////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Base UIElement Class
-   *
-   * @summary The Class used for all UI Elements.
-   *
    * @param {Node}      el      DOM Node
    * @param {String}    [q]     Query that element came from
-   *
-   * @link https://os-js.org/manual/gui/elements/
-   *
-   * @constructor Element
-   * @memberof OSjs.GUI
    */
-  function UIElement(el, q) {
+  constructor(el, q) {
 
     /**
      * The DOM Node
-     * @name $element
-     * @memberof OSjs.GUI.Element#
      * @type {Node}
      */
     this.$element = el || null;
 
     /**
      * The DOM Tag Name
-     * @name tagName
-     * @memberof OSjs.GUI.Element#
      * @type {String}
      */
     this.tagName = el ? el.tagName.toLowerCase() : null;
@@ -159,103 +161,82 @@
   /**
    * Builds the DOM nodes etc
    *
-   * @function build
-   * @memberof OSjs.GUI.Element#
-   *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.build = function() {
+  build() {
     return this;
-  };
+  }
 
   /**
    * Removes element from the DOM
    *
-   * @function remove
-   * @memberof OSjs.GUI.Element#
-   *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.remove = function() {
-    this.$element = Utils.$remove(this.$element);
+  remove() {
+    this.$element = DOM.$remove(this.$element);
     return this;
-  };
+  }
 
   /**
    * Empties the DOM element
    *
-   * @function empty
-   * @memberof OSjs.GUI.Element#
-   *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.empty = function() {
-    Utils.$empty(this.$element);
+  empty() {
+    DOM.$empty(this.$element);
     return this;
-  };
+  }
 
   /**
    * Blur (unfocus)
    *
-   * @function blur
-   * @memberof OSjs.GUI.Element#
-   *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.blur = function() {
+  blur() {
     if ( this.$element ) {
-      var firstChild = getFocusElement(this);
+      const firstChild = getFocusElement(this);
       if ( firstChild ) {
         firstChild.blur();
       }
     }
     return this;
-  };
+  }
 
   /**
    * Focus (focus)
    *
-   * @function focus
-   * @memberof OSjs.GUI.Element#
-   *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.focus = function() {
+  focus() {
     if ( this.$element ) {
-      var firstChild = getFocusElement(this);
+      const firstChild = getFocusElement(this);
       if ( firstChild ) {
         firstChild.focus();
       }
     }
     return this;
-  };
+  }
 
   /**
    * Show
    *
-   * @function show
-   * @memberof OSjs.GUI.Element#
-   *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.show = function() {
+  show() {
     if ( this.$element && !this.$element.offsetParent ) {
       if ( this.$element ) {
         this.$element.style.display = this.oldDisplay || '';
       }
     }
     return this;
-  };
+  }
 
   /**
    * Hide
    *
-   * @function hide
-   * @memberof OSjs.GUI.Element#
-   *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.hide = function() {
+  hide() {
     if ( this.$element && this.$element.offsetParent ) {
       if ( !this.oldDisplay ) {
         this.oldDisplay = this.$element.style.display;
@@ -263,13 +244,10 @@
       this.$element.style.display = 'none';
     }
     return this;
-  };
+  }
 
   /**
    * Register Event
-   *
-   * @function on
-   * @memberof OSjs.GUI.Element#
    *
    * @example
    * element.on('click', function() {});
@@ -280,9 +258,9 @@
    *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.on = function(evName, callback, args) {
+  on(evName, callback, args) {
     return this;
-  };
+  }
 
   /**
    * Register Event with scope
@@ -307,8 +285,6 @@
    *  // obj = 'element'
    * }
    *
-   * @function son
-   * @memberof OSjs.GUI.Element#
    * @see OSjs.GUI.Element#on
    *
    * @param   {String}        evName      Event Name
@@ -318,20 +294,17 @@
    *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.son = function(evName, thisArg, callback, args) {
+  son(evName, thisArg, callback, args) {
     return this.on(evName, function() {
       /* eslint no-invalid-this: "off" */
-      var args = Array.prototype.slice.call(arguments);
+      const args = Array.prototype.slice.call(arguments);
       args.unshift(this);
       callback.apply(thisArg, args);
     }, args);
-  };
+  }
 
   /**
    * Sets a parameter/property by name
-   *
-   * @function set
-   * @memberof OSjs.GUI.Element#
    *
    * @param   {String}    param     Parameter name
    * @param   {Mixed}     value     Parameter value
@@ -340,61 +313,52 @@
    *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.set = function(param, value, arg, arg2) {
+  set(param, value, arg, arg2) {
     if ( this.$element ) {
-      GUI.Helpers.setProperty(this.$element, param, value, arg, arg2);
+      GUI.setProperty(this.$element, param, value, arg, arg2);
     }
     return this;
-  };
+  }
 
   /**
    * Get a parameter/property by name
-   *
-   * @function get
-   * @memberof OSjs.GUI.Element#
    *
    * @param   {String}    param     Parameter name
    *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.get = function(param) {
+  get(param) {
     if ( this.$element ) {
-      return GUI.Helpers.getProperty(this.$element, param);
+      return GUI.getProperty(this.$element, param);
     }
     return null;
-  };
+  }
 
   /**
    * Appends a childNode to this element
-   *
-   * @function append
-   * @memberof OSjs.GUI.Element#
    *
    * @param   {(Node|OSjs.GUI.Element)}     el        Element
    *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.append = function(el) {
+  append(el) {
     if ( el instanceof UIElement ) {
       el = el.$element;
     } else if ( typeof el === 'string' || typeof el === 'number' ) {
       el = document.createTextNode(String(el));
     }
 
-    var outer = document.createElement('div');
+    let outer = document.createElement('div');
     outer.appendChild(el);
 
     this._append(outer);
     outer = null;
 
     return this;
-  };
+  }
 
   /**
    * Appends (and builds) HTML into the node
-   *
-   * @function appendHTML
-   * @memberof OSjs.GUI.Element#
    *
    * @param   {String}              html        HTML code
    * @param   {OSjs.Core.Window}    [win]       Reference to the Window
@@ -402,17 +366,17 @@
    *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.appendHTML = function(html, win, args) {
-    var el = document.createElement('div');
+  appendHTML(html, win, args) {
+    const el = document.createElement('div');
     el.innerHTML = html;
 
     return this._append(el, win, args);
-  };
+  }
 
   /*
    * Internal method for appending a Node
    */
-  UIElement.prototype._append = function(el, win, args) {
+  _append(el, win, args) {
     if ( el instanceof Element ) {
       UIElement.parseNode(win, el, null, args);
     }
@@ -425,47 +389,41 @@
     el = null;
 
     return this;
-  };
+  }
 
   /**
    * Perform `querySelector`
-   *
-   * @function querySelector
-   * @memberof OSjs.GUI.Element#
    *
    * @param     {String}      q             Query
    * @param     {Boolean}     [rui=false]   Return UI Element if possible
    *
    * @return    {(Node|OSjs.GUI.Element)} Depending on arguments
    */
-  UIElement.prototype.querySelector = function(q, rui) {
-    var el = this.$element.querySelector(q);
+  querySelector(q, rui) {
+    const el = this.$element.querySelector(q);
     if ( rui ) {
-      return GUI.Element.createFromNode(el, q);
+      return UIElement.createFromNode(el, q);
     }
     return el;
-  };
+  }
 
   /**
    * Perform `querySelectorAll`
-   *
-   * @function querySelectorAll
-   * @memberof OSjs.GUI.Element#
    *
    * @param     {String}      q             Query
    * @param     {Boolean}     [rui=false]   Return UI Element if possible
    *
    * @return    {OSjs.GUI.Element[]}
    */
-  UIElement.prototype.querySelectorAll = function(q, rui) {
-    var el = this.$element.querySelectorAll(q);
+  querySelectorAll(q, rui) {
+    let el = this.$element.querySelectorAll(q);
     if ( rui ) {
-      el = el.map(function(i) {
-        return GUI.Element.createFromNode(i, q);
+      el = el.map((i) => {
+        return UIElement.createFromNode(i, q);
       });
     }
     return el;
-  };
+  }
 
   /**
    * Set or get CSS attributes
@@ -473,30 +431,26 @@
    * @param {String}          k     CSS key
    * @param {(String|Number)} v     CSS value
    *
-   * @function css
-   * @memberof OSjs.GUI.Element#
    * @see OSjs.Utils.$css
    *
    * @return {OSjs.GUI.Element} The current instance (this)
    */
-  UIElement.prototype.css = function(k, v) {
-    Utils.$css(this.$element, k, v);
+  css(k, v) {
+    DOM.$css(this.$element, k, v);
     return this;
-  };
+  }
 
   /**
    * Get position
-   * @function position
-   * @memberof OSjs.GUI.Element#
    * @see OSjs.Utils.$position
    * @return {Object}
    */
-  UIElement.prototype.position = function() {
-    return Utils.$position(this.$element);
-  };
+  position() {
+    return DOM.$position(this.$element);
+  }
 
   // NOTE: DEPRECATED
-  UIElement.prototype._call = function(method, args, thisArg) {
+  _call(method, args, thisArg) {
     if ( arguments.length < 3 ) {
       console.warn('Element::_call("methodName") is DEPRECATED, use "instance.methodName()" instead');
     }
@@ -509,16 +463,16 @@
       console.warn(e.stack, e);
     }
     return null;
-  };
+  }
 
   // NOTE: DEPRECATED
-  UIElement.prototype.fn = function(name, args, thisArg) {
+  fn(name, args, thisArg) {
     console.warn('Element::fn("methodName") is DEPRECATED, use "instance.methodName()" instead');
     args = args || [];
     thisArg = thisArg || this;
 
     return this.fn(name, args, thisArg);
-  };
+  }
 
   /////////////////////////////////////////////////////////////////////////////
   // GUI ELEMENT STATIC METHODS
@@ -534,18 +488,16 @@
    * @param   {OSjs.Core.Window}      [win]         OS.js Window
    *
    * @return  {OSjs.GUI.Element}
-   * @function createInto
-   * @memberof OSjs.GUI.Element
    */
-  UIElement.createInto = function createGUIElementInto(tagName, params, parentNode, applyArgs, win) {
-    if ( parentNode instanceof GUI.Element ) {
+  static createInto(tagName, params, parentNode, applyArgs, win) {
+    if ( parentNode instanceof UIElement ) {
       parentNode = parentNode.$element;
     }
 
-    var gel = GUI.Element.create(tagName, params, applyArgs, win);
+    const gel = UIElement.create(tagName, params, applyArgs, win);
     parentNode.appendChild(gel.$element);
     return gel;
-  };
+  }
 
   /**
    * Creates a new GUI.Element from Node
@@ -555,18 +507,16 @@
    * @param {String}      [tagName]   Custom tag name
    *
    * @return  {OSjs.GUI.Element}
-   * @function createFromNode
-   * @memberof OSjs.GUI.Element
    */
-  UIElement.createFromNode = function createGUIElementFromNode(el, q, tagName) {
+  static createFromNode(el, q, tagName) {
     if ( el ) {
-      var instance = createElementInstance(null, el, q);
+      const instance = createElementInstance(null, el, q);
       if ( instance ) {
         return instance;
       }
     }
-    return new GUI.Element(el, q);
-  };
+    return new UIElement(el, q);
+  }
 
   /**
    * Creates a new GUI.Element
@@ -577,17 +527,15 @@
    * @param   {OSjs.Core.Window}      [win]           OS.js Window
    *
    * @return  {OSjs.GUI.Element}
-   * @function create
-   * @memberof OSjs.GUI.Element
    */
-  UIElement.create = function createGUIElement(tagName, params, applyArgs, win) {
+  static create(tagName, params, applyArgs, win) {
     tagName = tagName || '';
     applyArgs = applyArgs || {};
     params = params || {};
 
-    var el = GUI.Helpers.createElement(tagName, params);
+    const el = GUI.createElement(tagName, params);
     return createElementInstance(null, el, null, [applyArgs, win]);
-  };
+  }
 
   /**
    * Creates a new GUI.Element instance from Node
@@ -598,20 +546,15 @@
    * @param {String}      [q]         DOM Element query
    * @param {String}      [tagName]   Custom tag name
    *
-   * @function createInstance
-   * @memberof OSjs.GUI.Element
    * @return {OSjs.GUI.Element}
    */
-  UIElement.createInstance = function(el, q, tagName) {
+  static createInstance(el, q, tagName) {
     console.warn('Element::createInstance() is DEPRECATED, use Element::createFromNode() instead');
     return this.createFromNode(el, q, tagName);
-  };
+  }
 
   /**
    * Parses the given HTML node and makes OS.js compatible markup
-   *
-   * @function parseNode
-   * @memberof OSjs.GUI.Element
    *
    * @param   {OSjs.Core.Window}    win               Reference to the Window
    * @param   {Node}                node              The HTML node to parse
@@ -620,16 +563,16 @@
    * @param   {Function}            [onparse]         Method to signal when parsing has started
    * @param   {Mixed}               [id]              The id of the source (for debugging)
    */
-  UIElement.parseNode = function(win, node, type, args, onparse, id) {
+  static parseNode(win, node, type, args, onparse, id) {
     onparse = onparse || function() {};
     args = args || {};
     type = type || 'snipplet';
 
     // Apply a default className to non-containers
-    node.querySelectorAll('*').forEach(function(el) {
-      var lcase = el.tagName.toLowerCase();
+    node.querySelectorAll('*').forEach((el) => {
+      const lcase = el.tagName.toLowerCase();
       if ( lcase.match(/^gui\-/) && !lcase.match(/(\-container|\-(h|v)box|\-columns?|\-rows?|(status|tool)bar|(button|menu)\-bar|bar\-entry)$/) ) {
-        Utils.$addClass(el, 'gui-element');
+        DOM.$addClass(el, 'gui-element');
       }
     });
 
@@ -639,9 +582,9 @@
     // Lastly render elements
     onparse(node);
 
-    Object.keys(REGISTRY).forEach(function(key) {
-      node.querySelectorAll(key).forEach(function(pel) {
-        if ( pel._wasParsed || Utils.$hasClass(pel, 'gui-data-view') ) {
+    Object.keys(REGISTRY).forEach((key) => {
+      node.querySelectorAll(key).forEach((pel) => {
+        if ( pel._wasParsed || DOM.$hasClass(pel, 'gui-data-view') ) {
           return;
         }
 
@@ -654,35 +597,29 @@
         pel._wasParsed = true;
       });
     });
-  };
+  }
 
   /**
    * Register a GUI Element
-   *
-   * @function register
-   * @memberof OSjs.GUI.Element
    *
    * @param {Object}    data                 GUI Element Metadata
    * @param {String}    data.tagName         Node tagName
    * @param {Function}  [data.parent]        Base class to extend from
    * @param {Object}    classRef             An object used as a class
    */
-  UIElement.register = function(data, classRef) {
-    var name = data.tagName;
+  static register(data, classRef) {
+    const name = data.tagName;
 
     if ( REGISTRY[name] ) {
       throw new Error('GUI Element "' + name + '" already exists');
     }
 
-    var base = data.parent || GUI.Element;
-    var target = Utils.inherit(base, null, classRef);
-
-    REGISTRY[name] = (function() {
-      var metadata = Utils.argumentDefaults(Utils.cloneObject(data, true), {
+    REGISTRY[name] = (() => {
+      const metadata = Object.assign({}, {
         type: 'element',
         allowedChildren: [],
         allowedParents: []
-      });
+      }, data);
 
       if ( metadata.parent ) {
         delete metadata.parent;
@@ -696,19 +633,24 @@
 
       return {
         metadata: metadata,
-        component: target
+        component: classRef
       };
     })();
-  };
+  }
 
-  UIElement.getRegisteredElement = function(tagName) {
+  /**
+   * Get Element from registry
+   * @param {String} tagName HTML Tag Name
+   * @return {Object}
+   */
+  static getRegisteredElement(tagName) {
     return REGISTRY[tagName];
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  GUI.Element = Object.seal(UIElement);
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.API, OSjs.Utils, OSjs.VFS, OSjs.GUI);
+module.exports = UIElement;

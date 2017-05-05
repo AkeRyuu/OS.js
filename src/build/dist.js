@@ -71,12 +71,12 @@ function createIndex(debug, verbose, standalone, cfg) {
 
   function _write(fileName) {
     const inputScripts = [
-      'osjs.min.js',
-      'locales.min.js'
+      'locales.min.js',
+      'osjs.min.js'
     ];
 
     if ( standalone ) {
-      inputScripts.push('_dialogs.js');
+      inputScripts.unshift('_dialogs.js');
     }
 
     const inputStylesheets = [

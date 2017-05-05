@@ -28,31 +28,35 @@
  * @licence Simplified BSD License
  */
 
-(function(Utils) {
-  'use strict';
+'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // Settings Fragment.
-  /////////////////////////////////////////////////////////////////////////////
+const Utils = require('utils/misc.js');
+
+/////////////////////////////////////////////////////////////////////////////
+// Settings Fragment.
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Settings Fragment Class
+ *
+ * <pre><b>
+ * This is the object returned when manipulating with SettingsManager.
+ * </b></pre>
+ *
+ * @summary This is the class returned from SettingsManager getters.
+ * @throws {Error} If an invalid object was given
+ *
+ * @constructor
+ * @memberof OSjs.Helpers
+ * @see OSjs.Core.SettingsManager
+ */
+class SettingsFragment {
 
   /**
-   * Settings Fragment Class
-   *
-   * <pre><b>
-   * This is the object returned when manipulating with SettingsManager.
-   * </b></pre>
-   *
-   * @summary This is the class returned from SettingsManager getters.
-   * @throws {Error} If an invalid object was given
-   *
    * @param   {Object}        obj         Settings tree
    * @param   {String}        poolName    Name of the pool
-   *
-   * @constructor
-   * @memberof OSjs.Helpers
-   * @see OSjs.Core.SettingsManager
    */
-  function SettingsFragment(obj, poolName) {
+  constructor(obj, poolName) {
     this._pool = poolName;
     if ( obj.constructor !== {}.constructor ) {
       if ( !(obj instanceof Array) ) {
@@ -74,10 +78,10 @@
    *
    * @return  {Mixed}                   Either an entry or entire tree
    */
-  SettingsFragment.prototype.get = function(key, defaultValue) {
-    var ret = key ? this._settings[key] : this._settings;
+  get(key, defaultValue) {
+    const ret = key ? this._settings[key] : this._settings;
     return (typeof ret === 'undefined') ? defaultValue : ret;
-  };
+  }
 
   /**
    * Sets setting(s) by key/value
@@ -94,7 +98,9 @@
    *
    * @return  {OSjs.Helpers.SettingsFragment}  Itself `this`
    */
-  SettingsFragment.prototype.set = function(key, value, save, triggerWatch) {
+  set(key, value, save, triggerWatch) {
+    const SettingsManager = require('core/settings-manager.js');
+
     // Key here is actually the value
     // So you can update the whole object if you want.
     if ( key === null ) {
@@ -108,15 +114,15 @@
     }
 
     if (save) {
-      OSjs.Core.getSettingsManager().save(this._pool, save);
+      SettingsManager.save(this._pool, save);
     }
 
     if ( typeof triggerWatch === 'undefined' || triggerWatch === true ) {
-      OSjs.Core.getSettingsManager().changed(this._pool);
+      SettingsManager.changed(this._pool);
     }
 
     return this;
-  };
+  }
 
   /**
    * Saves the pool
@@ -129,12 +135,13 @@
    *
    * @return  Boolean
    */
-  SettingsFragment.prototype.save = function(callback) {
-    return OSjs.Core.getSettingsManager().save(this._pool, callback);
-  };
+  save(callback) {
+    const SettingsManager = require('core/settings-manager.js');
+    return SettingsManager.save(this._pool, callback);
+  }
 
-  SettingsFragment.prototype.getChained = function() {
-    var nestedSetting = this._settings;
+  getChained() {
+    let nestedSetting = this._settings;
     arguments.every(function(key) {
       if (nestedSetting[key]) {
         nestedSetting = nestedSetting[key];
@@ -145,7 +152,7 @@
     });
 
     return nestedSetting;
-  };
+  }
 
   /**
    * Merges given tree with current one
@@ -157,10 +164,10 @@
    *
    * @return  {OSjs.Helpers.SettingsFragment}  Itself `this`
    */
-  SettingsFragment.prototype.mergeDefaults = function(defaults) {
+  mergeDefaults(defaults) {
     Utils.mergeObject(this._settings, defaults, {overwrite: false});
     return this;
-  };
+  }
 
   /**
    * Creates a new SettingsFragment instance from given key
@@ -173,18 +180,18 @@
    *
    * @return  {OSjs.Helpers.SettingsFragment}  New instance
    */
-  SettingsFragment.prototype.instance = function(key) {
+  instance(key) {
     if (typeof this._settings[key] === 'undefined') {
       throw new Error('The object doesn\'t contain that key. SettingsFragment will not work.');
     }
 
-    return new OSjs.Helpers.SettingsFragment(this._settings[key], this._pool);
-  };
+    return new SettingsFragment(this._settings[key], this._pool);
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Helpers.SettingsFragment = SettingsFragment;
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.Utils);
+module.exports = SettingsFragment;

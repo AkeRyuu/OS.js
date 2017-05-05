@@ -27,47 +27,52 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
+'use strict';
 
-(function(Utils, API) {
-  'use strict';
+const API = require('core/api.js');
+const XHR = require('utils/xhr.js');
+const MountManager = require('core/mount-manager.js');
+
+/**
+ * @namespace GoogleAPI
+ * @memberof OSjs.Helpers
+ */
+
+const gapi = window.gapi = window.gapi || {};
+
+/////////////////////////////////////////////////////////////////////////////
+// API
+/////////////////////////////////////////////////////////////////////////////
+
+let SingletonInstance = null;
+
+/**
+ * The GoogleAPI wrapper class
+ *
+ * <pre><b>
+ * Generally you want to create an instance of this helper
+ * and when successfully created use `window.gapi`.
+ *
+ * This is a private class and can only be aquired through
+ * OSjs.Helpers.GoogleAPI.createInsatance()
+ * </b></pre>
+ *
+ * @summary Helper for communicating with Google API.
+ *
+ * @constructor Class
+ * @memberof OSjs.Helpers.GoogleAPI
+ * @see OSjs.Helpers.GoogleAPI.createInsatance
+ *
+ * @link https://developers.google.com/api-client-library/javascript/start/start-js
+ * @link https://developers.google.com/api-client-library/javascript/
+ * @link https://console.developers.google.com/project
+ */
+class GoogleAPI {
 
   /**
-   * @namespace GoogleAPI
-   * @memberof OSjs.Helpers
-   */
-
-  var gapi = window.gapi = window.gapi || {};
-
-  /////////////////////////////////////////////////////////////////////////////
-  // API
-  /////////////////////////////////////////////////////////////////////////////
-
-  var SingletonInstance = null;
-
-  /**
-   * The GoogleAPI wrapper class
-   *
-   * <pre><b>
-   * Generally you want to create an instance of this helper
-   * and when successfully created use `window.gapi`.
-   *
-   * This is a private class and can only be aquired through
-   * OSjs.Helpers.GoogleAPI.createInsatance()
-   * </b></pre>
-   *
-   * @summary Helper for communicating with Google API.
-   *
-   * @constructor Class
-   * @memberof OSjs.Helpers.GoogleAPI
-   * @see OSjs.Helpers.GoogleAPI.createInsatance
-   *
    * @param {String}  clientId    Client ID (key)
-   *
-   * @link https://developers.google.com/api-client-library/javascript/start/start-js
-   * @link https://developers.google.com/api-client-library/javascript/
-   * @link https://console.developers.google.com/project
    */
-  function GoogleAPI(clientId) {
+  constructor(clientId) {
     this.clientId       = clientId;
     this.accessToken    = null;
     this.userId         = null;
@@ -85,64 +90,60 @@
   /*
    * Destroy the class
    */
-  GoogleAPI.prototype.destroy = function() {
-  };
+  destroy() {
+  }
 
   /*
    * Initializes (preloads) the API
    */
-  GoogleAPI.prototype.init = function(callback) {
-    var self = this;
-
+  init(callback) {
     callback = callback || function() {};
     if ( this.preloaded ) {
       callback(false, true);
     } else {
-      Utils.preload(this.preloads, function(total, failed) {
+      XHR.preload(this.preloads, (total, failed) => {
         if ( !failed.length ) {
-          self.preloaded = true;
+          this.preloaded = true;
         }
         callback(failed.join('\n'));
       });
     }
-  };
+  }
 
   /*
    * Loads the API
    */
-  GoogleAPI.prototype.load = function(load, scope, client, callback) {
-    var self = this;
-
-    function auth(cb) {
-      self.authenticate(scope, function(error, result) {
+  load(load, scope, client, callback) {
+    const auth = (cb) => {
+      this.authenticate(scope, (error, result) => {
         if ( error ) {
           cb(error);
         } else {
-          if ( !self.authenticated ) {
+          if ( !this.authenticated ) {
             cb(API._('GAPI_AUTH_FAILURE'));
             return;
           }
           cb(false, result);
         }
       });
-    }
+    };
 
-    function loadAll(finished) {
-      var lload   = [];
-      load.forEach(function(i) {
-        if ( self.loaded.indexOf(i) === -1 ) {
+    const loadAll = (finished) => {
+      const lload = [];
+      load.forEach((i) => {
+        if ( this.loaded.indexOf(i) === -1 ) {
           lload.push(i);
         }
       });
 
-      var current = 0;
-      var total   = lload.length;
+      let current = 0;
+      let total = lload.length;
 
       console.debug('GoogleAPI::load()', load, '=>', lload, scope);
 
-      function _load(iter, cb) {
-        var args = [];
-        var name = null;
+      const _load = (iter, cb) => {
+        let args = [];
+        let name = null;
 
         if ( iter instanceof Array ) {
           if ( iter.length > 0 && iter.length < 3 ) {
@@ -154,11 +155,11 @@
           name = iter;
         }
 
-        args.push(function() {
-          self.loaded.push(name);
+        args.push((a, b, c, d) => {
+          this.loaded.push(name);
 
           /* eslint no-invalid-this: "off" */
-          cb.apply(this, arguments);
+          cb.call(this, a, b, c, d);
         });
 
         if ( client ) {
@@ -166,13 +167,13 @@
         } else {
           gapi.load.apply(gapi, args);
         }
-      }
+      };
 
       function _next() {
         if ( current >= total ) {
           finished();
         } else {
-          _load(lload[current], function() {
+          _load(lload[current], () => {
             _next();
           });
 
@@ -181,9 +182,9 @@
       }
 
       _next();
-    }
+    };
 
-    this.init(function(error) {
+    this.init((error) => {
       if ( error ) {
         callback(error);
         return;
@@ -194,19 +195,19 @@
         return;
       }
 
-      auth(function(error) {
+      auth((error) => {
         if ( error ) {
           callback(error);
           return;
         }
 
-        loadAll(function(error, result) {
+        loadAll((error, result) => {
           callback(error, result, SingletonInstance);
         });
       });
 
     });
-  };
+  }
 
   /**
    * Sign out of GoogleAPI
@@ -216,7 +217,7 @@
    *
    * @param   {Function}    cb      Callback => fn(error, result)
    */
-  GoogleAPI.prototype.signOut = function(cb) {
+  signOut(cb) {
     cb = cb || function() {};
 
     console.info('GoogleAPI::signOut()');
@@ -230,16 +231,16 @@
 
       this.authenticated = false;
 
-      var ring = API.getServiceNotificationIcon();
+      const ring = API.getServiceNotificationIcon();
       if ( ring ) {
         ring.remove('Google API');
       }
     }
 
-    OSjs.Core.getMountManager().remove('GoogleDrive');
+    MountManager.remove('GoogleDrive');
 
     cb(false, true);
-  };
+  }
 
   /**
    * Revoke Google permissions for this app
@@ -249,7 +250,7 @@
    *
    * @param   {Function}    callback      Callback => fn(error, result)
    */
-  GoogleAPI.prototype.revoke = function(callback) {
+  revoke(callback) {
     console.info('GoogleAPI::revoke()');
 
     if ( !this.accessToken ) {
@@ -257,155 +258,127 @@
       return;
     }
 
-    var url = 'https://accounts.google.com/o/oauth2/revoke?token=' + this.accessToken;
-    Utils.ajax({
+    const url = 'https://accounts.google.com/o/oauth2/revoke?token=' + this.accessToken;
+    XHR.ajax({
       url: url,
       jsonp: true,
-      onsuccess: function() {
+      onsuccess: () => {
         callback(true);
       },
-      onerror: function() {
+      onerror: () => {
         callback(false);
       }
     });
-  };
+  }
 
   /*
    * Authenticates the user
    */
-  GoogleAPI.prototype.authenticate = function(scope, callback) {
+  authenticate(scope, callback) {
     console.info('GoogleAPI::authenticate()');
 
     callback = callback || function() {};
 
-    var self = this;
-
-    function getUserId(cb) {
+    const getUserId = (cb) => {
       cb = cb || function() {};
-      gapi.client.load('oauth2', 'v2', function() {
-        gapi.client.oauth2.userinfo.get().execute(function(resp) {
+      gapi.client.load('oauth2', 'v2', () => {
+        gapi.client.oauth2.userinfo.get().execute((resp) => {
           console.info('GoogleAPI::authenticate() => getUserId()', resp);
           cb(resp.id);
         });
       });
-    }
+    };
 
-    function login(immediate, cb) {
+    const login = (immediate, cb) => {
       console.info('GoogleAPI::authenticate() => login()', immediate);
 
       cb = cb || function() {};
       gapi.auth.authorize({
-        client_id: self.clientId,
+        client_id: this.clientId,
         scope: scope,
-        user_id: self.userId,
+        user_id: this.userId,
         immediate: immediate
       }, cb);
-    }
+    };
 
-    function createRingNotification() {
-      var ring = API.getServiceNotificationIcon();
+    const createRingNotification = () => {
+      const ring = API.getServiceNotificationIcon();
       if ( ring ) {
         ring.remove('Google API');
 
         ring.add('Google API', [{
           title: API._('GAPI_SIGN_OUT'),
-          onClick: function() {
-            self.signOut();
+          onClick: () => {
+            this.signOut();
           }
         }, {
           title: API._('GAPI_REVOKE'),
-          onClick: function() {
-            self.revoke(function() {
-              self.signOut();
+          onClick: () => {
+            this.revoke(() => {
+              this.signOut();
             });
           }
         }]);
       }
-    }
+    };
 
-    var handleAuthResult = function(authResult, immediate) {
+    const handleAuthResult = (authResult, immediate) => {
       console.info('GoogleAPI::authenticate() => handleAuthResult()', authResult);
 
       if ( authResult.error ) {
         if ( authResult.error_subtype === 'origin_mismatch' || (authResult.error_subtype === 'access_denied' && !immediate) ) {
-          var msg = API._('GAPI_AUTH_FAILURE_FMT', authResult.error, authResult.error_subtype);
+          const msg = API._('GAPI_AUTH_FAILURE_FMT', authResult.error, authResult.error_subtype);
           callback(msg);
           return;
         }
       }
 
       if ( authResult && !authResult.error ) {
-        getUserId(function(id) {
-          self.userId = id;
+        getUserId((id) => {
+          this.userId = id;
 
           if ( id ) {
             createRingNotification();
-            self.authenticated = true;
-            self.accessToken = authResult.access_token || null;
+            this.authenticated = true;
+            this.accessToken = authResult.access_token || null;
             callback(false, true);
           } else {
             callback(false, false);
           }
         });
       } else {
-        login(false, function(res) {
+        login(false, (res) => {
           handleAuthResult(res, false);
         });
       }
     };
 
-    gapi.load('auth:client', function(result) {
+    gapi.load('auth:client', (result) => {
       if ( result && result.error ) {
-        var msg = API._('GAPI_AUTH_FAILURE_FMT', result.error, result.error_subtype);
+        const msg = API._('GAPI_AUTH_FAILURE_FMT', result.error, result.error_subtype);
         callback(msg);
         return;
       }
 
-      login(true, function(res) {
+      login(true, (res) => {
         handleAuthResult(res, true);
       });
     });
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Helpers.GoogleAPI = OSjs.Helpers.GoogleAPI || {};
-
-  /**
-   * Gets the currently running instance
-   *
-   * @function getInstance
-   * @memberof OSjs.Helpers.GoogleAPI
-   *
-   * @return  {OSjs.Helpers.GoogleAPI.Class}       Can also be null
-   */
-  OSjs.Helpers.GoogleAPI.getInstance = function() {
+module.exports = {
+  instance: function() {
     return SingletonInstance;
-  };
-
-  /**
-   * Create an instance of GoogleAPI
-   *
-   * @example
-   * The 'load' Array can be filled with either strings, or arrays. ex:
-   * - ['drive-realtime', 'drive-share']
-   * - [['calendar', 'v1'], 'drive-share']
-   *
-   * @function createInstance
-   * @memberof OSjs.Helpers.GoogleAPI
-   *
-   * @param   {Object}    args                   Arguments
-   * @param   {Array}     args.load              What functions/apis to load
-   * @param   {Array}     args.scope             What scopes to load
-   * @param   {boolean}   [args.client=false]    Load using gapi.client WILL BE REPLACED!
-   * @param   {Function}  callback               Callback function => fn(error, instance)
-   */
-  OSjs.Helpers.GoogleAPI.createInstance = function(args, callback) {
-    var load = args.load || [];
-    var scope = args.scope || [];
-    var client = args.client === true;
+  },
+  create: function(args, callback) {
+    const load = args.load || [];
+    const scope = args.scope || [];
+    const client = args.client === true;
 
     function _run() {
       SingletonInstance.load(load, scope, client, callback);
@@ -416,7 +389,7 @@
       return;
     }
 
-    var clientId = null;
+    let clientId = null;
     try {
       clientId = API.getConfig('GoogleAPI.ClientId');
     } catch ( e ) {
@@ -430,6 +403,6 @@
 
     SingletonInstance = new GoogleAPI(clientId);
     _run();
-  };
+  }
 
-})(OSjs.Utils, OSjs.API);
+};

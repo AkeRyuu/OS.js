@@ -159,3 +159,4 @@ function buildFiles(cli, cfg) {
 
 module.exports.clean = cleanFiles;
 module.exports.buildFiles = buildFiles;
+module.exports.getBuildFiles = getBuildFiles;

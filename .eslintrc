@@ -16,6 +16,9 @@
     "ArrayBuffer": true,
     "Promise": true
   },
+  "parserOptions": {
+    "ecmaVersion": 6
+  },
   "rules": {
     "valid-jsdoc": [
       1,
@@ -97,7 +100,7 @@
     "no-eq-null": 2,
     "strict": [
       1,
-      "function"
+      "global"
     ],
     "no-unused-expressions": 2,
     "no-use-before-define": 1,

@@ -27,21 +27,15 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, Storage) {
-  'use strict';
+'use strict';
 
-  function SystemStorage() {
-    Storage.apply(this, arguments);
-  }
+const Storage = require('core/storage.js');
 
-  SystemStorage.prototype = Object.create(Storage.prototype);
-  SystemStorage.constructor = Storage;
+class SystemStorage extends Storage {
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Storage = OSjs.Storage || {};
-  OSjs.Storage.system = SystemStorage;
-
-})(OSjs.API, OSjs.Utils, OSjs.Core.Storage);
+module.exports = SystemStorage;

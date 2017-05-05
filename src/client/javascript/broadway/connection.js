@@ -28,270 +28,279 @@
  * @licence Simplified BSD License
  */
 
-(function(Application, Window, Utils, VFS, GUI, API) {
-  'use strict';
+'use strict';
 
-  /**
-   * @namespace Broadway
-   * @memberof OSjs
-   */
+const API = require('core/api.js');
+const BroadwayWindow = require('broadway/window.js');
+const Broadway = require('broadway/broadway.js');
 
-  var _connected = false;
-  var _ws = null;
+/**
+ * @namespace Broadway
+ * @memberof OSjs
+ */
 
-  /////////////////////////////////////////////////////////////////////////////
-  // HELPERS
-  /////////////////////////////////////////////////////////////////////////////
+let _connected = false;
+let _ws = null;
 
-  /*
-   * Creates a new connection URL
-   */
-  function createURL(cfg) {
-    var protocol = cfg.protocol || window.location.protocol.replace(/^http/, 'ws');
-    var host = cfg.host || window.location.hostname;
-    if ( host === 'localhost' && host !== window.location.hostname ) {
-      host = window.location.hostname;
-    }
-    return protocol + '//' + host + ':' + cfg.port + '/' + cfg.uri;
+/////////////////////////////////////////////////////////////////////////////
+// HELPERS
+/////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Creates a new connection URL
+ */
+function createURL(cfg) {
+  const protocol = cfg.protocol || window.location.protocol.replace(/^http/, 'ws');
+
+  let host = cfg.host || window.location.hostname;
+  if ( host === 'localhost' && host !== window.location.hostname ) {
+    host = window.location.hostname;
   }
+  return protocol + '//' + host + ':' + cfg.port + '/' + cfg.uri;
+}
 
-  /*
-   * Get window
-   */
-  function actionOnWindow(id, cb) {
-    var wm = OSjs.Core.getWindowManager();
-    if ( wm ) {
-      var win = wm.getWindow('BroadwayWindow' + String(id));
-      if ( win ) {
-        return cb(win);
-      }
-    }
-    return null;
-  }
-
-  /*
-   * Removes the notification icon
-   */
-  function removeNotification() {
-    var wm = OSjs.Core.getWindowManager();
-    if ( wm ) {
-      wm.removeNotificationIcon('BroadwayService');
+/*
+ * Get window
+ */
+function actionOnWindow(id, cb) {
+  const wm = require('core/windowmanager.js').instance;
+  if ( wm ) {
+    const win = wm.getWindow('BroadwayWindow' + String(id));
+    if ( win ) {
+      return cb(win);
     }
   }
+  return null;
+}
 
-  /*
-   * Updates notification icon based on state(s)
-   */
-  function updateNotification() {
-    var wm = OSjs.Core.getWindowManager();
-    if ( wm ) {
-      var n = wm.getNotificationIcon('BroadwayService');
-      if ( n ) {
-        n.$image.style.opacity = _connected ? 1 : .4;
-      }
+/*
+ * Removes the notification icon
+ */
+function removeNotification() {
+  const wm = require('core/windowmanager.js').instance;
+  if ( wm ) {
+    wm.removeNotificationIcon('BroadwayService');
+  }
+}
+
+/*
+ * Updates notification icon based on state(s)
+ */
+function updateNotification() {
+  const wm = require('core/windowmanager.js').instance;
+  if ( wm ) {
+    const n = wm.getNotificationIcon('BroadwayService');
+    if ( n ) {
+      n.$image.style.opacity = _connected ? 1 : .4;
     }
   }
+}
 
-  /*
-   * Creates the notification icon
-   */
-  function createNotification() {
-    var wm = OSjs.Core.getWindowManager();
-    var conf = API.getConfig('Broadway');
+/*
+ * Creates the notification icon
+ */
+function createNotification() {
+  const wm = require('core/windowmanager.js').instance;
+  const conf = API.getConfig('Broadway');
 
-    function displayMenu(ev) {
-      var menuItems = [];
-      if ( _connected ) {
-        menuItems.push({
-          title: 'Disconnect from Broadway server',
-          onClick: function() {
-            OSjs.Broadway.Connection.disconnect();
-          }
-        });
-        menuItems.push({
-          title: 'Create new process',
-          onClick: function() {
-            API.createDialog('Input', {message: 'Launch process', value: '/usr/bin/gtk3-demo'}, function(ev, btn, value) {
-              if ( btn === 'ok' && value ) {
-                OSjs.Broadway.Connection.spawn(value);
-              }
-            });
-          }
-        });
-      } else {
-        menuItems.push({
-          title: 'Connect to Broadway server',
-          onClick: function() {
-            OSjs.Broadway.Connection.connect();
-          }
-        });
-      }
-
-      API.createMenu(menuItems, ev);
+  function displayMenu(ev) {
+    const menuItems = [];
+    if ( _connected ) {
+      menuItems.push({
+        title: 'Disconnect from Broadway server',
+        onClick: function() {
+          OSjs.Broadway.Connection.disconnect();
+        }
+      });
+      menuItems.push({
+        title: 'Create new process',
+        onClick: function() {
+          API.createDialog('Input', {message: 'Launch process', value: '/usr/bin/gtk3-demo'}, function(ev, btn, value) {
+            if ( btn === 'ok' && value ) {
+              OSjs.Broadway.Connection.spawn(value);
+            }
+          });
+        }
+      });
+    } else {
+      menuItems.push({
+        title: 'Connect to Broadway server',
+        onClick: function() {
+          OSjs.Broadway.Connection.connect();
+        }
+      });
     }
 
+    API.createMenu(menuItems, ev);
+  }
+
+  removeNotification();
+
+  if ( wm && conf.enabled ) {
     removeNotification();
 
-    if ( wm && conf.enabled ) {
-      removeNotification();
-
-      wm.createNotificationIcon('BroadwayService', {
-        image: API.getIcon('gtk.png'),
-        onContextMenu: function(ev) {
-          displayMenu(ev);
-          return false;
-        },
-        onClick: function(ev) {
-          displayMenu(ev);
-          return false;
-        }
-      });
-
-      updateNotification();
-    }
-  }
-
-  /*
-   * Creates a new Spawner connection
-   */
-  function createSpawner(host, cb) {
-    _ws = new WebSocket(host, 'broadway-spawner');
-
-    _ws.onerror = function() {
-      cb('Failed to connect to spawner');
-    };
-
-    _ws.onopen = function() {
-      cb(null, _ws);
-    };
-
-    _ws.onclose = function() {
-      OSjs.Broadway.Connection.disconnect();
-    };
-  }
-
-  var onResize = (function() {
-    var wm;
-    return function() {
-      if ( !wm ) {
-        wm = OSjs.Core.getWindowManager();
+    wm.createNotificationIcon('BroadwayService', {
+      image: API.getIcon('gtk.png'),
+      onContextMenu: function(ev) {
+        displayMenu(ev);
+        return false;
+      },
+      onClick: function(ev) {
+        displayMenu(ev);
+        return false;
       }
+    });
 
-      if ( wm ) {
-        var space = wm.getWindowSpace();
-        var theme = wm ? wm.getStyleTheme(true) : null;
-        var topMargin = theme ? (theme.style.window.margin) : 26;
-
-        OSjs.Broadway.GTK.inject(null, 'resize', null, {
-          width: space.width,
-          height: space.height - topMargin
-        });
-      }
-
-    };
-  })();
-
-  /////////////////////////////////////////////////////////////////////////////
-  // API
-  /////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Initializes Broadway
-   *
-   * @function init
-   * @memberof OSjs.Broadway.Connection
-   */
-  function init() {
-    createNotification();
+    updateNotification();
   }
+}
 
-  /**
-   * Disconnects the Broadway connections
-   *
-   * @function disconnect
-   * @memberof OSjs.Broadway.Connection
-   */
-  function disconnect() {
-    _connected = false;
+/*
+ * Creates a new Spawner connection
+ */
+function createSpawner(host, cb) {
+  _ws = new WebSocket(host, 'broadway-spawner');
 
-    if ( _ws ) {
-      _ws.close();
+  _ws.onerror = function() {
+    cb('Failed to connect to spawner');
+  };
+
+  _ws.onopen = function() {
+    cb(null, _ws);
+  };
+
+  _ws.onclose = function() {
+    OSjs.Broadway.Connection.disconnect();
+  };
+}
+
+const onResize = (function() {
+  let wm;
+  return function() {
+    if ( !wm ) {
+      wm = require('core/windowmanager.js').instance;
     }
-    _ws = null;
 
-    try {
-      OSjs.Broadway.GTK.disconnect();
-    } catch ( e ) {
-      console.warn(e);
-    }
-
-    var wm = OSjs.Core.getWindowManager();
     if ( wm ) {
-      wm.getWindows().forEach(function(w) {
-        if ( w && w instanceof OSjs.Broadway.Window ) {
-          w.destroy();
-        }
+      const space = wm.getWindowSpace();
+      const theme = wm ? wm.getStyleTheme(true) : null;
+      const topMargin = theme ? (theme.style.window.margin) : 26;
+
+      Broadway.inject(null, 'resize', null, {
+        width: space.width,
+        height: space.height - topMargin
       });
     }
 
-    setTimeout(function() {
-      updateNotification();
-    }, 100);
+  };
+})();
+
+/////////////////////////////////////////////////////////////////////////////
+// API
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Initializes Broadway
+ *
+ * @function init
+ * @memberof OSjs.Broadway.Connection
+ */
+function init() {
+  createNotification();
+}
+
+/**
+ * Disconnects the Broadway connections
+ *
+ * @function disconnect
+ * @memberof OSjs.Broadway.Connection
+ */
+function disconnect() {
+  _connected = false;
+
+  if ( _ws ) {
+    _ws.close();
+  }
+  _ws = null;
+
+  try {
+    Broadway.disconnect();
+  } catch ( e ) {
+    console.warn(e);
   }
 
-  /**
-   * Creates new Broadway connections
-   *
-   * @function connect
-   * @memberof OSjs.Broadway.Connection
-   */
-  function connect() {
-    if ( _connected || _ws ) {
-      return;
-    }
-
-    var conf = API.getConfig('Broadway');
-
-    createSpawner(createURL(conf.defaults.spawner), function(err) {
-      _connected = true;
-
-      if ( err ) {
-        API.error('Broadway', 'Failed to connect', err);
-      } else {
-        try {
-          var host = createURL(conf.defaults.connection);
-          OSjs.Broadway.GTK.connect(host);
-        } catch ( e ) {
-          console.warn(e);
-        }
+  const wm = require('core/windowmanager.js').instance;
+  if ( wm ) {
+    wm.getWindows().forEach(function(w) {
+      if ( w && w instanceof BroadwayWindow ) {
+        w.destroy();
       }
     });
   }
 
-  /**
-   * Spawns a new process on the Broadway server
-   *
-   * @param {String}  cmd     Command
-   *
-   * @function spawn
-   * @memberof OSjs.Broadway.Connection
-   */
-  function spawn(cmd) {
-    if ( !_connected || !_ws ) {
-      return;
-    }
+  setTimeout(function() {
+    updateNotification();
+  }, 100);
+}
 
-    _ws.send(JSON.stringify({
-      method: 'launch',
-      argument: cmd
-    }));
+/**
+ * Creates new Broadway connections
+ *
+ * @function connect
+ * @memberof OSjs.Broadway.Connection
+ */
+function connect() {
+  if ( _connected || _ws ) {
+    return;
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+  const conf = API.getConfig('Broadway');
 
-  OSjs.Broadway.Events = {
+  createSpawner(createURL(conf.defaults.spawner), function(err) {
+    _connected = true;
+
+    if ( err ) {
+      API.error('Broadway', 'Failed to connect', err);
+    } else {
+      try {
+        const host = createURL(conf.defaults.connection);
+        Broadway.connect(host);
+      } catch ( e ) {
+        console.warn(e);
+      }
+    }
+  });
+}
+
+/**
+ * Spawns a new process on the Broadway server
+ *
+ * @param {String}  cmd     Command
+ *
+ * @function spawn
+ * @memberof OSjs.Broadway.Connection
+ */
+function spawn(cmd) {
+  if ( !_connected || !_ws ) {
+    return;
+  }
+
+  _ws.send(JSON.stringify({
+    method: 'launch',
+    argument: cmd
+  }));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
+
+module.exports = {
+  init: init,
+  connect: connect,
+  disconnect: disconnect,
+  spawn: spawn,
+  events: {
     onSocketOpen: function() {
       window.addEventListener('resize', onResize);
 
@@ -325,8 +334,8 @@
 
     onMoveSurface: function(id, has_pos, has_size, surface) {
       return actionOnWindow(id, function(win) {
-        var wm = OSjs.Core.getWindowManager();
-        var space = wm.getWindowSpace();
+        const wm = require('core/windowmanager.js').instance;
+        const space = wm.getWindowSpace();
 
         if ( has_pos ) {
           win._move(space.left + surface.x, space.top + surface.y);
@@ -339,23 +348,11 @@
     },
 
     onCreateSurface: function(id, surface) {
-      var wm = OSjs.Core.getWindowManager();
+      const wm = require('core/windowmanager.js').instance;
       if ( !surface.isTemp ) {
-        var win = new OSjs.Broadway.Window(id, surface.x, surface.y, surface.width, surface.height, surface.canvas);
+        const win = new BroadwayWindow(id, surface.x, surface.y, surface.width, surface.height, surface.canvas);
         wm.addWindow(win, true);
       }
     }
-  };
-
-  /**
-   * @namespace Connection
-   * @memberof OSjs.Broadway
-   */
-  OSjs.Broadway.Connection = {
-    init: init,
-    connect: connect,
-    disconnect: disconnect,
-    spawn: spawn
-  };
-
-})(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.VFS, OSjs.GUI, OSjs.API);
+  }
+};

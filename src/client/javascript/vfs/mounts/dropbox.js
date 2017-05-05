@@ -27,353 +27,342 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(Utils, API) {
-  /*eslint no-use-before-define: "off"*/
-  'use strict';
+/*eslint no-use-before-define: "off"*/
+'use strict';
 
-  /**
-   * @namespace Dropbox
-   * @memberof OSjs.VFS.Modules
-   */
+const FS = require('utils/fs.js');
+const API = require('core/api.js');
+const VFS = require('vfs/fs.js');
+const MountManager = require('core/mount-manager.js');
 
-  // https://github.com/bcherry/dropbox-js
-  // https://github.com/apily/dropbox/blob/master/index.js
-  // https://www.dropbox.com/developers/core/start/python
-  // https://www.dropbox.com/developers/reference/devguide
+/**
+ * @namespace Dropbox
+ * @memberof OSjs.VFS.Modules
+ */
 
-  var _cachedClient;
-  var _isMounted = false;
+// https://github.com/bcherry/dropbox-js
+// https://github.com/apily/dropbox/blob/master/index.js
+// https://www.dropbox.com/developers/core/start/python
+// https://www.dropbox.com/developers/reference/devguide
 
-  function _getConfig(cfg, isVFS) {
-    var config = OSjs.Core.getConfig();
-    try {
-      return isVFS ? config.VFS.Dropbox[cfg] : config.DropboxAPI[cfg];
-    } catch ( e ) {
-      console.warn('OSjs.VFS.Modules.Dropbox::enabled()', e, e.stack);
-    }
-    return null;
+let _cachedClient;
+let _isMounted = false;
+
+function _getConfig(cfg, isVFS) {
+  const config = OSjs.Core.getConfig();
+  try {
+    return isVFS ? config.VFS.Dropbox[cfg] : config.DropboxAPI[cfg];
+  } catch ( e ) {
+    console.warn('OSjs.VFS.Modules.Dropbox::enabled()', e, e.stack);
   }
+  return null;
+}
 
-  function destroyRingNotification() {
-    var ring = API.getServiceNotificationIcon();
-    if ( ring ) {
-      ring.remove('Dropbox.js');
-    }
+function destroyRingNotification() {
+  const ring = API.getServiceNotificationIcon();
+  if ( ring ) {
+    ring.remove('Dropbox.js');
   }
+}
 
-  function createRingNotification() {
-    var ring = API.getServiceNotificationIcon();
-    if ( ring ) {
-      ring.add('Dropbox.js', [{
-        title: API._('DROPBOX_SIGN_OUT'),
-        onClick: function() {
-          signoutDropbox();
-        }
-      }]);
-    }
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-  // HELPERS
-  /////////////////////////////////////////////////////////////////////////////
-
-  function DropboxVFS() {
-    var clientKey = _getConfig('ClientKey');
-    this.client = new window.Dropbox.Client({key: clientKey});
-
-    if ( this.client ) {
-      var href = window.location.href;
-      if ( !href.match(/\/$/) ) {
-        href += '/';
+function createRingNotification() {
+  const ring = API.getServiceNotificationIcon();
+  if ( ring ) {
+    ring.add('Dropbox.js', [{
+      title: API._('DROPBOX_SIGN_OUT'),
+      onClick: () => {
+        signoutDropbox();
       }
-      href += 'vendor/dropboxOauthReceiver.html';
+    }]);
+  }
+}
 
-      var authDriver = new window.Dropbox.AuthDriver.Popup({
-        receiverUrl: href
+/////////////////////////////////////////////////////////////////////////////
+// HELPERS
+/////////////////////////////////////////////////////////////////////////////
+
+function DropboxVFS() {
+  const clientKey = _getConfig('ClientKey');
+  this.client = new window.Dropbox.Client({key: clientKey});
+
+  if ( this.client ) {
+    let href = window.location.href;
+    if ( !href.match(/\/$/) ) {
+      href += '/';
+    }
+    href += 'vendor/dropboxOauthReceiver.html';
+
+    let authDriver = new window.Dropbox.AuthDriver.Popup({
+      receiverUrl: href
+    });
+    this.client.authDriver(authDriver);
+  }
+}
+
+DropboxVFS.prototype.init = function(callback) {
+  let timedOut = false;
+
+  let timeout = setTimeout(() => {
+    timedOut = true;
+    callback(API._('ERR_OPERATION_TIMEOUT_FMT', '60s'));
+  }, 60 * 1000);
+
+  this.client.authenticate((error, client) => {
+    if ( !timedOut ) {
+      console.warn('DropboxVFS::construct()', error, client);
+      timeout = clearTimeout(timeout);
+      callback(error);
+    }
+  });
+};
+
+DropboxVFS.prototype.scandir = function(item, callback) {
+  console.info('DropboxVFS::scandir()', item);
+
+  const path = FS.getPathFromVirtual(item.path);
+
+  function _finish(entries) {
+    const result = entries.map((iter) => {
+      console.info(iter);
+      return new VFS.File({
+        filename: iter.name,
+        path: MountManager.getModuleProperty('Dropbox', 'root').replace(/\/$/, '') + iter.path,
+        size: iter.size,
+        mime: iter.isFolder ? null : iter.mimeType,
+        type: iter.isFolder ? 'dir' : 'file'
       });
-      this.client.authDriver(authDriver);
-    }
+    });
+    console.info('DropboxVFS::scandir()', item, '=>', result);
+
+    const list = FS.filterScandir(result, item._opts);
+    callback(false, list);
   }
 
-  DropboxVFS.prototype.init = function(callback) {
-    var timedOut = false;
-
-    var timeout = setTimeout(function() {
-      timedOut = true;
-      callback(API._('ERR_OPERATION_TIMEOUT_FMT', '60s'));
-    }, 60 * 1000);
-
-    this.client.authenticate(function(error, client) {
-      if ( !timedOut ) {
-        console.warn('DropboxVFS::construct()', error, client);
-        timeout = clearTimeout(timeout);
-        callback(error);
-      }
-    });
-  };
-
-  DropboxVFS.prototype.scandir = function(item, callback) {
-    console.info('DropboxVFS::scandir()', item);
-
-    var mm = OSjs.Core.getMountManager();
-    var path = Utils.getPathFromVirtual(item.path);
-
-    function _finish(entries) {
-      var result = entries.map(function(iter) {
-        console.info(iter);
-        return new OSjs.VFS.File({
-          filename: iter.name,
-          path: mm.getModuleProperty('Dropbox', 'root').replace(/\/$/, '') + iter.path,
-          size: iter.size,
-          mime: iter.isFolder ? null : iter.mimeType,
-          type: iter.isFolder ? 'dir' : 'file'
-        });
-      });
-      console.info('DropboxVFS::scandir()', item, '=>', result);
-
-      var list = OSjs.VFS.Helpers.filterScandir(result, item._opts);
-      callback(false, list);
-    }
-
-    this.client.readdir(path, {}, function(error, entries, stat, entry_stats) {
-      if ( error ) {
-        callback(error);
-        return;
-      }
-      _finish(entry_stats);
-    });
-  };
-
-  DropboxVFS.prototype.write = function(item, data, callback) {
-    console.info('DropboxVFS::write()', item);
-
-    var path = Utils.getPathFromVirtual(item.path);
-    this.client.writeFile(path, data, function(error, stat) {
-      callback(error, true);
-    });
-  };
-
-  DropboxVFS.prototype.read = function(item, callback, options) {
-    options = options || {};
-    options.arrayBuffer = true;
-
-    console.info('DropboxVFS::read()', item, options);
-    var path = Utils.getPathFromVirtual(item.path);
-
-    this.client.readFile(path, options, function(error, entries) {
-      callback(error, (error ? false : (entries instanceof Array ? entries.join('\n') : entries)));
-    });
-  };
-
-  DropboxVFS.prototype.copy = function(src, dest, callback) {
-    console.info('DropboxVFS::copy()', src, dest);
-    var spath = Utils.getPathFromVirtual(src.path);
-    var dpath = Utils.getPathFromVirtual(dest.path);
-    this.client.copy(spath, dpath, function(error) {
-      callback(error, !error);
-    });
-  };
-
-  DropboxVFS.prototype.move = function(src, dest, callback) {
-    console.info('DropboxVFS::move()', src, dest);
-    var spath = Utils.getPathFromVirtual(src.path);
-    var dpath = Utils.getPathFromVirtual(dest.path);
-    this.client.move(spath, dpath, function(error) {
-      callback(error, !error);
-    });
-  };
-
-  DropboxVFS.prototype.unlink = function(item, callback) {
-    console.info('DropboxVFS::unlink()', item);
-    var path = Utils.getPathFromVirtual(item.path);
-    this.client.unlink(path, function(error, stat) {
-      callback(error, !error);
-    });
-  };
-
-  DropboxVFS.prototype.mkdir = function(item, callback) {
-    console.info('DropboxVFS::mkdir()', item);
-    var path = Utils.getPathFromVirtual(item.path);
-    this.client.mkdir(path, function(error, stat) {
-      callback(error, !error);
-    });
-  };
-
-  // FIXME: Is there a better way to do this ?!
-  DropboxVFS.prototype.exists = function(item, callback) {
-    console.info('DropboxVFS::exists()', item);
-    this.read(item, function(error, data) {
-      callback(error, !error);
-    });
-  };
-
-  DropboxVFS.prototype.fileinfo = function(item, callback) {
-    console.info('DropboxVFS::fileinfo()', item);
-
-    var path = Utils.getPathFromVirtual(item.path);
-    this.client.stat(path, path, function(error, response) {
-      var fileinfo = null;
-      if ( !error && response ) {
-        fileinfo = {};
-
-        var useKeys = ['clientModifiedAt', 'humanSize', 'mimeType', 'modifiedAt', 'name', 'path', 'size', 'versionTag'];
-        useKeys.forEach(function(k) {
-          fileinfo[k] = response[k];
-        });
-      }
-
-      callback(error, fileinfo);
-    });
-  };
-
-  DropboxVFS.prototype.url = function(item, callback) {
-    console.info('DropboxVFS::url()', item);
-    var path = (typeof item === 'string') ? Utils.getPathFromVirtual(item) : Utils.getPathFromVirtual(item.path);
-    this.client.makeUrl(path, {downloadHack: true}, function(error, url) {
-      callback(error, url ? url.url : false);
-    });
-  };
-
-  DropboxVFS.prototype.upload = function(file, dest, callback) {
-    console.info('DropboxVFS::upload()', file, dest);
-
-    var item = new OSjs.VFS.File({
-      filename: file.name,
-      path: Utils.pathJoin((new OSjs.VFS.File(dest)).path, file.name),
-      mime: file.type,
-      size: file.size
-    });
-
-    this.write(item, file, callback);
-  };
-
-  DropboxVFS.prototype.trash = function(item, callback) {
-    callback(API._('ERR_VFS_UNAVAILABLE'));
-  };
-
-  DropboxVFS.prototype.untrash = function(item, callback) {
-    callback(API._('ERR_VFS_UNAVAILABLE'));
-  };
-
-  DropboxVFS.prototype.emtpyTrash = function(item, callback) {
-    callback(API._('ERR_VFS_UNAVAILABLE'));
-  };
-
-  DropboxVFS.freeSpace = function(root, callback) {
-    callback(false, -1);
-  };
-
-  /////////////////////////////////////////////////////////////////////////////
-  // WRAPPERS
-  /////////////////////////////////////////////////////////////////////////////
-
-  function getDropbox(callback) {
-    if ( !_cachedClient ) {
-      _cachedClient = new DropboxVFS();
-      _cachedClient.init(function(error) {
-        if ( error ) {
-          console.error('Failed to initialize dropbox VFS', error);
-          callback(null, error);
-          return;
-        }
-
-        _isMounted = true;
-
-        createRingNotification();
-
-        API.message('vfs:mount', 'Dropbox', {source: null});
-
-        callback(_cachedClient);
-      });
+  this.client.readdir(path, {}, (error, entries, stat, entry_stats) => {
+    if ( error ) {
+      callback(error);
       return;
     }
-    callback(_cachedClient);
-  }
+    _finish(entry_stats);
+  });
+};
 
-  function signoutDropbox(cb, options) {
-    cb = cb || function() {};
-    options = options || null;
+DropboxVFS.prototype.write = function(item, data, callback) {
+  console.info('DropboxVFS::write()', item);
 
-    function finished(client) {
-      if ( client ) {
-        client.reset();
-      }
-      _isMounted = false;
-      _cachedClient = null;
+  const path = FS.getPathFromVirtual(item.path);
+  this.client.writeFile(path, data, (error, stat) => {
+    callback(error, true);
+  });
+};
 
-      API.message('vfs:unmount', 'Dropbox', {source: null});
+DropboxVFS.prototype.read = function(item, callback, options) {
+  options = options || {};
+  options.arrayBuffer = true;
 
-      destroyRingNotification();
+  console.info('DropboxVFS::read()', item, options);
+  const path = FS.getPathFromVirtual(item.path);
 
-      cb();
+  this.client.readFile(path, options, (error, entries) => {
+    callback(error, (error ? false : (entries instanceof Array ? entries.join('\n') : entries)));
+  });
+};
+
+DropboxVFS.prototype.copy = function(src, dest, callback) {
+  console.info('DropboxVFS::copy()', src, dest);
+  const spath = FS.getPathFromVirtual(src.path);
+  const dpath = FS.getPathFromVirtual(dest.path);
+  this.client.copy(spath, dpath, (error) => {
+    callback(error, !error);
+  });
+};
+
+DropboxVFS.prototype.move = function(src, dest, callback) {
+  console.info('DropboxVFS::move()', src, dest);
+  const spath = FS.getPathFromVirtual(src.path);
+  const dpath = FS.getPathFromVirtual(dest.path);
+  this.client.move(spath, dpath, (error) => {
+    callback(error, !error);
+  });
+};
+
+DropboxVFS.prototype.unlink = function(item, callback) {
+  console.info('DropboxVFS::unlink()', item);
+  const path = FS.getPathFromVirtual(item.path);
+  this.client.unlink(path, (error, stat) => {
+    callback(error, !error);
+  });
+};
+
+DropboxVFS.prototype.mkdir = function(item, callback) {
+  console.info('DropboxVFS::mkdir()', item);
+  const path = FS.getPathFromVirtual(item.path);
+  this.client.mkdir(path, (error, stat) => {
+    callback(error, !error);
+  });
+};
+
+// FIXME: Is there a better way to do this ?!
+DropboxVFS.prototype.exists = function(item, callback) {
+  console.info('DropboxVFS::exists()', item);
+  this.read(item, (error, data) => {
+    callback(error, !error);
+  });
+};
+
+DropboxVFS.prototype.fileinfo = function(item, callback) {
+  console.info('DropboxVFS::fileinfo()', item);
+
+  const path = FS.getPathFromVirtual(item.path);
+  this.client.stat(path, path, (error, response) => {
+    let fileinfo = null;
+    if ( !error && response ) {
+      fileinfo = {};
+
+      const useKeys = ['clientModifiedAt', 'humanSize', 'mimeType', 'modifiedAt', 'name', 'path', 'size', 'versionTag'];
+      useKeys.forEach((k) => {
+        fileinfo[k] = response[k];
+      });
     }
 
-    getDropbox(function(client) {
-      client = client ? client.client : null;
-      if ( client ) {
-        try {
-          client.signOut(options, function() {
-            finished(client);
-          });
-        } catch ( ex ) {
-          console.warn('DROPBOX SIGNOUT EXCEPTION', ex);
-          finished(client);
-        }
-      }
-    });
-  }
+    callback(error, fileinfo);
+  });
+};
 
-  function makeRequest(name, args, callback, options) {
-    args = args || [];
-    callback = callback || function() {};
+DropboxVFS.prototype.url = function(item, callback) {
+  console.info('DropboxVFS::url()', item);
+  const path = (typeof item === 'string') ? FS.getPathFromVirtual(item) : FS.getPathFromVirtual(item.path);
+  this.client.makeUrl(path, {downloadHack: true}, (error, url) => {
+    callback(error, url ? url.url : false);
+  });
+};
 
-    getDropbox(function(instance, error) {
-      if ( !instance ) {
-        callback('No Dropbox VFS API Instance was ever created. Possible intialization error' + (error ? ': ' + error : ''));
-        return;
-      }
-      var fargs = args;
-      fargs.push(callback);
-      fargs.push(options);
-      instance[name].apply(instance, fargs);
-    });
-  }
+DropboxVFS.prototype.upload = function(file, dest, callback) {
+  console.info('DropboxVFS::upload()', file, dest);
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
-
-  /*
-   * This is the Dropbox VFS Abstraction for OS.js
-   */
-  OSjs.Core.getMountManager()._add({
-    readOnly: false,
-    name: 'Dropbox',
-    transport: 'Dropbox',
-    description: 'Dropbox',
-    visible: true,
-    searchable: false,
-    unmount: function(cb) {
-      // FIXME: Should we sign out here too ?
-      cb = cb || function() {};
-      _isMounted = false;
-      API.message('vfs:unmount', 'Dropbox', {source: null});
-      cb(false, true);
-    },
-    mounted: function() {
-      return _isMounted;
-    },
-    enabled: function() {
-      if ( !window.Dropbox ) {
-        return false;
-      }
-      return _getConfig('Enabled', true) || false;
-    },
-    root: 'dropbox:///',
-    icon: 'places/dropbox.png',
-    match: /^dropbox\:\/\//,
-    request: makeRequest
+  const item = new VFS.File({
+    filename: file.name,
+    path: FS.pathJoin((new VFS.File(dest)).path, file.name),
+    mime: file.type,
+    size: file.size
   });
 
-})(OSjs.Utils, OSjs.API);
+  this.write(item, file, callback);
+};
 
+DropboxVFS.prototype.trash = function(item, callback) {
+  callback(API._('ERR_VFS_UNAVAILABLE'));
+};
+
+DropboxVFS.prototype.untrash = function(item, callback) {
+  callback(API._('ERR_VFS_UNAVAILABLE'));
+};
+
+DropboxVFS.prototype.emtpyTrash = function(item, callback) {
+  callback(API._('ERR_VFS_UNAVAILABLE'));
+};
+
+DropboxVFS.freeSpace = function(root, callback) {
+  callback(false, -1);
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// WRAPPERS
+/////////////////////////////////////////////////////////////////////////////
+
+function getDropbox(callback) {
+  if ( !_cachedClient ) {
+    _cachedClient = new DropboxVFS();
+    _cachedClient.init((error) => {
+      if ( error ) {
+        console.error('Failed to initialize dropbox VFS', error);
+        callback(null, error);
+        return;
+      }
+
+      _isMounted = true;
+
+      createRingNotification();
+
+      API.message('vfs:mount', 'Dropbox', {source: null});
+
+      callback(_cachedClient);
+    });
+    return;
+  }
+  callback(_cachedClient);
+}
+
+function signoutDropbox(cb, options) {
+  cb = cb || function() {};
+  options = options || null;
+
+  function finished(client) {
+    if ( client ) {
+      client.reset();
+    }
+    _isMounted = false;
+    _cachedClient = null;
+
+    API.message('vfs:unmount', 'Dropbox', {source: null});
+
+    destroyRingNotification();
+
+    cb();
+  }
+
+  getDropbox((client) => {
+    client = client ? client.client : null;
+    if ( client ) {
+      try {
+        client.signOut(options, () => {
+          finished(client);
+        });
+      } catch ( ex ) {
+        console.warn('DROPBOX SIGNOUT EXCEPTION', ex);
+        finished(client);
+      }
+    }
+  });
+}
+
+function makeRequest(name, args, callback, options) {
+  args = args || [];
+  callback = callback || function() {};
+
+  getDropbox((instance, error) => {
+    if ( !instance ) {
+      callback('No Dropbox VFS API Instance was ever created. Possible intialization error' + (error ? ': ' + error : ''));
+      return;
+    }
+    const fargs = args;
+    fargs.push(callback);
+    fargs.push(options);
+    instance[name].apply(instance, fargs);
+  });
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
+
+module.exports = {
+  module: DropboxVFS,
+  request: makeRequest,
+  unmount: (cb) => {
+    // FIXME: Should we sign out here too ?
+    cb = cb || function() {};
+    _isMounted = false;
+    API.message('vfs:unmount', 'Dropbox', {source: null});
+    cb(false, true);
+  },
+  mounted: () => {
+    return _isMounted;
+  },
+  enabled: () => {
+    if ( !window.Dropbox ) {
+      return false;
+    }
+    return _getConfig('Enabled', true) || false;
+  }
+};

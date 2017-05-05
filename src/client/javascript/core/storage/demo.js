@@ -27,29 +27,27 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, Storage) {
-  'use strict';
+'use strict';
 
-  function DemoStorage() {
-    Storage.apply(this, arguments);
-  }
+const API = require('core/api.js');
+const Storage = require('core/storage.js');
 
-  DemoStorage.prototype = Object.create(Storage.prototype);
-  DemoStorage.constructor = Storage;
+class DemoStorage extends Storage {
 
-  DemoStorage.prototype.init = function(callback) {
-    var curr = API.getConfig('Version');
-    var version = localStorage.getItem('__version__');
+  init(callback) {
+    const curr = API.getConfig('Version');
+    const version = localStorage.getItem('__version__');
+
     if ( curr !== version ) {
       localStorage.clear();
     }
     localStorage.setItem('__version__', String(curr));
 
     callback(null, true);
-  };
+  }
 
-  DemoStorage.prototype.saveSettings = function(pool, storage, callback) {
-    Object.keys(storage).forEach(function(key) {
+  saveSettings(pool, storage, callback) {
+    Object.keys(storage).forEach((key) => {
       if ( pool && key !== pool ) {
         return;
       }
@@ -62,13 +60,12 @@
     });
 
     callback();
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Storage = OSjs.Storage || {};
-  OSjs.Storage.demo = DemoStorage;
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.API, OSjs.Utils, OSjs.Core.Storage);
+module.exports = DemoStorage;

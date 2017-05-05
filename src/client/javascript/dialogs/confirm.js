@@ -27,72 +27,73 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, DialogWindow) {
-  'use strict';
+'use strict';
+
+const API = require('core/api.js');
+const DialogWindow = require('core/dialog.js');
+
+/**
+ * An 'Confirm' dialog
+ *
+ * @example
+ *
+ * OSjs.API.createDialog('Confirm', {}, fn);
+ *
+ * @constructor Confirm
+ * @memberof OSjs.Dialogs
+ */
+class ConfirmDialog extends DialogWindow {
 
   /**
-   * An 'Confirm' dialog
-   *
-   * @example
-   *
-   * OSjs.API.createDialog('Confirm', {}, fn);
-   *
    * @param  {Object}          args              An object with arguments
    * @param  {String}          args.title        Dialog title
    * @param  {String}          args.message      Dialog message
    * @param  {Array}           args.buttons      Dialog buttons (default=yes,no,cancel)
    * @param  {CallbackDialog}  callback          Callback when done
-   *
-   * @constructor Confirm
-   * @memberof OSjs.Dialogs
    */
-  function ConfirmDialog(args, callback) {
-    args = Utils.argumentDefaults(args, {
+  constructor(args, callback) {
+    args = Object.assign({}, {
       buttons: ['yes', 'no', 'cancel']
-    });
+    }, args);
 
-    DialogWindow.apply(this, ['ConfirmDialog', {
+    super('ConfirmDialog', {
       title: args.title || API._('DIALOG_CONFIRM_TITLE'),
       icon: 'status/dialog-question.png',
       width: 400,
       height: 100
-    }, args, callback]);
+    }, args, callback);
   }
 
-  ConfirmDialog.prototype = Object.create(DialogWindow.prototype);
-  ConfirmDialog.constructor = DialogWindow;
+  init() {
+    const root = super.init(...arguments);
 
-  ConfirmDialog.prototype.init = function() {
-    var self = this;
-    var root = DialogWindow.prototype.init.apply(this, arguments);
-
-    var msg = DialogWindow.parseMessage(this.args.message);
+    const msg = DialogWindow.parseMessage(this.args.message);
     this._find('Message').empty().append(msg);
 
-    var buttonMap = {
+    const buttonMap = {
       yes: 'ButtonYes',
       no: 'ButtonNo',
       cancel: 'ButtonCancel'
     };
 
-    var hide = [];
-    (['yes', 'no', 'cancel']).forEach(function(b) {
-      if ( self.args.buttons.indexOf(b) < 0 ) {
+    const hide = [];
+    (['yes', 'no', 'cancel']).forEach((b) => {
+      if ( this.args.buttons.indexOf(b) < 0 ) {
         hide.push(b);
       }
     });
 
-    hide.forEach(function(b) {
-      self._find(buttonMap[b]).hide();
+    hide.forEach((b) => {
+      this._find(buttonMap[b]).hide();
     });
 
     return root;
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Dialogs.Confirm = Object.seal(ConfirmDialog);
+module.exports = ConfirmDialog;
 
-})(OSjs.API, OSjs.Utils, OSjs.Core.DialogWindow);

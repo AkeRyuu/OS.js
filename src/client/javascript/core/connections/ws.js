@@ -27,17 +27,20 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
+'use strict';
 
-(function(API, VFS, Utils, Connection) {
-  'use strict';
+const API = require('core/api.js');
+const VFS = require('vfs/fs.js');
+const Connection = require('core/connection.js');
 
-  function WSConnection() {
-    Connection.apply(this, arguments);
+class WSConnection extends Connection {
+  constructor() {
+    super(...arguments);
 
-    var port = API.getConfig('Connection.WSPort');
-    var path = API.getConfig('Connection.WSPath') || '';
-    var url = window.location.protocol.replace('http', 'ws') + '//' + window.location.host;
+    const port = API.getConfig('Connection.WSPort');
+    const path = API.getConfig('Connection.WSPath') || '';
 
+    let url = window.location.protocol.replace('http', 'ws') + '//' + window.location.host;
     if ( port !== 'upgrade' ) {
       if ( url.match(/:\d+$/) ) {
         url = url.replace(/:\d+$/, '');
@@ -52,10 +55,7 @@
     this.destroying = false;
   }
 
-  WSConnection.prototype = Object.create(Connection.prototype);
-  WSConnection.constructor = Connection;
-
-  WSConnection.prototype.destroy = function() {
+  destroy() {
     this.destroying = true;
 
     if ( this.ws ) {
@@ -64,51 +64,48 @@
 
     this.ws = null;
     this.wsqueue = {};
-    return Connection.prototype.destroy.apply(this, arguments);
-  };
 
-  WSConnection.prototype.init = function(callback) {
+    return super.destroy.apply(this, arguments);
+  }
+
+  init(callback) {
     this.destroying = false;
-
     this._connect(false, callback);
-  };
+  }
 
-  WSConnection.prototype._connect = function(reconnect, callback) {
+  _connect(reconnect, callback) {
     if ( this.destroying || this.ws && !reconnect ) {
       return;
     }
 
     console.info('Trying WebSocket Connection', this.wsurl);
 
-    var self = this;
-    var connected = false;
+    let connected = false;
 
     this.ws = new WebSocket(this.wsurl);
 
     this.ws.onopen = function() {
       connected = true;
       // NOTE: For some reason it needs to be fired on next tick
-      setTimeout(function() {
-        callback();
-      }, 0);
+      setTimeout(() => callback, 0);
     };
 
-    this.ws.onmessage = function(ev) {
-      var data = JSON.parse(ev.data);
-      var idx = data._index;
-      self._onmessage(idx, data);
+    this.ws.onmessage = (ev) => {
+      const data = JSON.parse(ev.data);
+      const idx = data._index;
+      this._onmessage(idx, data);
     };
 
-    this.ws.onclose = function(ev) {
+    this.ws.onclose = (ev) => {
       if ( !connected && ev.code !== 3001 ) {
         callback(API._('CONNECTION_ERROR'));
         return;
       }
-      self._onclose();
+      this._onclose();
     };
-  };
+  }
 
-  WSConnection.prototype._onmessage = function(idx, data) {
+  _onmessage(idx, data) {
     if ( typeof idx === 'undefined'  ) {
       this.message(data);
     } else {
@@ -120,10 +117,9 @@
         delete this.wsqueue[idx];
       }
     }
-  };
+  }
 
-  WSConnection.prototype._onclose = function(reconnecting) {
-    var self = this;
+  _onclose(reconnecting) {
     if ( this.destroying ) {
       return;
     }
@@ -132,35 +128,35 @@
 
     this.ws = null;
 
-    setTimeout(function() {
-      self._connect(true, function(err) {
+    setTimeout(() => {
+      this._connect(true, (err) => {
         if ( err ) {
-          self._onclose((reconnecting || 0) + 1);
+          this._onclose((reconnecting || 0) + 1);
         } else {
-          self.onOnline();
+          this.onOnline();
         }
       });
     }, reconnecting ? 10000 : 1000);
-  };
+  }
 
-  WSConnection.prototype.message = function(data) {
+  message(data) {
     // Emit a VFS event when a change occures
     if ( data.action === 'vfs:watch' ) {
-      VFS.Helpers.triggerWatch(data.args.event, VFS.file(data.args.file));
+      OSjs.VFS.Helpers.triggerWatch(data.args.event, new VFS.File(data.args.file));
     }
 
     // Emit a subscription event
     if ( this._evHandler ) {
       this._evHandler.emit(data.action, data.args);
     }
-  };
+  }
 
-  WSConnection.prototype.request = function(method, args, onsuccess, onerror, options) {
+  createRequest(method, args, onsuccess, onerror, options) {
     onerror = onerror || function() {
       console.warn('Connection::callWS()', 'error', arguments);
     };
 
-    var res = Connection.prototype.request.apply(this, arguments);
+    const res = super.createRequest(...arguments);
     if ( res !== false ) {
       return res;
     }
@@ -168,8 +164,8 @@
       return false;
     }
 
-    var idx = this.index++;
-    var base = method.match(/^FS:/) ? '/FS/' : '/API/';
+    const idx = this.index++;
+    const base = method.match(/^FS:/) ? '/FS/' : '/API/';
 
     try {
       this.ws.send(JSON.stringify({
@@ -187,13 +183,12 @@
     }
 
     return false;
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Connections = OSjs.Connections || {};
-  OSjs.Connections.ws = WSConnection;
+module.exports = WSConnection;
 
-})(OSjs.API, OSjs.VFS, OSjs.Utils, OSjs.Core.Connection);

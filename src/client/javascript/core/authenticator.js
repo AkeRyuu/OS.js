@@ -28,24 +28,35 @@
  * @licence Simplified BSD License
  */
 
-(function(API, Utils) {
-  'use strict';
+'use strict';
 
-  var _authInstance;
+/**
+ * @module core/authenticator
+ */
 
-  /**
-   * Authenticator Base Class
-   *
-   * @abstract
-   * @constructor Authenticator
-   * @memberof OSjs.Core
-   */
-  function Authenticator() {
+const API = require('core/api.js');
+const Connection = require('core/connection.js');
+const Compability = require('utils/compability.js');
+
+let _instance;
+
+/**
+ * Authenticator Base Class
+ *
+ * @abstract
+ */
+class Authenticator {
+
+  static get instance() {
+    return _instance;
+  }
+
+  constructor() {
+    /* eslint consistent-this: "warn" */
+    _instance = this;
 
     /**
      * User data
-     * @name userData
-     * @memberof OSjs.Core.Authenticator#
      * @type {Object}
      * @example
      * {
@@ -63,72 +74,53 @@
 
     /**
      * If user is logged in
-     * @name loggedIn
-     * @memberof OSjs.Core.Authenticator#
      * @type {Boolean}
      */
     this.loggedIn = false;
-
-    /*eslint consistent-this: "off"*/
-    _authInstance = this;
   }
 
   /**
    * Initializes the Authenticator
    *
-   * @function init
-   * @memberof OSjs.Core.Authenticator#
-   *
    * @param   {CallbackHandler}      callback        Callback function
    */
-  Authenticator.prototype.init = function(callback) {
+  init(callback) {
     this.onCreateUI(callback);
-  };
+  }
 
   /**
    * Destroys the Authenticator
-   *
-   * @function destroy
-   * @memberof OSjs.Core.Authenticator#
    */
-  Authenticator.prototype.destroy = function() {
-  };
+  destroy() {
+    _instance = null;
+  }
 
   /**
    * Get data for logged in user
    *
-   * @function getUser
-   * @memberof OSjs.Core.Authenticator#
-   *
    * @return  {Object}      JSON With user data
    */
-  Authenticator.prototype.getUser = function() {
-    return Utils.cloneObject(this.userData || {}, true);
-  };
+  getUser() {
+    return Object.assign({}, this.userData);
+  }
 
   /**
    * Gets if there is a user logged in
    *
-   * @function isLoggedIn
-   * @memberof OSjs.Core.Authenticator#
-   *
    * @return {Boolean}
    */
-  Authenticator.prototype.isLoggedIn = function() {
+  isLoggedIn() {
     return this.isLoggedIn;
-  };
+  }
 
   /**
    * Log in user
    *
-   * @function login
-   * @memberof OSjs.Core.Authenticator#
-   *
    * @param   {Object}               data            Login form data
    * @param   {CallbackHandler}      callback        Callback function
    */
-  Authenticator.prototype.login = function(data, callback) {
-    API.call('login', data, function onLoginResponse(error, result) {
+  login(data, callback) {
+    Connection.request('login', data, function onLoginResponse(error, result) {
       if ( result ) {
         callback(false, result);
       } else {
@@ -136,60 +128,52 @@
         callback(API._('ERR_LOGIN_FMT', error), false);
       }
     });
-  };
+  }
 
   /**
    * Log out user
    *
-   * @function logout
-   * @memberof OSjs.Core.Authenticator#
-   *
    * @param   {CallbackHandler}      callback        Callback function
    */
-  Authenticator.prototype.logout = function(callback) {
-    var opts = {};
+  logout(callback) {
+    const opts = {};
 
-    API.call('logout', opts, function onLogoutResponse(error, result) {
+    Connection.request('logout', opts, function onLogoutResponse(error, result) {
       if ( result ) {
         callback(false, true);
       } else {
         callback('An error occured: ' + (error || 'Unknown error'));
       }
     });
-  };
+  }
 
   /**
    * When login is requested
    *
-   * @function onLoginRequest
-   * @memberof OSjs.Core.Authenticator#
-   *
    * @param   {Object}               data            Login data
    * @param   {CallbackHandler}      callback        Callback function
    */
-  Authenticator.prototype.onLoginRequest = function(data, callback) {
-    var self = this;
-
-    this.login(data, function onLoginRequest(err, result) {
+  onLoginRequest(data, callback) {
+    this.login(data, (err, result) => {
       if ( err ) {
         callback(err);
       } else {
-        self.onLogin(result, callback);
+        this.onLogin(result, callback);
       }
     });
-  };
+  }
 
   /**
    * When login has occured
    *
-   * @function onLogin
-   * @memberof OSjs.Core.Authenticator#
-   *
    * @param   {Object}               data            User data
    * @param   {CallbackHandler}      callback        Callback function
    */
-  Authenticator.prototype.onLogin = function(data, callback) {
-    var userSettings = data.userSettings;
+  onLogin(data, callback) {
+    const sm = require('core/settings-manager.js');
+    const pm = require('core/package-manager.js');
+
+    let userSettings = data.userSettings;
     if ( !userSettings || userSettings instanceof Array ) {
       userSettings = {};
     }
@@ -198,15 +182,15 @@
 
     // Ensure we get the user-selected locale configured from WM
     function getUserLocale() {
-      var curLocale = API.getConfig('Locale');
-      var detectedLocale = Utils.getUserLocale();
+      let curLocale = API.getConfig('Locale');
+      let detectedLocale = Compability.getUserLocale();
 
       if ( API.getConfig('LocaleOptions.AutoDetect', true) && detectedLocale ) {
         console.info('Auto-detected user locale via browser', detectedLocale);
         curLocale = detectedLocale;
       }
 
-      var result = OSjs.Core.getSettingsManager().get('CoreWM');
+      let result = sm.get('CoreWM');
       if ( !result ) {
         try {
           result = userSettings.CoreWM;
@@ -218,32 +202,28 @@
     document.getElementById('LoadingScreen').style.display = 'block';
 
     API.setLocale(getUserLocale());
-    OSjs.Core.getSettingsManager().init(userSettings);
+    sm.init(userSettings);
 
     if ( data.blacklistedPackages ) {
-      OSjs.Core.getPackageManager().setBlacklist(data.blacklistedPackages);
+      pm.setBlacklist(data.blacklistedPackages);
     }
 
     this.loggedIn = true;
 
     callback(null, true);
-  };
+  }
 
   /**
    * When login UI is requested
    *
-   * @function onCreateUI
-   * @memberof OSjs.Core.Authenticator#
-   *
    * @param   {CallbackHandler}      callback        Callback function
    */
-  Authenticator.prototype.onCreateUI = function(callback) {
-    var self = this;
-    var container = document.getElementById('Login');
-    var login = document.getElementById('LoginForm');
-    var u = document.getElementById('LoginUsername');
-    var p = document.getElementById('LoginPassword');
-    var s = document.getElementById('LoginSubmit');
+  onCreateUI(callback) {
+    const container = document.getElementById('Login');
+    const login = document.getElementById('LoginForm');
+    const u = document.getElementById('LoginUsername');
+    const p = document.getElementById('LoginPassword');
+    const s = document.getElementById('LoginSubmit');
 
     if ( !container ) {
       throw new Error('Could not find Login Form Container');
@@ -261,16 +241,16 @@
       p.setAttribute('disabled', 'disabled');
     }
 
-    login.onsubmit = function(ev) {
+    login.onsubmit = (ev) => {
       _lock();
       if ( ev ) {
         ev.preventDefault();
       }
 
-      self.onLoginRequest({
+      this.onLoginRequest({
         username: u.value,
         password: p.value
-      }, function(err) {
+      }, (err) => {
         if ( err ) {
           alert(err);
           _restore();
@@ -284,25 +264,13 @@
     container.style.display = 'block';
 
     _restore();
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Core.Authenticator = Authenticator;
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  /**
-   * Get running 'Authenticator' instance
-   *
-   * @function getAuthenticator
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.Authenticator}
-   */
-  OSjs.Core.getAuthenticator = function Core_getAuthenticator() {
-    return _authInstance;
-  };
-
-})(OSjs.API, OSjs.Utils);
+module.exports = Authenticator;
 

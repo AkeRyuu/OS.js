@@ -27,21 +27,15 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, Storage) {
-  'use strict';
+'use strict';
 
-  function DatabaseStorage() {
-    Storage.apply(this, arguments);
-  }
+const Storage = require('core/storage.js');
 
-  DatabaseStorage.prototype = Object.create(Storage.prototype);
-  DatabaseStorage.constructor = Storage;
+class DatabaseStorage extends Storage {
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Storage = OSjs.Storage || {};
-  OSjs.Storage.database = DatabaseStorage;
-
-})(OSjs.API, OSjs.Utils, OSjs.Core.Storage);
+module.exports = DatabaseStorage;

@@ -27,44 +27,49 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
+'use strict';
 
-(function(Application, Window, Utils, VFS, GUI) {
-  'use strict';
+const Application = require('core/application.js');
+const Window = require('core/window.js');
+const Utils = require('utils/misc.js');
 
-  var IFRAME_COUNT = 0;
+let IFRAME_COUNT = 0;
 
-  /////////////////////////////////////////////////////////////////////////////
-  // Iframe Application Window Helper
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// Iframe Application Window Helper
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * IFrame Application Window constructor
+ *
+ * <pre><b>
+ * This class is a basic implementation of OSjs.Core.Window
+ * that uses Iframe as window content. It's usefull for creating
+ * applications that is not using OS.js API.
+ *
+ * You can use this in combination with 'IFrameApplication'
+ * </b></pre>
+ *
+ * @summary Helper for making IFrame Applications.
+ *
+ * @constructor
+ * @memberof OSjs.Helpers
+ * @see OSjs.Core.Window
+ *
+ * @link https://os-js.org/manual/package/iframe/
+ */
+class IFrameApplicationWindow extends Window {
 
   /**
-   * IFrame Application Window constructor
-   *
-   * <pre><b>
-   * This class is a basic implementation of OSjs.Core.Window
-   * that uses Iframe as window content. It's usefull for creating
-   * applications that is not using OS.js API.
-   *
-   * You can use this in combination with 'IFrameApplication'
-   * </b></pre>
-   *
-   * @summary Helper for making IFrame Applications.
-   *
    * @param  {String}                 name          Window name
    * @param  {Object}                 opts          Window options
    * @param  {String}                 opts.src      The Iframe source
    * @param  {String}                 opts.icon     The Icon relative/absolute path (./ for app dir)
    * @param  {String}                 opts.title    The Window title
    * @param  {OSjs.Core.Application}  app           The Application reference
-   *
-   * @constructor
-   * @memberof OSjs.Helpers
-   * @see OSjs.Core.Window
-   *
-   * @link https://os-js.org/manual/package/iframe/
    */
-  function IFrameApplicationWindow(name, opts, app) {
-    opts = Utils.argumentDefaults(opts, {
+  constructor(name, opts, app) {
+    opts = Object.assign({}, {
       src: 'about:blank',
       focus: function() {},
       blur: function() {},
@@ -75,34 +80,31 @@
       allow_resize: false,
       allow_restore: false,
       allow_maximize: false
-    });
+    }, opts);
 
-    Window.apply(this, ['IFrameApplicationWindow', opts, app]);
+    super('IFrameApplicationWindow', opts, app);
 
     this._iwin = null;
     this._frame = null;
   }
 
-  IFrameApplicationWindow.prototype = Object.create(Window.prototype);
-
-  IFrameApplicationWindow.prototype.destroy = function() {
+  destroy() {
     this.postMessage('Window::destroy');
-    return Window.prototype.destroy.apply(this, arguments);
-  };
+    return super.destroy(...arguments);
+  }
 
-  IFrameApplicationWindow.prototype.init = function(wmRef, app) {
-    var self = this;
-    var root = Window.prototype.init.apply(this, arguments);
+  init(wmRef, app) {
+    const root = super.init(...arguments);
     root.style.overflow = 'visible';
 
-    var id = 'IframeApplicationWindow' + IFRAME_COUNT.toString();
-    var iframe = document.createElement('iframe');
+    const id = 'IframeApplicationWindow' + IFRAME_COUNT.toString();
+    const iframe = document.createElement('iframe');
     iframe.setAttribute('border', 0);
     iframe.id = id;
     iframe.className = 'IframeApplicationFrame';
-    iframe.addEventListener('load', function() {
-      self._iwin = iframe.contentWindow;
-      self.postMessage('Window::init');
+    iframe.addEventListener('load', () => {
+      this._iwin = iframe.contentWindow;
+      this.postMessage('Window::init');
     });
 
     this.setLocation(this._opts.src, iframe);
@@ -124,10 +126,10 @@
     IFRAME_COUNT++;
 
     return root;
-  };
+  }
 
-  IFrameApplicationWindow.prototype._blur = function() {
-    if ( Window.prototype._blur.apply(this, arguments) ) {
+  _blur() {
+    if ( super._blur(...arguments) ) {
       if ( this._iwin ) {
         this._iwin.blur();
       }
@@ -139,10 +141,10 @@
       return true;
     }
     return false;
-  };
+  }
 
-  IFrameApplicationWindow.prototype._focus = function() {
-    if ( Window.prototype._focus.apply(this, arguments) ) {
+  _focus() {
+    if ( super._focus(...arguments) ) {
       if ( this._iwin ) {
         this._iwin.focus();
       }
@@ -153,7 +155,7 @@
       return true;
     }
     return false;
-  };
+  }
 
   /**
    * Post a message to IFrame Application
@@ -163,7 +165,7 @@
    *
    * @param   {Mixed}       message     The message
    */
-  IFrameApplicationWindow.prototype.postMessage = function(message) {
+  postMessage(message) {
     if ( this._iwin && this._app ) {
       console.debug('IFrameApplicationWindow::postMessage()', message);
       this._iwin.postMessage({
@@ -172,7 +174,7 @@
         wid: this._wid
       }, window.location.href);
     }
-  };
+  }
 
   /**
    * When Window receives a message from IFrame Application
@@ -183,9 +185,9 @@
    * @param   {Mixed}       message     The message
    * @param   {Event}       ev          DOM Event
    */
-  IFrameApplicationWindow.prototype.onPostMessage = function(message, ev) {
+  onPostMessage(message, ev) {
     console.debug('IFrameApplicationWindow::onPostMessage()', message);
-  };
+  }
 
   /**
    * Set Iframe source
@@ -196,61 +198,65 @@
    * @param   {String}      src       Source
    * @param   {Element}     iframe    Iframe element
    */
-  IFrameApplicationWindow.prototype.setLocation = function(src, iframe) {
+  setLocation(src, iframe) {
     iframe = iframe || this._frame;
 
-    var oldbefore = window.onbeforeunload;
+    const oldbefore = window.onbeforeunload;
     window.onbeforeunload = null;
     iframe.src = src;
     window.onbeforeunload = oldbefore;
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // IFrame Application Helper
-  /////////////////////////////////////////////////////////////////////////////
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// IFrame Application Helper
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * IFrame Application constructor
+ *
+ * <pre><code>
+ * Usage: Just apply the correct options and this should work
+ * automatically.
+ *
+ * This just inits an empty application with a window that uses
+ * iframe for contents. Look at the IFrameApplicationWindow
+ * constructor for more options you can apply here.
+ * </code></pre>
+ *
+ * @summary Helper for making IFrame Applications.
+ *
+ * @constructor
+ * @memberof OSjs.Helpers
+ * @see OSjs.Core.Application
+ */
+class IFrameApplication extends Application {
 
   /**
-   * IFrame Application constructor
-   *
-   * <pre><code>
-   * Usage: Just apply the correct options and this should work
-   * automatically.
-   *
-   * This just inits an empty application with a window that uses
-   * iframe for contents. Look at the IFrameApplicationWindow
-   * constructor for more options you can apply here.
-   * </code></pre>
-   *
-   * @summary Helper for making IFrame Applications.
-   *
    * @param   {String}    name          Process name
    * @param   {Object}    args          Process arguments
    * @param   {Object}    metadata      Application metadata
    * @param   {Object}    opts          Application options
    * @param   {String}    opts.icon     Window Icon
    * @param   {String}    opts.title    Window Title
-   *
-   * @constructor
-   * @memberof OSjs.Helpers
-   * @see OSjs.Core.Application
    */
-  function IFrameApplication(name, args, metadata, opts) {
-    Application.call(this, name, args, metadata);
+  constructor(name, args, metadata, opts) {
+    super(...arguments);
 
-    this.options = Utils.argumentDefaults(opts, {
+    this.options = Object.assign({}, {
       icon: '',
       title: 'IframeApplicationWindow'
-    });
+    }, opts);
     this.options.src = this._getResource(this.options.src);
   }
 
-  IFrameApplication.prototype = Object.create(Application.prototype);
+  init(settings, metadata) {
+    super.init(...arguments);
 
-  IFrameApplication.prototype.init = function(settings, metadata) {
-    Application.prototype.init.apply(this, arguments);
-    var name = this.__pname + 'Window';
+    const name = this.__pname + 'Window';
     this._addWindow(new IFrameApplicationWindow(name, this.options, this), null, true);
-  };
+  }
 
   /**
    * When Application receives a message from IFrame
@@ -260,19 +266,17 @@
    * @param   {Mixed}       message     The message
    * @param   {Event}       ev          DOM Event
    */
-  IFrameApplication.prototype.onPostMessage = function(message, ev) {
+  onPostMessage(message, ev) {
     console.debug('IFrameApplication::onPostMessage()', message);
 
-    var self = this;
-
-    function _response(err, res) {
-      self.postMessage({
+    const _response = (err, res) => {
+      this.postMessage({
         id: message.id,
         method: message.method,
         error: err,
         result: Utils.cloneObject(res)
       });
-    }
+    };
 
     if ( typeof message.id === 'number' && message.method ) {
       if ( this[message.method] ) {
@@ -281,25 +285,24 @@
         _response('No such method');
       }
     }
-  };
+  }
 
   /**
    * @param   {Mixed}       message     The message
    * @alias OSjs.Helpers.IframeApplicationWindow#postMessage
    */
-  IFrameApplication.prototype.postMessage = function(message) {
-    var win = this._getMainWindow();
+  postMessage(message) {
+    const win = this._getMainWindow();
     if ( win ) {
       win.postMessage(message);
     }
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Helpers.IFrameApplication       = IFrameApplication;
-  OSjs.Helpers.IFrameApplicationWindow = IFrameApplicationWindow;
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.VFS, OSjs.GUI);
-
+module.exports.IFrameApplication = IFrameApplication;
+module.exports.IFrameApplicationWindow = IFrameApplicationWindow;

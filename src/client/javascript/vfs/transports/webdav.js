@@ -27,298 +27,298 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(Utils, API) {
-  'use strict';
+'use strict';
 
-  /**
-   * @namespace WebDAV
-   * @memberof OSjs.VFS.Transports
-   */
+const FS = require('utils/fs.js');
+const API = require('core/api.js');
+const Utils = require('utils/misc.js');
+const MountManager = require('core/mount-manager.js');
 
-  /////////////////////////////////////////////////////////////////////////////
-  // HELPERS
-  /////////////////////////////////////////////////////////////////////////////
+/**
+ * @namespace WebDAV
+ * @memberof OSjs.VFS.Transports
+ */
 
-  function getModule(item) {
-    var mm = OSjs.Core.getMountManager();
-    var module = mm.getModuleFromPath(item.path, false, true);
-    if ( !module ) {
-      throw new Error(API._('ERR_VFSMODULE_INVALID_FMT', item.path));
+/////////////////////////////////////////////////////////////////////////////
+// HELPERS
+/////////////////////////////////////////////////////////////////////////////
+
+function getModule(item) {
+  const module = MountManager.getModuleFromPath(item.path, false, true);
+  if ( !module ) {
+    throw new Error(API._('ERR_VFSMODULE_INVALID_FMT', item.path));
+  }
+  return module;
+}
+
+function getNamespace(item) {
+  const module = getModule(item);
+  return module.options.ns || 'DAV:';
+}
+
+function getCORSAllowed(item) {
+  const module = getModule(item);
+  return module.options.cors === true;
+}
+
+function getURL(item) {
+  if ( typeof item === 'string' ) {
+    item = new OSjs.VFS.File(item);
+  }
+  const module = getModule(item);
+  const opts = module.options;
+  return Utils.parseurl(opts.host, {username: opts.username, password: opts.password}).url;
+}
+
+function getURI(item) {
+  const module = getModule(item);
+  return Utils.parseurl(module.options.host).path;
+}
+
+function resolvePath(item) {
+  const module = getModule(item);
+  return item.path.replace(module.match, '');
+}
+
+function davCall(method, args, callback, raw) {
+  function parseDocument(body) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(body, 'application/xml');
+    return doc.firstChild;
+  }
+
+  function getUrl(p, f) {
+    let url = getURL(p);
+    url += resolvePath(f).replace(/^\//, '');
+    return url;
+  }
+
+  const mime = args.mime || 'application/octet-stream';
+  const headers = {};
+  const sourceFile = new OSjs.VFS.File(args.path, mime);
+  const sourceUrl = getUrl(args.path, sourceFile);
+
+  let destUrl = null;
+  if ( args.dest ) {
+    destUrl = getUrl(args.dest, new OSjs.VFS.File(args.dest, mime));
+    headers.Destination = destUrl;
+  }
+
+  function externalCall() {
+    const opts = {
+      url: sourceUrl,
+      method: method,
+      requestHeaders: headers
+    };
+
+    if ( raw ) {
+      opts.binary = true;
+      opts.mime = mime;
     }
-    return module;
-  }
 
-  function getNamespace(item) {
-    var module = getModule(item);
-    return module.options.ns || 'DAV:';
-  }
-
-  function getCORSAllowed(item) {
-    var module = getModule(item);
-    return module.options.cors === true;
-  }
-
-  function getURL(item) {
-    if ( typeof item === 'string' ) {
-      item = new OSjs.VFS.File(item);
-    }
-    var module = getModule(item);
-    var opts = module.options;
-    return Utils.parseurl(opts.host, {username: opts.username, password: opts.password}).url;
-  }
-
-  function getURI(item) {
-    var module = getModule(item);
-    return Utils.parseurl(module.options.host).path;
-  }
-
-  function resolvePath(item) {
-    var module = getModule(item);
-    return item.path.replace(module.match, '');
-  }
-
-  function davCall(method, args, callback, raw) {
-    function parseDocument(body) {
-      var parser = new DOMParser();
-      var doc = parser.parseFromString(body, 'application/xml');
-      return doc.firstChild;
+    if ( typeof args.data !== 'undefined' ) {
+      opts.query = args.data;
     }
 
-    function getUrl(p, f) {
-      var url = getURL(p);
-      url += resolvePath(f).replace(/^\//, '');
-      return url;
-    }
-
-    var mime = args.mime || 'application/octet-stream';
-    var headers = {};
-    var sourceFile = new OSjs.VFS.File(args.path, mime);
-    var sourceUrl = getUrl(args.path, sourceFile);
-    var destUrl = null;
-
-    if ( args.dest ) {
-      destUrl = getUrl(args.dest, new OSjs.VFS.File(args.dest, mime));
-      headers.Destination = destUrl;
-    }
-
-    function externalCall() {
-      var opts = {
-        url: sourceUrl,
-        method: method,
-        requestHeaders: headers
-      };
-
-      if ( raw ) {
-        opts.binary = true;
-        opts.mime = mime;
+    API.call('curl', opts, (error, result) => {
+      if ( error ) {
+        callback(error);
+        return;
       }
 
-      if ( typeof args.data !== 'undefined' ) {
-        opts.query = args.data;
+      if ( !result ) {
+        callback(API._('ERR_VFS_REMOTEREAD_EMPTY'));
+        return;
       }
 
-      API.call('curl', opts, function(error, result) {
-        if ( error ) {
-          callback(error);
-          return;
-        }
+      if ( ([200, 201, 203, 204, 205, 207]).indexOf(result.httpCode) < 0 ) {
+        callback(API._('ERR_VFSMODULE_XHR_ERROR') + ': ' + result.httpCode);
+        return;
+      }
 
-        if ( !result ) {
-          callback(API._('ERR_VFS_REMOTEREAD_EMPTY'));
-          return;
-        }
-
-        if ( ([200, 201, 203, 204, 205, 207]).indexOf(result.httpCode) < 0 ) {
-          callback(API._('ERR_VFSMODULE_XHR_ERROR') + ': ' + result.httpCode);
-          return;
-        }
-
-        if ( opts.binary ) {
-          OSjs.VFS.Helpers.dataSourceToAb(result.body, mime, callback);
-        } else {
-          var doc = parseDocument(result.body);
-          callback(false, doc);
-        }
-      });
-    }
-
-    if ( getCORSAllowed(sourceFile) ) {
-      OSjs.VFS.Transports.OSjs.request('get', {url: sourceUrl, method: method}, callback);
-    } else {
-      externalCall();
-    }
+      if ( opts.binary ) {
+        OSjs.VFS.Helpers.dataSourceToAb(result.body, mime, callback);
+      } else {
+        const doc = parseDocument(result.body);
+        callback(false, doc);
+      }
+    });
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // API
-  /////////////////////////////////////////////////////////////////////////////
+  if ( getCORSAllowed(sourceFile) ) {
+    OSjs.VFS.Transports.OSjs.request('get', {url: sourceUrl, method: method}, callback);
+  } else {
+    externalCall();
+  }
+}
 
-  /**
-   * WebDAV (OwnCloud) VFS Transport Module
-   */
-  var Transport = {
-    scandir: function(item, callback, options) {
-      var mm = OSjs.Core.getMountManager();
+/////////////////////////////////////////////////////////////////////////////
+// API
+/////////////////////////////////////////////////////////////////////////////
 
-      function parse(doc) {
-        var ns = getNamespace(item);
-        var list = [];
-        var reqpath = resolvePath(item);
-        var root = mm.getRootFromPath(item.path);
+/**
+ * WebDAV (OwnCloud) VFS Transport Module
+ */
+const Transport = {
+  scandir: function(item, callback, options) {
 
-        (doc.children || []).forEach(function(c) {
-          var type = 'file';
+    function parse(doc) {
+      const ns = getNamespace(item);
+      const list = [];
+      const reqpath = resolvePath(item);
+      const root = MountManager.getRootFromPath(item.path);
 
-          function getPath() {
-            var path = c.getElementsByTagNameNS(ns, 'href')[0].textContent;
-            return path.substr(getURI(item).length - 1, path.length);
+      (doc.children || []).forEach((c) => {
+        let type = 'file';
+
+        function getPath() {
+          let path = c.getElementsByTagNameNS(ns, 'href')[0].textContent;
+          return path.substr(getURI(item).length - 1, path.length);
+        }
+
+        function getId() {
+          let id = null;
+          try {
+            id = c.getElementsByTagNameNS(ns, 'getetag')[0].textContent;
+          } catch ( e ) {
           }
+          return id;
+        }
 
-          function getId() {
-            var id = null;
+        function getMime() {
+          let mime = null;
+          if ( type === 'file' ) {
             try {
-              id = c.getElementsByTagNameNS(ns, 'getetag')[0].textContent;
+              mime = c.getElementsByTagNameNS(ns, 'getcontenttype')[0].textContent || 'application/octet-stream';
+            } catch ( e ) {
+              mime = 'application/octet-stream';
+            }
+          }
+          return mime;
+        }
+
+        function getSize() {
+          let size = 0;
+          if ( type === 'file' ) {
+            try {
+              size = parseInt(c.getElementsByTagNameNS(ns, 'getcontentlength')[0].textContent, 10) || 0;
             } catch ( e ) {
             }
-            return id;
           }
-
-          function getMime() {
-            var mime = null;
-            if ( type === 'file' ) {
-              try {
-                mime = c.getElementsByTagNameNS(ns, 'getcontenttype')[0].textContent || 'application/octet-stream';
-              } catch ( e ) {
-                mime = 'application/octet-stream';
-              }
-            }
-            return mime;
-          }
-
-          function getSize() {
-            var size = 0;
-            if ( type === 'file' ) {
-              try {
-                size = parseInt(c.getElementsByTagNameNS(ns, 'getcontentlength')[0].textContent, 10) || 0;
-              } catch ( e ) {
-              }
-            }
-            return size;
-          }
-
-          try {
-            var path = getPath();
-            if ( path.match(/\/$/) ) {
-              type = 'dir';
-              path = path.replace(/\/$/, '') || '/';
-            }
-
-            if ( path !== reqpath ) {
-              list.push({
-                id: getId(),
-                path: root + path.replace(/^\//, ''),
-                filename: Utils.filename(path),
-                size: getSize(),
-                mime: getMime(),
-                type: type
-              });
-            }
-          } catch ( e ) {
-            console.warn('scandir() exception', e, e.stack);
-          }
-        });
-
-        return OSjs.VFS.Helpers.filterScandir(list, options);
-      }
-
-      davCall('PROPFIND', {path: item.path}, function(error, doc) {
-        var list = [];
-        if ( !error && doc ) {
-          var result = parse(doc);
-          result.forEach(function(iter) {
-            list.push(new OSjs.VFS.File(iter));
-          });
+          return size;
         }
-        callback(error, list);
+
+        try {
+          let path = getPath();
+          if ( path.match(/\/$/) ) {
+            type = 'dir';
+            path = path.replace(/\/$/, '') || '/';
+          }
+
+          if ( path !== reqpath ) {
+            list.push({
+              id: getId(),
+              path: root + path.replace(/^\//, ''),
+              filename: FS.filename(path),
+              size: getSize(),
+              mime: getMime(),
+              type: type
+            });
+          }
+        } catch ( e ) {
+          console.warn('scandir() exception', e, e.stack);
+        }
       });
-    },
 
-    write: function(item, data, callback, options) {
-      davCall('PUT', {path: item.path, mime: item.mime, data: data}, callback);
-    },
-
-    read: function(item, callback, options) {
-      davCall('GET', {path: item.path, mime: item.mime}, callback, true);
-    },
-
-    copy: function(src, dest, callback) {
-      davCall('COPY', {path: src.path, dest: dest.path}, callback);
-    },
-
-    move: function(src, dest, callback) {
-      davCall('MOVE', {path: src.path, dest: dest.path}, callback);
-    },
-
-    unlink: function(item, callback) {
-      davCall('DELETE', {path: item.path}, callback);
-    },
-
-    mkdir: function(item, callback) {
-      davCall('MKCOL', {path: item.path}, callback);
-    },
-
-    exists: function(item, callback) {
-      davCall('PROPFIND', {path: item.path}, function(error, doc) {
-        callback(false, !error);
-      });
-    },
-
-    url: function(item, callback, options) {
-      callback(false, OSjs.VFS.Transports.WebDAV.path(item));
-    },
-
-    freeSpace: function(root, callback) {
-      callback(false, -1);
-    }
-  };
-
-  /////////////////////////////////////////////////////////////////////////////
-  // WRAPPERS
-  /////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Make a WebDAV HTTP URL for VFS
-   *
-   * @param   {(String|OSjs.VFS.File)}    item        VFS File
-   *
-   * @return  {String}                  URL based on input
-   *
-   * @function path
-   * @memberof OSjs.VFS.Transports.WebDAV
-   */
-  function makePath(item) {
-    if ( typeof item === 'string' ) {
-      item = new OSjs.VFS.File(item);
+      return OSjs.VFS.Helpers.filterScandir(list, options);
     }
 
-    var url      = getURL(item);
-    var reqpath  = resolvePath(item).replace(/^\//, '');
-    var fullpath = url + reqpath;
+    davCall('PROPFIND', {path: item.path}, (error, doc) => {
+      const list = [];
+      if ( !error && doc ) {
+        const result = parse(doc);
+        result.forEach((iter) => {
+          list.push(new OSjs.VFS.File(iter));
+        });
+      }
+      callback(error, list);
+    });
+  },
 
-    if ( !getCORSAllowed(item) ) {
-      fullpath = API.getConfig('Connection.FSURI') + '/get/' + fullpath;
-    }
+  write: function(item, data, callback, options) {
+    davCall('PUT', {path: item.path, mime: item.mime, data: data}, callback);
+  },
 
-    return fullpath;
+  read: function(item, callback, options) {
+    davCall('GET', {path: item.path, mime: item.mime}, callback, true);
+  },
+
+  copy: function(src, dest, callback) {
+    davCall('COPY', {path: src.path, dest: dest.path}, callback);
+  },
+
+  move: function(src, dest, callback) {
+    davCall('MOVE', {path: src.path, dest: dest.path}, callback);
+  },
+
+  unlink: function(item, callback) {
+    davCall('DELETE', {path: item.path}, callback);
+  },
+
+  mkdir: function(item, callback) {
+    davCall('MKCOL', {path: item.path}, callback);
+  },
+
+  exists: function(item, callback) {
+    davCall('PROPFIND', {path: item.path}, (error, doc) => {
+      callback(false, !error);
+    });
+  },
+
+  url: function(item, callback, options) {
+    callback(false, OSjs.VFS.Transports.WebDAV.path(item));
+  },
+
+  freeSpace: function(root, callback) {
+    callback(false, -1);
+  }
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// WRAPPERS
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Make a WebDAV HTTP URL for VFS
+ *
+ * @param   {(String|OSjs.VFS.File)}    item        VFS File
+ *
+ * @return  {String}                  URL based on input
+ *
+ * @function path
+ * @memberof OSjs.VFS.Transports.WebDAV
+ */
+function makePath(item) {
+  if ( typeof item === 'string' ) {
+    item = new OSjs.VFS.File(item);
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+  const url = getURL(item);
+  const reqpath = resolvePath(item).replace(/^\//, '');
 
-  OSjs.VFS.Transports.WebDAV = {
-    module: Transport,
-    path: makePath
-  };
+  let fullpath = url + reqpath;
+  if ( !getCORSAllowed(item) ) {
+    fullpath = API.getConfig('Connection.FSURI') + '/get/' + fullpath;
+  }
 
-})(OSjs.Utils, OSjs.API);
+  return fullpath;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
+
+module.exports = {
+  module: Transport,
+  path: makePath
+};

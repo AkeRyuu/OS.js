@@ -27,655 +27,642 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(Utils, API) {
-  /*eslint no-use-before-define: "off"*/
-  'use strict';
+/*eslint no-use-before-define: "off"*/
+'use strict';
 
-  /**
-   * @namespace LocalStorage
-   * @memberof OSjs.VFS.Modules
-   */
+const FS = require('utils/fs.js');
+const API = require('core/api.js');
+const Utils = require('utils/misc.js');
+const VFS = require('vfs/fs.js');
 
-  /*
-   * This storage works like this:
-   *
-   * A map of folders with arrays of metadata
-   *  namespace/tree  = {'/': [{id: -1, size: -1, mime: 'str', filename: 'str'}, ...], ...}
-   *
-   * A flat map of data
-   *  namespace/data = {'path': %base64%}
-   *
-   */
+/**
+ * @namespace LocalStorage
+ * @memberof OSjs.VFS.Modules
+ */
 
-  /////////////////////////////////////////////////////////////////////////////
-  // GLOBALS
-  /////////////////////////////////////////////////////////////////////////////
+/*
+ * This storage works like this:
+ *
+ * A map of folders with arrays of metadata
+ *  namespace/tree  = {'/': [{id: -1, size: -1, mime: 'str', filename: 'str'}, ...], ...}
+ *
+ * A flat map of data
+ *  namespace/data = {'path': %base64%}
+ *
+ */
 
-  var NAMESPACE = 'OSjs/VFS/LocalStorage';
+/////////////////////////////////////////////////////////////////////////////
+// GLOBALS
+/////////////////////////////////////////////////////////////////////////////
 
-  var _isMounted = false;
-  var _cache = {};
-  var _fileCache = {};
+let NAMESPACE = 'OSjs/VFS/LocalStorage';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // HELPERS
-  /////////////////////////////////////////////////////////////////////////////
+let _isMounted = false;
+let _cache = {};
+let _fileCache = {};
 
-  /*
-   * Get's the "real" path of a object (which is basically a path without protocol)
-   */
-  function getRealPath(p, par) {
-    if ( typeof p !== 'string' || !p ) {
-      throw new TypeError('Expected p as String');
-    }
+/////////////////////////////////////////////////////////////////////////////
+// HELPERS
+/////////////////////////////////////////////////////////////////////////////
 
-    p = Utils.getPathFromVirtual(p).replace(/\/+/g, '/');
-
-    var path = par ? (Utils.dirname(p) || '/') : p;
-    if ( path !== '/' ) {
-      path = path.replace(/\/$/, '');
-    }
-
-    return path;
+/*
+ * Get's the "real" path of a object (which is basically a path without protocol)
+ */
+function getRealPath(p, par) {
+  if ( typeof p !== 'string' || !p ) {
+    throw new TypeError('Expected p as String');
   }
 
-  /*
-   * This methods creates a VFS.File from cache and fills in the gaps
-   */
-  function createMetadata(i, path, p) {
-    i = Utils.cloneObject(i);
-    if ( !p.match(/(\/\/)?\/$/) ) {
-      p += '/';
-    }
-    i.path = p + i.filename;
+  p = FS.getPathFromVirtual(p).replace(/\/+/g, '/');
 
-    return new OSjs.VFS.File(i);
+  let path = par ? (FS.dirname(p) || '/') : p;
+  if ( path !== '/' ) {
+    path = path.replace(/\/$/, '');
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // LOCALSTORAGE ABSTRACTION
-  /////////////////////////////////////////////////////////////////////////////
+  return path;
+}
 
-  /*
-   * Initialize and restore data from localStorage
-   */
-  function initStorage() {
-    if ( !_isMounted ) {
-      try {
-        _cache = JSON.parse(localStorage.getItem(NAMESPACE + '/tree')) || {};
-      } catch ( e ) {}
-
-      try {
-        _fileCache = JSON.parse(localStorage.getItem(NAMESPACE + '/data')) || {};
-      } catch ( e ) {}
-
-      if ( typeof _cache['/'] === 'undefined' ) {
-        _cache['/'] = [];
-      }
-
-      _isMounted = true;
-
-      API.message('vfs:mount', 'LocalStorage', {source: null});
-    }
+/*
+ * This methods creates a VFS.File from cache and fills in the gaps
+ */
+function createMetadata(i, path, p) {
+  i = Utils.cloneObject(i);
+  if ( !p.match(/(\/\/)?\/$/) ) {
+    p += '/';
   }
+  i.path = p + i.filename;
 
-  /*
-   * Store tree and data to localStorage
-   */
-  function commitStorage() {
+  return new VFS.File(i);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// LOCALSTORAGE ABSTRACTION
+/////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Initialize and restore data from localStorage
+ */
+function initStorage() {
+  if ( !_isMounted ) {
     try {
-      localStorage.setItem(NAMESPACE + '/tree', JSON.stringify(_cache));
-      localStorage.setItem(NAMESPACE + '/data', JSON.stringify(_fileCache));
-
-      return true;
+      _cache = JSON.parse(localStorage.getItem(NAMESPACE + '/tree')) || {};
     } catch ( e ) {}
 
-    return false;
-  }
+    try {
+      _fileCache = JSON.parse(localStorage.getItem(NAMESPACE + '/data')) || {};
+    } catch ( e ) {}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // CACHE
-  /////////////////////////////////////////////////////////////////////////////
-
-  /*
-   * Adds an entry to the cache
-   */
-  function addToCache(iter, data, dab) {
-    var path = getRealPath(iter.path);
-    var dirname = Utils.dirname(path);
-
-    var type = typeof data === 'undefined' || data === null ? 'dir' : 'file';
-    var mimeConfig = API.getConfig('MIME.mapping');
-
-    var mime = (function(type) {
-      if ( type !== 'dir' ) {
-        if ( iter.mime ) {
-          return iter.mime;
-        } else {
-          var ext = Utils.filext(iter.filename);
-          return mimeConfig['.' + ext] || 'application/octet-stream';
-        }
-      }
-      return null;
-    })(iter.type);
-
-    var file = {
-      size: iter.size || (type === 'file' ? (dab.byteLength || dab.length || 0) : 0),
-      mime: mime,
-      type: type,
-      filename: iter.filename
-    };
-
-    if ( typeof _cache[dirname] === 'undefined' ) {
-      _cache[dirname] = [];
+    if ( typeof _cache['/'] === 'undefined' ) {
+      _cache['/'] = [];
     }
 
-    (function(found) {
-      if ( found !== false) {
-        _cache[dirname][found] = file;
+    _isMounted = true;
+
+    API.message('vfs:mount', 'LocalStorage', {source: null});
+  }
+}
+
+/*
+ * Store tree and data to localStorage
+ */
+function commitStorage() {
+  try {
+    localStorage.setItem(NAMESPACE + '/tree', JSON.stringify(_cache));
+    localStorage.setItem(NAMESPACE + '/data', JSON.stringify(_fileCache));
+
+    return true;
+  } catch ( e ) {}
+
+  return false;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CACHE
+/////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Adds an entry to the cache
+ */
+function addToCache(iter, data, dab) {
+  const path = getRealPath(iter.path);
+  const dirname = FS.dirname(path);
+
+  const type = typeof data === 'undefined' || data === null ? 'dir' : 'file';
+  const mimeConfig = API.getConfig('MIME.mapping');
+
+  const mime = ((type) => {
+    if ( type !== 'dir' ) {
+      if ( iter.mime ) {
+        return iter.mime;
       } else {
-        _cache[dirname].push(file);
+        const ext = FS.filext(iter.filename);
+        return mimeConfig['.' + ext] || 'application/octet-stream';
       }
-    })(findInCache(iter));
+    }
+    return null;
+  })(iter.type);
 
-    if ( file.type === 'dir' ) {
-      if ( _fileCache[path] ) {
-        delete _fileCache[path];
-      }
-      _cache[path] = [];
+  const file = {
+    size: iter.size || (type === 'file' ? (dab.byteLength || dab.length || 0) : 0),
+    mime: mime,
+    type: type,
+    filename: iter.filename
+  };
+
+  if ( typeof _cache[dirname] === 'undefined' ) {
+    _cache[dirname] = [];
+  }
+
+  ((found) => {
+    if ( found !== false) {
+      _cache[dirname][found] = file;
     } else {
-      var iof = data.indexOf(',');
-      _fileCache[path] = data.substr(iof + 1);
+      _cache[dirname].push(file);
     }
+  })(findInCache(iter));
 
-    return true;
+  if ( file.type === 'dir' ) {
+    if ( _fileCache[path] ) {
+      delete _fileCache[path];
+    }
+    _cache[path] = [];
+  } else {
+    const iof = data.indexOf(',');
+    _fileCache[path] = data.substr(iof + 1);
   }
 
-  /*
-   * Removes an entry from cache (recursively)
-   */
-  function removeFromCache(iter) {
-    function _removef(i) {
-      var path = getRealPath(i.path);
-      //console.warn('-->', '_removef', i, path);
+  return true;
+}
 
-      // Remove data
-      if ( _fileCache[path] ) {
-        delete _fileCache[path];
-      }
+/*
+ * Removes an entry from cache (recursively)
+ */
+function removeFromCache(iter) {
+  function _removef(i) {
+    const path = getRealPath(i.path);
+    //console.warn('-->', '_removef', i, path);
 
-      // Remove from parent tree
+    // Remove data
+    if ( _fileCache[path] ) {
+      delete _fileCache[path];
+    }
+
+    // Remove from parent tree
+    _removefromp(i);
+  }
+
+  function _removed(i) {
+    const path = getRealPath(i.path);
+
+    //console.warn('-->', '_removed', i, path);
+
+    if ( path !== '/' ) {
+      // Remove from parent node
       _removefromp(i);
-    }
 
-    function _removed(i) {
-      var path = getRealPath(i.path);
-
-      //console.warn('-->', '_removed', i, path);
-
-      if ( path !== '/' ) {
-        // Remove from parent node
-        _removefromp(i);
-
-        // Remove base node if a root directory
-        if ( _cache[path] ) {
-          delete _cache[path];
-        }
+      // Remove base node if a root directory
+      if ( _cache[path] ) {
+        delete _cache[path];
       }
     }
+  }
 
-    function _removefromp(i) {
-      var path = getRealPath(i.path);
-      var dirname = Utils.dirname(path);
+  function _removefromp(i) {
+    const path = getRealPath(i.path);
+    const dirname = FS.dirname(path);
 
-      //console.warn('-->', '_removefromp', i, path, dirname);
+    //console.warn('-->', '_removefromp', i, path, dirname);
 
-      if ( _cache[dirname] ) {
-        var found = -1;
-        _cache[dirname].forEach(function(ii, idx) {
-          if ( found === -1 && ii ) {
-            if ( ii.type === i.type && i.filename === i.filename ) {
-              found = idx;
-            }
+    if ( _cache[dirname] ) {
+      let found = -1;
+      _cache[dirname].forEach((ii, idx) => {
+        if ( found === -1 && ii ) {
+          if ( ii.type === i.type && i.filename === i.filename ) {
+            found = idx;
           }
-        });
-
-        if ( found >= 0 ) {
-          _cache[dirname].splice(found, 1);
-        }
-      }
-    }
-
-    function _op(i) {
-      //console.warn('-->', '_op', i);
-
-      if ( i ) {
-        if ( i.type === 'dir' ) {
-          // First go up in the tree
-          scanStorage(i, false).forEach(function(ii) {
-            _op(ii);
-          });
-
-          // Then go down
-          _removed(i);
-        } else {
-          _removef(i);
-        }
-      }
-    }
-
-    _op(iter);
-
-    return true;
-  }
-
-  /*
-   * Looks up a file from the cache and returns index
-   */
-  function findInCache(iter) {
-    var path = getRealPath(iter.path);
-    var dirname = Utils.dirname(path);
-    var found = false;
-
-    _cache[dirname].forEach(function(chk, idx) {
-      if ( found === false && chk.filename === iter.filename ) {
-        found = idx;
-      }
-    });
-
-    return found;
-  }
-
-  /*
-   * Fetches a VFS.File object from cache from path
-   */
-  function getFromCache(pp) {
-    var path = Utils.dirname(pp);
-    var fname = Utils.filename(pp);
-    var result = null;
-
-    var tpath = path.replace(/^(.*)\:\/\//, '');
-    (_cache[tpath] || []).forEach(function(v) {
-      if ( !result && v.filename === fname ) {
-        result = createMetadata(v, null, path);
-      }
-    });
-
-    return result;
-  }
-
-  /*
-   * Scans a directory and returns file list
-   */
-  function scanStorage(item, ui) {
-    var path = getRealPath(item.path);
-    var data = _cache[path] || false;
-
-    var list = (data === false) ? false : data.filter(function(i) {
-      return !!i;
-    }).map(function(i) {
-      return createMetadata(i, path, item.path);
-    });
-
-    return list;
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-  // API
-  /////////////////////////////////////////////////////////////////////////////
-
-  var LocalStorageStorage = {
-
-    scandir: function(item, callback, options) {
-      var list = scanStorage(item, true);
-      callback(list === false ? API._('ERR_VFSMODULE_NOSUCH') : false, list);
-    },
-
-    read: function(item, callback, options) {
-      options = options || {};
-
-      var path = getRealPath(item.path);
-
-      function readStorage(cb) {
-        var metadata = getFromCache(path);
-
-        if ( metadata ) {
-          var data = _fileCache[path];
-
-          if ( data ) {
-
-            var ds  = 'data:' + metadata.mime + ',' + data;
-            OSjs.VFS.Helpers.dataSourceToAb(ds, metadata.mime, function(err, res) {
-              if ( err ) {
-                cb(err);
-              } else {
-                if ( options.url ) {
-                  OSjs.VFS.Helpers.abToBlob(res, metadata.mime, function(err, blob) {
-                    cb(err, URL.createObjectURL(blob));
-                  });
-                } else {
-                  cb(err, res);
-                }
-              }
-            });
-
-            return true;
-          }
-        }
-
-        return false;
-      }
-
-      if ( readStorage(callback) === false ) {
-        callback(API._('ERR_VFS_FATAL'), false);
-      }
-    },
-
-    write: function(file, data, callback, options) {
-      options = options || {};
-
-      var mime = file.mime || 'application/octet-stream';
-
-      function writeStorage(cb) {
-        if ( options.isds ) {
-          cb(false, data);
-        } else {
-          OSjs.VFS.Helpers.abToDataSource(data, mime, function(err, res) {
-            if ( err ) {
-              callback(err, false);
-            } else {
-              cb(false, res);
-            }
-          });
-        }
-      }
-
-      writeStorage(function(err, res) {
-        try {
-          if ( addToCache(file, res, data) && commitStorage() ) {
-            callback(err, true);
-          } else {
-            callback(API._('ERR_VFS_FATAL'), false);
-          }
-        } catch ( e ) {
-          callback(e);
         }
       });
-    },
 
-    unlink: function(src, callback) {
+      if ( found >= 0 ) {
+        _cache[dirname].splice(found, 1);
+      }
+    }
+  }
+
+  function _op(i) {
+    //console.warn('-->', '_op', i);
+
+    if ( i ) {
+      if ( i.type === 'dir' ) {
+        // First go up in the tree
+        scanStorage(i, false).forEach((ii) => {
+          _op(ii);
+        });
+
+        // Then go down
+        _removed(i);
+      } else {
+        _removef(i);
+      }
+    }
+  }
+
+  _op(iter);
+
+  return true;
+}
+
+/*
+ * Looks up a file from the cache and returns index
+ */
+function findInCache(iter) {
+  const path = getRealPath(iter.path);
+  const dirname = FS.dirname(path);
+
+  let found = false;
+  _cache[dirname].forEach((chk, idx) => {
+    if ( found === false && chk.filename === iter.filename ) {
+      found = idx;
+    }
+  });
+
+  return found;
+}
+
+/*
+ * Fetches a VFS.File object from cache from path
+ */
+function getFromCache(pp) {
+  const path = FS.dirname(pp);
+  const fname = FS.filename(pp);
+  const tpath = path.replace(/^(.*)\:\/\//, '');
+
+  let result = null;
+  (_cache[tpath] || []).forEach((v) => {
+    if ( !result && v.filename === fname ) {
+      result = createMetadata(v, null, path);
+    }
+  });
+
+  return result;
+}
+
+/*
+ * Scans a directory and returns file list
+ */
+function scanStorage(item, ui) {
+  const path = getRealPath(item.path);
+  const data = _cache[path] || false;
+
+  const list = (data === false) ? false : data.filter((i) => {
+    return !!i;
+  }).map((i) => {
+    return createMetadata(i, path, item.path);
+  });
+
+  return list;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// API
+/////////////////////////////////////////////////////////////////////////////
+
+const LocalStorageStorage = {
+
+  scandir: function(item, callback, options) {
+    const list = scanStorage(item, true);
+    callback(list === false ? API._('ERR_VFSMODULE_NOSUCH') : false, list);
+  },
+
+  read: function(item, callback, options) {
+    options = options || {};
+
+    const path = getRealPath(item.path);
+
+    function readStorage(cb) {
+      const metadata = getFromCache(path);
+
+      if ( metadata ) {
+        const data = _fileCache[path];
+
+        if ( data ) {
+          const ds  = 'data:' + metadata.mime + ',' + data;
+          FS.dataSourceToAb(ds, metadata.mime, (err, res) => {
+            if ( err ) {
+              cb(err);
+            } else {
+              if ( options.url ) {
+                FS.abToBlob(res, metadata.mime, (err, blob) => {
+                  cb(err, URL.createObjectURL(blob));
+                });
+              } else {
+                cb(err, res);
+              }
+            }
+          });
+
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    if ( readStorage(callback) === false ) {
+      callback(API._('ERR_VFS_FATAL'), false);
+    }
+  },
+
+  write: function(file, data, callback, options) {
+    options = options || {};
+
+    const mime = file.mime || 'application/octet-stream';
+
+    function writeStorage(cb) {
+      if ( options.isds ) {
+        cb(false, data);
+      } else {
+        FS.abToDataSource(data, mime, (err, res) => {
+          if ( err ) {
+            callback(err, false);
+          } else {
+            cb(false, res);
+          }
+        });
+      }
+    }
+
+    writeStorage((err, res) => {
       try {
-        src = getFromCache(src.path) || src;
-
-        if ( removeFromCache(src) && commitStorage() ) {
-          callback(false, true);
+        if ( addToCache(file, res, data) && commitStorage() ) {
+          callback(err, true);
         } else {
           callback(API._('ERR_VFS_FATAL'), false);
         }
       } catch ( e ) {
         callback(e);
       }
-    },
+    });
+  },
 
-    copy: function(src, dest, callback) {
+  unlink: function(src, callback) {
+    try {
+      src = getFromCache(src.path) || src;
 
-      function _write(s, d, cb) {
-        OSjs.VFS.read(s, function(err, data) {
+      if ( removeFromCache(src) && commitStorage() ) {
+        callback(false, true);
+      } else {
+        callback(API._('ERR_VFS_FATAL'), false);
+      }
+    } catch ( e ) {
+      callback(e);
+    }
+  },
+
+  copy: function(src, dest, callback) {
+
+    function _write(s, d, cb) {
+      VFS.read(s, (err, data) => {
+        if ( err ) {
+          cb(err);
+        } else {
+          VFS.write(d, data, cb);
+        }
+      });
+    }
+
+    function _op(s, d, cb) {
+      if ( s.type === 'file' ) {
+        d.mime = s.mime;
+      }
+
+      d.size = s.size;
+      d.type = s.type;
+
+      if ( d.type === 'dir' ) {
+        VFS.mkdir(d, (err, res) => {
           if ( err ) {
             cb(err);
           } else {
-            OSjs.VFS.write(d, data, cb);
-          }
-        });
-      }
+            const list = scanStorage(s, false);
 
-      function _op(s, d, cb) {
-        if ( s.type === 'file' ) {
-          d.mime = s.mime;
-        }
+            if ( list && list.length ) {
+              Utils.asyncs(list, (entry, idx, next) => {
+                const rp = entry.path.substr(src.path.length);
+                const nd = new VFS.File(dest.path + rp);
 
-        d.size = s.size;
-        d.type = s.type;
+                //console.warn('----->', 'source root', s);
+                //console.warn('----->', 'dest root', d);
+                //console.warn('----->', 'files', list.length, idx);
+                //console.warn('----->', 'relative', rp);
+                //console.warn('----->', 'new file', nd);
 
-        if ( d.type === 'dir' ) {
-          OSjs.VFS.mkdir(d, function(err, res) {
-            if ( err ) {
-              cb(err);
-            } else {
-              var list = scanStorage(s, false);
-
-              if ( list && list.length ) {
-                Utils.asyncs(list, function(entry, idx, next) {
-                  var rp = entry.path.substr(src.path.length);
-                  var nd = new OSjs.VFS.File(dest.path + rp);
-
-                  //console.warn('----->', 'source root', s);
-                  //console.warn('----->', 'dest root', d);
-                  //console.warn('----->', 'files', list.length, idx);
-                  //console.warn('----->', 'relative', rp);
-                  //console.warn('----->', 'new file', nd);
-
-                  _op(entry, nd, next);
-                }, function() {
-                  cb(false, true);
-                });
-              } else {
+                _op(entry, nd, next);
+              }, () => {
                 cb(false, true);
-              }
+              });
+            } else {
+              cb(false, true);
             }
-          });
-        } else {
-          _write(s, d, cb);
-        }
-      }
-
-      // Force retrieval of real data so MIME is correctly synced etc
-      src = getFromCache(src.path) || src;
-
-      // Check if destination exists
-      var droot = getRealPath(Utils.dirname(dest.path));
-      if ( droot !== '/' && !getFromCache(droot) ) {
-        callback(API._('ERR_VFS_TARGET_NOT_EXISTS'));
-        return;
-      }
-
-      if ( src.type === 'dir' && src.path === Utils.dirname(dest.path) ) {
-        callback('You cannot copy a directory into itself'); // FIXME
-        return;
-      }
-
-      _op(src, dest, callback);
-    },
-
-    move: function(src, dest, callback) {
-      var spath = getRealPath(src.path);
-      var dpath = getRealPath(dest.path);
-
-      var sdirname = Utils.dirname(spath);
-      var ddirname = Utils.dirname(dpath);
-
-      if ( _fileCache[dpath] ) {
-        callback(API._('ERR_VFS_FILE_EXISTS'));
-        return;
-      }
-
-      // Rename
-      if ( sdirname === ddirname ) {
-        if ( _fileCache[spath] ) {
-          var tmp = _fileCache[spath];
-          delete _fileCache[spath];
-          _fileCache[dpath] = tmp;
-        }
-
-        if ( _cache[sdirname] ) {
-          var found = -1;
-          _cache[sdirname].forEach(function(i, idx) {
-            if ( i && found === -1 ) {
-              if ( i.filename === src.filename && i.type === src.type ) {
-                found = idx;
-              }
-            }
-          });
-
-          if ( found >= 0 ) {
-            _cache[sdirname][found].filename = dest.filename;
-          }
-        }
-
-        callback(false, commitStorage());
-      } else {
-        OSjs.VSF.copy(src, dest, function(err) {
-          if ( err ) {
-            callback(err);
-          } else {
-            OSjs.VFS.unlink(src, callback);
           }
         });
+      } else {
+        _write(s, d, cb);
       }
-    },
-
-    exists: function(item, callback) {
-      var data = getFromCache(getRealPath(item.path));
-      callback(false, !!data);
-    },
-
-    fileinfo: function(item, callback) {
-      var data = getFromCache(item.path);
-      callback(data ? false : API._('ERR_VFSMODULE_NOSUCH'), data);
-    },
-
-    mkdir: function(dir, callback) {
-      var dpath = getRealPath(dir.path);
-      if ( dpath !== '/' && getFromCache(dpath) ) {
-        callback(API._('ERR_VFS_FILE_EXISTS'));
-        return;
-      }
-
-      dir.mime = null;
-      dir.size = 0;
-      dir.type = 'dir';
-
-      try {
-        if ( addToCache(dir) && commitStorage() ) {
-          callback(false, true);
-        } else {
-          callback(API._('ERR_VFS_FATAL'));
-        }
-      } catch ( e ) {
-        callback(e);
-      }
-    },
-
-    upload: function(file, dest, callback) {
-      var check = new OSjs.VFS.File(Utils.pathJoin((new OSjs.VFS.File(dest)).path, file.name), file.type);
-      check.size = file.size;
-      check.type = 'file';
-
-      OSjs.VFS.exists(check, function(err, exists) {
-        if ( err || exists ) {
-          callback(err || API._('ERR_VFS_FILE_EXISTS'));
-        } else {
-          var reader = new FileReader();
-          reader.onerror = function(e) {
-            callback(e);
-          };
-          reader.onloadend = function() {
-            OSjs.VFS.write(check, reader.result, callback, {isds: true});
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-    },
-
-    url: function(item, callback) {
-      OSjs.VFS.exists(item, function(err, exists) {
-        if ( err || !exists ) {
-          callback(err || API._('ERR_VFS_FILE_EXISTS'));
-        } else {
-          OSjs.VFS.read(item, callback, {url: true});
-        }
-      });
-    },
-
-    find: function(file, callback) {
-      callback(API._('ERR_VFS_UNAVAILABLE'));
-    },
-
-    trash: function(file, callback) {
-      callback(API._('ERR_VFS_UNAVAILABLE'));
-    },
-
-    untrash: function(file, callback) {
-      callback(API._('ERR_VFS_UNAVAILABLE'));
-    },
-
-    emptyTrash: function(callback) {
-      callback(API._('ERR_VFS_UNAVAILABLE'));
-    },
-
-    freeSpace: function(root, callback) {
-      var total = 5 * 1024 * 1024;
-      var used = JSON.stringify(_cache).length + JSON.stringify(_fileCache).length;
-
-      callback(false, total - used);
     }
-  };
 
-  /////////////////////////////////////////////////////////////////////////////
-  // WRAPPERS
-  /////////////////////////////////////////////////////////////////////////////
+    // Force retrieval of real data so MIME is correctly synced etc
+    src = getFromCache(src.path) || src;
 
-  function makeRequest(name, args, callback, options) {
-    initStorage();
+    // Check if destination exists
+    const droot = getRealPath(FS.dirname(dest.path));
+    if ( droot !== '/' && !getFromCache(droot) ) {
+      callback(API._('ERR_VFS_TARGET_NOT_EXISTS'));
+      return;
+    }
 
-    var ref = LocalStorageStorage[name];
-    var fargs = (args || []).slice(0);
-    fargs.push(callback || function() {});
-    fargs.push(options || {});
+    if ( src.type === 'dir' && src.path === FS.dirname(dest.path) ) {
+      callback('You cannot copy a directory into itself'); // FIXME
+      return;
+    }
 
-    return ref.apply(ref, fargs);
-  }
+    _op(src, dest, callback);
+  },
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+  move: function(src, dest, callback) {
+    const spath = getRealPath(src.path);
+    const dpath = getRealPath(dest.path);
 
-  /*
-   * Browser LocalStorage VFS Module
-   *
-   * This is *experimental* at best. It involves making a real-ish filesystemwhich
-   * I don't have much experience in :P This is why it is disabled by default!
-   */
-  OSjs.Core.getMountManager()._add({
-    readOnly: false,
-    name: 'LocalStorage',
-    transport: 'LocalStorage',
-    description: API.getConfig('VFS.LocalStorage.Options.description', 'LocalStorage'),
-    visible: true,
-    searchable: false,
-    unmount: function(cb) {
-      cb = cb || function() {};
-      _isMounted = false;
-      API.message('vfs:unmount', 'LocalStorage', {source: null});
-      cb(false, true);
-    },
-    mounted: function() {
-      return _isMounted;
-    },
-    enabled: function() {
-      try {
-        if ( API.getConfig('VFS.LocalStorage.Enabled') ) {
-          return true;
-        }
-      } catch ( e ) {
-        console.warn('OSjs.VFS.Modules.LocalStorage::enabled()', e, e.stack);
+    const sdirname = FS.dirname(spath);
+    const ddirname = FS.dirname(dpath);
+
+    if ( _fileCache[dpath] ) {
+      callback(API._('ERR_VFS_FILE_EXISTS'));
+      return;
+    }
+
+    // Rename
+    if ( sdirname === ddirname ) {
+      if ( _fileCache[spath] ) {
+        const tmp = _fileCache[spath];
+        delete _fileCache[spath];
+        _fileCache[dpath] = tmp;
       }
-      return false;
-    },
-    root: 'localstorage:///',
-    icon: API.getConfig('VFS.LocalStorage.Options.icon', 'apps/web-browser.png'),
-    match: /^localstorage\:\/\//,
-    request: makeRequest
-  });
 
-})(OSjs.Utils, OSjs.API);
+      if ( _cache[sdirname] ) {
+        let found = -1;
+        _cache[sdirname].forEach((i, idx) => {
+          if ( i && found === -1 ) {
+            if ( i.filename === src.filename && i.type === src.type ) {
+              found = idx;
+            }
+          }
+        });
+
+        if ( found >= 0 ) {
+          _cache[sdirname][found].filename = dest.filename;
+        }
+      }
+
+      callback(false, commitStorage());
+    } else {
+      OSjs.VSF.copy(src, dest, (err) => {
+        if ( err ) {
+          callback(err);
+        } else {
+          VFS.unlink(src, callback);
+        }
+      });
+    }
+  },
+
+  exists: function(item, callback) {
+    const data = getFromCache(getRealPath(item.path));
+    callback(false, !!data);
+  },
+
+  fileinfo: function(item, callback) {
+    const data = getFromCache(item.path);
+    callback(data ? false : API._('ERR_VFSMODULE_NOSUCH'), data);
+  },
+
+  mkdir: function(dir, callback) {
+    const dpath = getRealPath(dir.path);
+    if ( dpath !== '/' && getFromCache(dpath) ) {
+      callback(API._('ERR_VFS_FILE_EXISTS'));
+      return;
+    }
+
+    dir.mime = null;
+    dir.size = 0;
+    dir.type = 'dir';
+
+    try {
+      if ( addToCache(dir) && commitStorage() ) {
+        callback(false, true);
+      } else {
+        callback(API._('ERR_VFS_FATAL'));
+      }
+    } catch ( e ) {
+      callback(e);
+    }
+  },
+
+  upload: function(file, dest, callback) {
+    const check = new VFS.File(FS.pathJoin((new VFS.File(dest)).path, file.name), file.type);
+    check.size = file.size;
+    check.type = 'file';
+
+    VFS.exists(check, (err, exists) => {
+      if ( err || exists ) {
+        callback(err || API._('ERR_VFS_FILE_EXISTS'));
+      } else {
+        const reader = new FileReader();
+        reader.onerror = (e) => {
+          callback(e);
+        };
+        reader.onloadend = () => {
+          VFS.write(check, reader.result, callback, {isds: true});
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  },
+
+  url: function(item, callback) {
+    VFS.exists(item, (err, exists) => {
+      if ( err || !exists ) {
+        callback(err || API._('ERR_VFS_FILE_EXISTS'));
+      } else {
+        VFS.read(item, callback, {url: true});
+      }
+    });
+  },
+
+  find: function(file, callback) {
+    callback(API._('ERR_VFS_UNAVAILABLE'));
+  },
+
+  trash: function(file, callback) {
+    callback(API._('ERR_VFS_UNAVAILABLE'));
+  },
+
+  untrash: function(file, callback) {
+    callback(API._('ERR_VFS_UNAVAILABLE'));
+  },
+
+  emptyTrash: function(callback) {
+    callback(API._('ERR_VFS_UNAVAILABLE'));
+  },
+
+  freeSpace: function(root, callback) {
+    const total = 5 * 1024 * 1024;
+    const used = JSON.stringify(_cache).length + JSON.stringify(_fileCache).length;
+
+    callback(false, total - used);
+  }
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// WRAPPERS
+/////////////////////////////////////////////////////////////////////////////
+
+function makeRequest(name, args, callback, options) {
+  initStorage();
+
+  const ref = LocalStorageStorage[name];
+  const fargs = (args || []).slice(0);
+  fargs.push(callback || function() {});
+  fargs.push(options || {});
+
+  return ref.apply(ref, fargs);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
+
+module.exports = {
+  module: LocalStorageStorage,
+  unmount: (cb) => {
+    cb = cb || function() {};
+    _isMounted = false;
+    API.message('vfs:unmount', 'LocalStorage', {source: null});
+    cb(false, true);
+  },
+  mounted: () => {
+    return _isMounted;
+  },
+  enabled: () => {
+    try {
+      if ( API.getConfig('VFS.LocalStorage.Enabled') ) {
+        return true;
+      }
+    } catch ( e ) {
+      console.warn('OSjs.VFS.Modules.LocalStorage::enabled()', e, e.stack);
+    }
+    return false;
+  },
+  request: makeRequest
+};

@@ -27,48 +27,54 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, DialogWindow) {
-  'use strict';
+'use strict';
+
+const API = require('core/api.js');
+const DialogWindow = require('core/dialog.js');
+
+/**
+ * An 'Alert' dialog
+ *
+ * @example
+ *
+ * OSjs.API.createDialog('Alert', {}, fn);
+ *
+ * @constructor Alert
+ * @memberof OSjs.Dialogs
+ */
+class AlertDialog extends DialogWindow {
 
   /**
-   * An 'Alert' dialog
-   *
-   * @example
-   *
-   * OSjs.API.createDialog('Alert', {}, fn);
-   *
    * @param  {Object}          args              An object with arguments
    * @param  {String}          args.title        Dialog title
    * @param  {String}          args.message      Dialog message
    * @param  {CallbackDialog}  callback          Callback when done
-   *
-   * @constructor Alert
-   * @memberof OSjs.Dialogs
    */
-  function AlertDialog(args, callback) {
-    args = Utils.argumentDefaults(args, {});
-    DialogWindow.apply(this, ['AlertDialog', {
+  constructor(args, callback) {
+    args = Object.assign({}, {}, args);
+
+    super('AlertDialog', {
       title: args.title || API._('DIALOG_ALERT_TITLE'),
       icon: 'status/dialog-warning.png',
       width: 400,
       height: 100
-    }, args, callback]);
+    }, args, callback);
   }
 
-  AlertDialog.prototype = Object.create(DialogWindow.prototype);
-  AlertDialog.constructor = DialogWindow;
+  init() {
+    const root = super.init(...arguments);
 
-  AlertDialog.prototype.init = function() {
-    var root = DialogWindow.prototype.init.apply(this, arguments);
     root.setAttribute('role', 'alertdialog');
+
     this._find('Message').set('value', this.args.message, true);
+
     return root;
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Dialogs.Alert = Object.seal(AlertDialog);
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.API, OSjs.Utils, OSjs.Core.DialogWindow);
+module.exports = AlertDialog;

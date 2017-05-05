@@ -27,53 +27,46 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(Utils, API, Process) {
-  'use strict';
+'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // SERVICE
-  /////////////////////////////////////////////////////////////////////////////
+/**
+ * @module core/service
+ */
 
-  /**
-   * Service Class
-   *
-   * <pre><b>
-   * YOU CANNOT CANNOT USE THIS VIA 'new' KEYWORD.
-   * </b></pre>
-   *
-   * @summary Class used for basis as a Service.
-   *
-   * @param   {String}    name        Process name
-   * @param   {Object}    args        Process arguments
-   * @param   {Object}    metadata    Package metadata
-   *
-   * @abstract
-   * @constructor
-   * @memberof OSjs.Core
-   * @extends OSjs.Core.Process
-   */
-  function Service(name, args, metadata) {
+const Process = require('core/process.js');
+
+/////////////////////////////////////////////////////////////////////////////
+// SERVICE
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Service Class
+ *
+ * <pre><b>
+ * YOU CANNOT CANNOT USE THIS VIA 'new' KEYWORD.
+ * </b></pre>
+ *
+ * @summary Class used for basis as a Service.
+ *
+ * @param   {String}    name        Process name
+ * @param   {Object}    args        Process arguments
+ * @param   {Object}    metadata    Package metadata
+ *
+ * @abstract
+ * @extends core/process~Process
+ */
+class Service extends Process {
+
+  constructor(name, args, metadata) {
     console.group('Service::constructor()', name);
-    Process.apply(this, arguments);
+    super(...arguments);
     console.groupEnd();
   }
 
-  Service.prototype = Object.create(Process.prototype);
-  Service.constructor = Process;
+}
 
-  /**
-   * Intiaialize the Service
-   *
-   * @function init
-   * @memberof OSjs.Core.Service#
-   */
-  Service.prototype.init = function() {
-  };
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
-
-  OSjs.Core.Service = Object.seal(Service);
-
-})(OSjs.Utils, OSjs.API, OSjs.Core.Process);
+module.exports =  Service;

@@ -73,7 +73,6 @@
     this.widgets          = [];
     this.switcher         = null;
     this.iconView         = null;
-    this.$themeLink       = null;
     this.$themeScript     = null;
     this.$animationLink   = null;
     this.importedSettings = Utils.mergeObject(API.getConfig('SettingsManager.CoreWM'), importSettings);
@@ -155,7 +154,6 @@
   CoreWM.prototype.init = function() {
     var link = (OSjs.Core.getConfig().Connection.RootURI || '/') + 'blank.css';
 
-    this.setThemeLink(link);
     this.setAnimationLink(link);
 
     WindowManager.prototype.init.apply(this, arguments);
@@ -307,7 +305,6 @@
 
     // Clear DOM
     this._$notifications = Utils.$remove(this._$notifications);
-    this.$themeLink = Utils.$remove(this.$themeLink);
     this.$themeScript = Utils.$remove(this.$themeScript);
     this.$animationLink = Utils.$remove(this.$animationLink);
     this.switcher = null;
@@ -1053,17 +1050,7 @@
   };
 
   CoreWM.prototype.setTheme = function(settings) {
-    if ( this.$themeLink ) {
-      if ( settings.styleTheme ) {
-        this.setThemeLink(API.getThemeCSS(settings.styleTheme));
-      } else {
-        console.warn('NO THEME WAS SELECTED!');
-      }
-    }
-
-    if ( this.$themeLink ) {
-      this.themeAction('destroy');
-    }
+    this.themeAction('destroy');
 
     this.setThemeScript(API.getThemeResource('theme.js'));
 
@@ -1074,6 +1061,8 @@
         this.setAnimationLink(API.getThemeCSS(null));
       }
     }
+
+    document.body.setAttribute('data-theme', settings.styleTheme);
   };
 
   CoreWM.prototype.setIconView = function(settings) {
@@ -1155,13 +1144,6 @@
       this.$animationLink = Utils.$remove(this.$animationLink);
     }
     this.$animationLink = Utils.$createCSS(src);
-  };
-
-  CoreWM.prototype.setThemeLink = function(src) {
-    if ( this.$themeLink ) {
-      this.$themeLink = Utils.$remove(this.$themeLink);
-    }
-    this.$themeLink = Utils.$createCSS(src);
   };
 
   CoreWM.prototype.setThemeScript = function(src) {

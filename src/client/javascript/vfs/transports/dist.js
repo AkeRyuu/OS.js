@@ -27,53 +27,54 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(Utils, API) {
-  'use strict';
+'use strict';
 
-  /**
-   * @namespace Dist
-   * @memberof OSjs.VFS.Transports
-   */
+const API = require('core/api.js');
+const MountManager = require('core/mount-manager.js');
 
-  /////////////////////////////////////////////////////////////////////////////
-  // API
-  /////////////////////////////////////////////////////////////////////////////
+/**
+ * @namespace Dist
+ * @memberof OSjs.VFS.Transports
+ */
 
-  /*
-   * OSjs 'dist' VFS Transport Module
-   *
-   * This is just a custom version of 'OSjs' module
-   */
-  var Transport = {
-    url: function(item, callback) {
-      var root = API.getBrowserPath();
-      var mm = OSjs.Core.getMountManager();
-      var module = mm.getModuleFromPath(item.path, false, true);
-      var url = item.path.replace(module.match, root);
+/////////////////////////////////////////////////////////////////////////////
+// API
+/////////////////////////////////////////////////////////////////////////////
 
-      callback(false, url);
-    }
-  };
+/*
+ * OSjs 'dist' VFS Transport Module
+ *
+ * This is just a custom version of 'OSjs' module
+ */
+const Transport = {
+  url: function(item, callback) {
+    const root = API.getBrowserPath();
+    const module = MountManager.getModuleFromPath(item.path, false, true);
+    const url = item.path.replace(module.match, root).replace(/^\/+/, '/');
 
-  // Inherit non-restricted methods
-  var restricted = ['write', 'move', 'unlink', 'mkdir', 'exists', 'fileinfo', 'trash', 'untrash', 'emptyTrash', 'freeSpace'];
-  var internal = OSjs.VFS.Transports.OSjs.module;
-  Object.keys(internal).forEach(function(n) {
-    if ( restricted.indexOf(n) === -1 ) {
-      Transport[n] = internal[n];
-    }
-  });
+    callback(false, url);
+  },
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+  scandir: function() {
+    const BaseTransport = require('vfs/transports/osjs.js');
+    return BaseTransport.module.scandir.apply(this, arguments);
+  },
 
-  OSjs.VFS.Transports.Dist = {
-    module: Transport,
-    defaults: function(opts) {
-      opts.readOnly = true;
-      opts.searchable = true;
-    }
-  };
+  read: function() {
+    const BaseTransport = require('vfs/transports/osjs.js');
+    return BaseTransport.module.read.apply(this, arguments);
+  }
+};
 
-})(OSjs.Utils, OSjs.API);
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
+
+module.exports = {
+  module: Transport,
+  defaults: function(opts) {
+    opts.readOnly = true;
+    opts.searchable = true;
+  }
+};
+

@@ -27,21 +27,18 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-(function(API, Utils, Authenticator) {
-  'use strict';
+'use strict';
 
-  function DemoAuthenticator() {
-    Authenticator.apply(this, arguments);
-  }
+const API = require('core/api.js');
+const Authenticator = require('core/authenticator.js');
 
-  DemoAuthenticator.prototype = Object.create(Authenticator.prototype);
-  DemoAuthenticator.constructor = Authenticator;
+class DemoAuthenticator extends Authenticator {
 
-  DemoAuthenticator.prototype.login = function(login, callback) {
-    var settings = {};
-    var key;
+  login(login, callback) {
+    let settings = {};
+    let key;
 
-    for ( var i = 0; i < localStorage.length; i++ ) {
+    for ( let i = 0; i < localStorage.length; i++ ) {
       key = localStorage.key(i);
       if ( key.match(/^OSjs\//) ) {
         try {
@@ -65,7 +62,7 @@
       });
     }
 
-    return Authenticator.prototype.login.call(this, login, function(error, result) {
+    return super.login(login, (error, result) => {
       if ( error ) {
         callback(error);
       } else {
@@ -73,20 +70,20 @@
         callback(null, result);
       }
     });
-  };
+  }
 
-  DemoAuthenticator.prototype.onCreateUI = function(callback) {
+  onCreateUI(callback) {
     this.onLoginRequest({
       username: 'demo',
       password: 'demo'
     }, callback);
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Auth = OSjs.Auth || {};
-  OSjs.Auth.demo = DemoAuthenticator;
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.API, OSjs.Utils, OSjs.Core.Authenticator);
+module.exports = DemoAuthenticator;
+
