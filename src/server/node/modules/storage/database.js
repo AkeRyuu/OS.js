@@ -34,47 +34,53 @@
 const _db = require('./../../lib/database.js');
 const _logger = require('./../../lib/logger.js');
 
-module.exports.setSettings = function(http, username, settings) {
-  return new Promise((resolve, reject) => {
-    function done() {
-      resolve(true);
-    }
+const Storage = require('./../../core/storage.js');
 
-    _db.instance('authstorage').then((db) => {
-      db.query('UPDATE `users` SET `settings` = ? WHERE `username` = ?;', [JSON.stringify(settings), username])
-        .then(done).catch(reject);
-    }).catch(reject);
-  });
-};
+class DatabaseStorage extends Storage {
+  setSettings(http, username, settings) {
+    return new Promise((resolve, reject) => {
+      function done() {
+        resolve(true);
+      }
 
-module.exports.getSettings = function(http, username) {
-  return new Promise((resolve, reject) => {
-    function done(row) {
-      row = row || {};
-      let json = {};
-      try {
-        json = JSON.parse(row.settings);
-      } catch (e) {}
-      resolve(json);
-    }
+      _db.instance('authstorage').then((db) => {
+        db.query('UPDATE `users` SET `settings` = ? WHERE `username` = ?;', [JSON.stringify(settings), username])
+          .then(done).catch(reject);
+      }).catch(reject);
+    });
+  }
 
-    _db.instance('authstorage').then((db) => {
-      db.query('SELECT `settings` FROM `users` WHERE `username` = ? LIMIT 1;', [username])
-        .then(done).catch(reject);
-    }).catch(reject);
-  });
-};
+  getSettings(http, username) {
+    return new Promise((resolve, reject) => {
+      function done(row) {
+        row = row || {};
+        let json = {};
+        try {
+          json = JSON.parse(row.settings);
+        } catch (e) {}
+        resolve(json);
+      }
 
-module.exports.register = function(config) {
-  const type = config.driver;
-  const settings = config[type];
+      _db.instance('authstorage').then((db) => {
+        db.query('SELECT `settings` FROM `users` WHERE `username` = ? LIMIT 1;', [username])
+          .then(done).catch(reject);
+      }).catch(reject);
+    });
+  }
 
-  const str = type === 'sqlite' ? require('path').basename(settings.database) : settings.user + '@' + settings.host + ':/' + settings.database;
-  _logger.lognt('INFO', 'Module:', _logger.colored('Storage', 'bold'), 'using', _logger.colored(type, 'green'), '->', _logger.colored(str, 'green'));
+  register(config) {
+    const type = config.driver;
+    const settings = config[type];
 
-  return _db.instance('authstorage', type, settings);
-};
+    const str = type === 'sqlite' ? require('path').basename(settings.database) : settings.user + '@' + settings.host + ':/' + settings.database;
+    _logger.lognt('INFO', 'Module:', _logger.colored('Storage', 'bold'), 'using', _logger.colored(type, 'green'), '->', _logger.colored(str, 'green'));
 
-module.exports.destroy = function() {
-  return _db.destroy('authstorage');
-};
+    return _db.instance('authstorage', type, settings);
+  }
+
+  destroy() {
+    return _db.destroy('authstorage');
+  }
+}
+
+module.exports = DatabaseStorage;

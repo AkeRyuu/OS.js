@@ -31,42 +31,10 @@
 /*eslint strict:["error", "global"]*/
 'use strict';
 
-/**
- * Sets user settings
- *
- * @param   {ServerRequest}    http          OS.js Server Request
- * @param   {String}           username      Requested user
- * @param   {Object}           settings      Settings
- *
- * @return {Promise}
- */
-module.exports.setSettings = function(http, username, settings) {
-  return Promise.resolve(true);
-};
+const Storage = require('./../../core/storage.js');
 
-/**
- * Gets user settings
- *
- * @param   {ServerRequest}    http          OS.js Server Request
- * @param   {String}           username      Requested user
- *
- * @return {Promise}
- */
-module.exports.getSettings = function(http, username) {
-  return Promise.resolve({});
-};
+class ExampleStorage extends Storage {
 
-/**
- * When module is registered upon initialization
- *
- * @param   {Object}           config        Configuration for given auth module
- *
- * @return {Promise}
- */
-module.exports.register = function(config) {
-  return Promise.resolve();
-};
+}
 
-module.exports.destroy = function() {
-  return Promise.resolve();
-};
+module.exports = ExampleStorage;

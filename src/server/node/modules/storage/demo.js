@@ -30,22 +30,10 @@
 /*eslint strict:["error", "global"]*/
 'use strict';
 
-module.exports.setSettings = function(http, username, data) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+const Storage = require('./../../core/storage.js');
 
-module.exports.getSettings = function(http, username) {
-  return new Promise((resolve) => {
-    resolve({});
-  });
-};
+class DemoStorage extends Storage {
 
-module.exports.register = function(config) {
-  return Promise.resolve();
-};
+}
 
-module.exports.destroy = function() {
-  return Promise.resolve();
-};
+module.exports = DemoStorage;

@@ -35,44 +35,44 @@ const _vfs = require('./../../core/vfs.js');
 const _settings = require('./../../core/settings.js');
 const _utils = require('./../../lib/utils.js');
 
-module.exports.setSettings = function(http, username, settings) {
-  const config = _settings.get();
-  const path = _vfs.resolvePathArguments(config.modules.storage.system.settings, {
-    username: username
-  });
+const Storage = require('./../../core/storage.js');
 
-  return new Promise((resolve, reject) => {
-    _fs.ensureFile(path, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        _fs.writeFile(path, JSON.stringify(settings), (err, res) => {
-          if ( err ) {
-            reject(err);
-          } else {
-            resolve(true);
-          }
-        });
-      }
+class SystemStorage extends Storage {
+
+  setSettings(http, username, settings) {
+    const config = _settings.get();
+    const path = _vfs.resolvePathArguments(config.modules.storage.system.settings, {
+      username: username
     });
-  });
-};
 
-module.exports.getSettings = function(http, username) {
-  const config = _settings.get();
-  const path = _vfs.resolvePathArguments(config.modules.storage.system.settings, {
-    username: username
-  });
+    return new Promise((resolve, reject) => {
+      _fs.ensureFile(path, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          _fs.writeFile(path, JSON.stringify(settings), (err, res) => {
+            if ( err ) {
+              reject(err);
+            } else {
+              resolve(true);
+            }
+          });
+        }
+      });
+    });
+  }
 
-  return new Promise((resolve) => {
-    _utils.readUserMap(null, path, resolve);
-  });
-};
+  getSettings(http, username) {
+    const config = _settings.get();
+    const path = _vfs.resolvePathArguments(config.modules.storage.system.settings, {
+      username: username
+    });
 
-module.exports.register = function(config) {
-  return Promise.resolve();
-};
+    return new Promise((resolve) => {
+      _utils.readUserMap(null, path, resolve);
+    });
+  }
 
-module.exports.destroy = function() {
-  return Promise.resolve();
-};
+}
+
+module.exports = SystemStorage;

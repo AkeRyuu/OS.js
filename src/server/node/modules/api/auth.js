@@ -34,8 +34,8 @@
  * @namespace modules.api
  */
 
-const _storage = require('./../../core/storage.js');
-const _auth = require('./../../core/auth.js');
+const Storage = require('./../../core/storage.js');
+const Authenticator = require('./../../core/auth.js');
 
 /**
  * Send a login attempt
@@ -48,6 +48,8 @@ const _auth = require('./../../core/auth.js');
  * @return {Promise}
  */
 module.exports.login = function(http, data) {
+  const auth = Authenticator.get();
+
   function _login(resolve, reject) {
     function _fail(e) {
       http.session.set('username', '', () => {
@@ -57,8 +59,8 @@ module.exports.login = function(http, data) {
 
     function _proceed(userData) {
       http.session.set('username', userData.username, () => {
-        _storage.get().getSettings(http, userData.username).then((userSettings) => {
-          _auth.get().getBlacklist(http, userData.username).then((blacklist) => {
+        Storage.get().getSettings(http, userData.username).then((userSettings) => {
+          auth.getBlacklist(http, userData.username).then((blacklist) => {
             resolve({
               userData: userData,
               userSettings: userSettings,
@@ -69,9 +71,9 @@ module.exports.login = function(http, data) {
       });
     }
 
-    _auth.get().login(http, data).then((userData) => {
+    auth.login(http, data).then((userData) => {
       if ( typeof userData.groups === 'undefined' ) {
-        _auth.get().getGroups(http, userData.username).then((groups) => {
+        auth.getGroups(http, userData.username).then((groups) => {
           userData.groups = groups;
           _proceed(userData);
         }).catch(_fail);
@@ -96,7 +98,7 @@ module.exports.login = function(http, data) {
  */
 module.exports.logout = function(http, data) {
   return new Promise((resolve, reject) => {
-    _auth.get().logout(http, data).then((arg) => {
+    Authenticator.get().logout(http, data).then((arg) => {
       http.session.destroy(() => {
         resolve(arg);
       });

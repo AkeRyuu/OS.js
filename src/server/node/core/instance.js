@@ -61,11 +61,9 @@ const _glob = require('glob-promise');
 
 const _env = require('./env.js');
 const _api = require('./api.js');
-const _auth = require('./auth.js');
 const _vfs = require('./vfs.js');
 const _http = require('./http.js');
 const _settings = require('./settings.js');
-const _storage = require('./storage.js');
 const _session = require('./session.js');
 const _metadata = require('./metadata.js');
 const _middleware = require('./middleware.js');
@@ -73,6 +71,9 @@ const _middleware = require('./middleware.js');
 const _logger = require('./../lib/logger.js');
 const _utils = require('./../lib/utils.js');
 const _evhandler = require('./../lib/evhandler.js');
+
+const Storage = require('./storage.js');
+const Authenticator = require('./auth.js');
 
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBALS
@@ -324,12 +325,12 @@ module.exports.destroy = (() => {
         }
       });
 
-      const auth = _auth.get();
+      const auth = Authenticator.get();
       if ( auth && typeof auth.destroy === 'function' ) {
         auth.destroy();
       }
 
-      const storage = _storage.get();
+      const storage = Storage.get();
       if ( storage && typeof storage.destroy === 'function' ) {
         storage.destroy();
       }
@@ -371,8 +372,8 @@ module.exports.init = function init(opts) {
       })
       .then(_session.load)
       .then(_api.load)
-      .then(_auth.load)
-      .then(_storage.load)
+      .then(Authenticator.load)
+      .then(Storage.load)
       .then(_vfs.load)
       .then(_http.init)
       .then(registerPackages)

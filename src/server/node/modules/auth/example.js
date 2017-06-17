@@ -30,116 +30,21 @@
 /*eslint strict:["error", "global"]*/
 'use strict';
 
-/**
- * Handles user login attempts
- *
- * @param   {ServerRequest}    http          OS.js Server Request
- * @param   {Object}           data          Request data
- *
- * @return {Promise}
- */
-module.exports.login = function(http, data) {
-  return new Promise((resolve, reject) => {
-    resolve({
+const Authenticator = require('./../../core/auth.js');
+
+class ExampleAuthenticator extends Authenticator {
+  login(http, data) {
+    return Promise.resolve({
       id: 0,
-      username: 'Username',
-      name: 'Full User Name'
+      username: 'Example',
+      name: 'Example User',
+      groups: ['admin']
     });
-  });
-};
+  }
 
-/**
- * Handles user logout attempts
- *
- * @param   {ServerRequest}    http          OS.js Server Request
- * @param   {Object}           data          Request data
- *
- * @return {Promise}
- */
-module.exports.logout = function(http, data) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+  getGroups(http, username) {
+    return Promise.resolve(['admin']);
+  }
+}
 
-/**
- * Handler user management
- *
- * @param   {ServerRequest}    http          OS.js Server Request
- * @param   {String}           command       Management command
- * @param   {Object}           args          Command arguments
- *
- * @return {Promise}
- */
-module.exports.manage = function(http, command, args) {
-  return new Promise((resolve, reject) => {
-    reject('Not available');
-  });
-};
-
-/**
- * Runs when a HTTP request is made
- *
- * @param   {ServerRequest}    http          OS.js Server Request
- * @param   {Function}         resolve       Resolve promise callback
- * @param   {Function}         reject        Reject promise callback
- *
- * @return {Promise}
- */
-module.exports.initSession = function(http, resolve, reject) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
-
-/**
- * Checks the given permission
- *
- * @param   {ServerRequest}    http          OS.js Server Request
- * @param   {String}           type          Permission type (vfs, api, package)
- * @param   {Object}           options       Permission options/arguments
- *
- * @return {Promise}
- */
-module.exports.checkPermission = function(http, type, options) {
-  return new Promise((resolve) => {
-    resolve(true); // Return false to ignore internal group checking
-  });
-};
-
-/**
- * Checks if a session is available
- *
- * @param   {ServerRequest}    http          OS.js Server Request
- *
- * @return {Promise}
- */
-module.exports.checkSession = function(http) {
-  return new Promise((resolve, reject) => {
-    if ( http.session.get('username') ) {
-      resolve();
-    } else {
-      reject('You have no OS.js Session, please log in!');
-    }
-  });
-};
-
-/**
- * When module is registered upon initialization
- *
- * @param   {Object}           config        Configuration for given auth module
- *
- * @return {Promise}
- */
-module.exports.register = function(config) {
-  return Promise.resolve();
-};
-
-/**
- * When module is destroyed upon shutdown
- *
- * @return {Promise}
- */
-module.exports.destroy = function() {
-  return Promise.resolve();
-};
+module.exports = ExampleAuthenticator;
