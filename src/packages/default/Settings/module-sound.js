@@ -29,6 +29,8 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
+const _ = require('./locale.js');
+
 (function(Application, Window, Utils, API, VFS, GUI) {
   'use strict';
 
@@ -50,7 +52,6 @@
   }
 
   function editList(win, scheme, key) {
-    var _ = OSjs.Applications.ApplicationSettings._;
     win._toggleDisabled(true);
     API.createDialog('Input', {
       message: _('Enter filename for:') + ' ' + key.name,

@@ -54,7 +54,7 @@ const Scheme = require('gui/scheme.js');
  */
 class DefaultApplicationWindow extends Window {
 
-  constructor(name, app, args, scheme, file) {
+  constructor(name, args, app, scheme, file) {
     super(...arguments);
     this.hasClosingDialog = false;
     this.currentFile = file ? new VFS.File(file) : null;

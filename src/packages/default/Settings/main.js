@@ -28,6 +28,8 @@
  * @licence Simplified BSD License
  */
 
+const _ = require('./locale.js');
+
 /*eslint valid-jsdoc: "off"*/
 (function(Application, Window, Utils, API, VFS, GUI) {
   'use strict';
@@ -130,7 +132,6 @@
     var self = this;
     var root = Window.prototype.init.apply(this, arguments);
     var wm = OSjs.Core.getWindowManager();
-    var _ = OSjs.Applications.ApplicationSettings._;
 
     // Load and render `scheme.html` file
     this._render('SettingsWindow');
@@ -243,7 +244,6 @@
   };
 
   ApplicationSettingsWindow.prototype.onModuleSelect = function(name) {
-    var _ = OSjs.Applications.ApplicationSettings._;
     var wm = OSjs.Core.getWindowManager();
     var root = this._$element;
     var self = this;

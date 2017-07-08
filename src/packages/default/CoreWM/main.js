@@ -1311,5 +1311,21 @@
   OSjs.Applications.CoreWM.PanelItems        = OSjs.Applications.CoreWM.PanelItems || {};
   OSjs.Applications.CoreWM.Widgets           = OSjs.Applications.CoreWM.Widgets || {};
   OSjs.Applications.CoreWM.CurrentTheme      = OSjs.Applications.CoreWM.CurrentTheme || null;
+  OSjs.Applications.CoreWM._ = require('./locales.js');
+
+  require('./menu.js');
+  require('./iconview.js');
+  require('./windowswitcher.js');
+  require('./panel.js');
+  require('./widget.js');
+  require('./panelitems/buttons.js');
+  require('./panelitems/clock.js');
+  require('./panelitems/notificationarea.js');
+  require('./panelitems/windowlist.js');
+  require('./panelitems/weather.js');
+  require('./panelitems/appmenu.js');
+  require('./panelitems/search.js');
+  require('./widgets/analogclock.js');
+  require('./widgets/digitalclock.js');
 
 })(OSjs.Core.WindowManager, OSjs.GUI, OSjs.Utils, OSjs.API, OSjs.VFS);

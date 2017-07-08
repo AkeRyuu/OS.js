@@ -29,6 +29,8 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
+const _ = require('./locale.js');
+
 (function(Application, Window, Utils, API, User, GUI) {
   'use strict';
 
@@ -49,8 +51,6 @@
   }
 
   function showDialog(win, scheme, data, passwd) {
-    var _ = OSjs.Applications.ApplicationSettings._;
-
     win._toggleDisabled(true);
 
     if ( passwd ) {

@@ -29,25 +29,28 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-(function(DefaultApplication, DefaultApplicationWindow, Application, Window, Utils, API, VFS, GUI) {
-  'use strict';
+'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // WINDOWS
-  /////////////////////////////////////////////////////////////////////////////
+const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
+const {API, VFS, GUI, Utils} = OSjs;
 
-  function ApplicationWriterWindow(app, metadata, scheme, file) {
-    /*eslint dot-notation: "off"*/
-    var config = OSjs.Core.getConfig();
+/////////////////////////////////////////////////////////////////////////////
+// WINDOWS
+/////////////////////////////////////////////////////////////////////////////
 
-    DefaultApplicationWindow.apply(this, ['ApplicationWriterWindow', {
+class ApplicationWriterWindow extends DefaultApplicationWindow {
+  /*eslint dot-notation: "off"*/
+  constructor(app, metadata, scheme, file) {
+    const config = OSjs.Core.getConfig();
+
+    super('ApplicationWriterWindow', {
       allow_drop: true,
       icon: metadata.icon,
       title: metadata.name,
       width: 550,
       height: 400,
       translator: OSjs.Applications.ApplicationWriter._
-    }, app, scheme, file]);
+    }, app, scheme, file);
 
     this.checkChangeLength = -1;
     this.checkChangeInterval = null;
@@ -61,16 +64,13 @@
     };
   }
 
-  ApplicationWriterWindow.prototype = Object.create(DefaultApplicationWindow.prototype);
-  ApplicationWriterWindow.constructor = DefaultApplicationWindow.prototype;
-
-  ApplicationWriterWindow.prototype.destroy = function() {
+  destroy() {
     this.checkChangeInterval = clearInterval(this.checkChangeInterval);
-    return DefaultApplicationWindow.prototype.destroy.apply(this, arguments);
-  };
+    super.destroy(...arguments);
+  }
 
-  ApplicationWriterWindow.prototype.init = function(wmRef, app, scheme) {
-    var root = DefaultApplicationWindow.prototype.init.apply(this, arguments);
+  init(wmRef, app, scheme) {
+    const root = super.init(...arguments);
     var self = this;
     var _ = OSjs.Applications.ApplicationWriter._;
 
@@ -298,9 +298,9 @@
     }, 500);
 
     return root;
-  };
+  }
 
-  ApplicationWriterWindow.prototype.updateFile = function(file) {
+  updateFile(file) {
     DefaultApplicationWindow.prototype.updateFile.apply(this, arguments);
 
     try {
@@ -309,56 +309,52 @@
     } catch ( e ) {}
 
     this.checkChangeLength = -1;
-  };
+  }
 
-  ApplicationWriterWindow.prototype.showFile = function(file, content) {
+  showFile(file, content) {
     this._find('Text').set('value', content || '');
     DefaultApplicationWindow.prototype.showFile.apply(this, arguments);
-  };
+  }
 
-  ApplicationWriterWindow.prototype.getFileData = function() {
+  getFileData() {
     return this._find('Text').get('value');
-  };
+  }
 
-  ApplicationWriterWindow.prototype._focus = function(file, content) {
-    if ( DefaultApplicationWindow.prototype._focus.apply(this, arguments) ) {
+  _focus(file, content) {
+    if ( super._focus(...arguments) ) {
       this._find('Text').focus();
       return true;
     }
     return false;
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // APPLICATION
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// APPLICATION
+/////////////////////////////////////////////////////////////////////////////
 
-  function ApplicationWriter(args, metadata) {
-    DefaultApplication.apply(this, ['ApplicationWriter', args, metadata, {
+class ApplicationWriter extends DefaultApplication {
+  constructor(args, metadata) {
+    super('ApplicationWriter', args, metadata, {
       extension: 'odoc',
       mime: 'osjs/document',
       filename: 'New text file.odoc'
-    }]);
+    });
   }
 
-  ApplicationWriter.prototype = Object.create(DefaultApplication.prototype);
-  ApplicationWriter.constructor = DefaultApplication;
+  init(settings, metadata, scheme) {
+    super.init(...arguments);
 
-  ApplicationWriter.prototype.destroy = function() {
-    return DefaultApplication.prototype.destroy.apply(this, arguments);
-  };
-
-  ApplicationWriter.prototype.init = function(settings, metadata, scheme) {
-    Application.prototype.init.call(this, settings, metadata, scheme);
-    var file = this._getArgument('file');
+    const file = this._getArgument('file');
     this._addWindow(new ApplicationWriterWindow(this, metadata, scheme, file));
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Applications = OSjs.Applications || {};
-  OSjs.Applications.ApplicationWriter = OSjs.Applications.ApplicationWriter || {};
-  OSjs.Applications.ApplicationWriter.Class = Object.seal(ApplicationWriter);
-
-})(OSjs.Helpers.DefaultApplication, OSjs.Helpers.DefaultApplicationWindow, OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.API, OSjs.VFS, OSjs.GUI);
+OSjs.Applications = OSjs.Applications || {};
+OSjs.Applications.ApplicationWriter = OSjs.Applications.ApplicationWriter || {};
+OSjs.Applications.ApplicationWriter.Class = Object.seal(ApplicationWriter);
+OSjs.Applications.ApplicationWriter._ = require('./locales.js');

@@ -27,118 +27,115 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-
-/*eslint strict:["error", "global"]*/
 'use strict';
 
-const _path = require('path');
-const _less = require('less');
-const _fs = require('fs-extra');
-const _os = require('os');
+const path = require('path');
 
-const ISWIN = /^win/.test(process.platform);
-const ROOT = _path.dirname(_path.dirname(_path.join(__dirname)));
+const ROOT = path.dirname(path.dirname(path.join(__dirname)));
 
-const _ugly = require('uglify-js');
-const Cleancss = require('clean-css');
+///////////////////////////////////////////////////////////////////////////////
+// HELPERS
+///////////////////////////////////////////////////////////////////////////////
 
-require('colors');
-
-/*
- * Filter a file reference by string
+/**
+ * Mutates package manifest (corrections etc)
+ * @param {Object} packages Package list
+ * @return {Object}
  */
-function _filter(i, debug) {
-  if ( i.match(/^dev:/) && !debug ) {
+function mutateManifest(packages) {
+  packages = Object.assign({}, packages);
+
+  Object.keys(packages).forEach((p) => {
+    if ( packages[p].build ) {
+      delete packages[p].build;
+    }
+
+    if ( typeof packages[p].enabled !== 'undefined' ) {
+      delete packages[p].enabled;
+    }
+
+    if ( packages[p].type === 'service' ) {
+      packages[p].singular = true;
+    }
+  });
+
+  return packages;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// API
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Reads and iterates over overlay paths
+ * @param {Object} cfg Configuration tree
+ * @param {String} key Entry to fetch
+ * @param {Function} onentry Iterative function (map function)
+ * @return {Array}
+ */
+const readOverlayPaths = (cfg, key, onentry) => {
+  onentry = onentry || ((p) => path.resolve(ROOT, p));
+
+  const overlays = cfg.build.overlays;
+  const paths = [];
+
+  if ( overlays ) {
+    Object.keys(overlays).forEach((n) => {
+      const overlay = overlays[n];
+      if ( overlay[key] instanceof Array ) {
+        overlay[key].forEach((e, i) => {
+          paths.push(onentry(e, i));
+        });
+      }
+    });
+  }
+
+  return paths;
+};
+
+/**
+ * Check if given package is enabled or not
+ * @param {Array} enabled All forcefully enabled packages
+ * @param {Array} disabled All forcefully disabled packages
+ * @param {Object} meta Package metadata
+ * @return {Boolean}
+ */
+function checkEnabledState(enabled, disabled, meta) {
+  const name = meta.path;
+  const shortName = meta.path.split('/')[1];
+
+  if ( String(meta.enabled) === 'false' ) {
+    if ( enabled.indexOf(shortName) !== -1 || enabled.indexOf(name) !== -1 ) {
+      return true;
+    }
     return false;
   }
-  if ( i.match(/^prod:/) && debug ) {
+
+  if ( disabled.indexOf(shortName) !== -1 || disabled.indexOf(name) !== -1 ) {
     return false;
   }
   return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-///////////////////////////////////////////////////////////////////////////////
-
-/*
- * Fixes Windows paths
+/**
+ * Gets all package paths
+ * @param {Object} cfg Configuration tree
+ * @param {String} repo The repository name
+ * @return {Array}
  */
-module.exports.fixWinPath = function fixWinPath(str) {
-  if ( typeof str === 'string' && ISWIN ) {
-    return str.replace(/(["\s'$`\\])/g, '\\$1').replace(/\\+/g, '/');
-  }
-  return str;
-};
+function getPackagePaths(cfg, repo) {
+  return [
+    path.join(ROOT, 'src/packages', repo)
+  ].concat(readOverlayPaths(cfg, 'packages'));
+}
 
-/*
- * Logging proxy
+/**
+ * Merges two objects together (deep merge)
+ * @param {Object} into Into this object
+ * @param {Object} from From this object
+ * @return {Object}
  */
-module.exports.log = function log() {
-  const str = Array.prototype.slice.call(arguments).join(' ');
-  console.log(module.exports.replaceAll(str, ROOT + '/', ''));
-};
-
-/*
- * Reads a template
- */
-module.exports.readTemplate = function readTemplate(name) {
-  const tpls = _path.join(ROOT, 'src', 'templates');
-  return _fs.readFileSync(_path.join(tpls, name)).toString();
-};
-
-/*
- * Replace all occurences of something
- */
-module.exports.replaceAll = function replaceAll(temp, stringToFind, stringToReplace) {
-  let index = temp.indexOf(stringToFind);
-  while (index !== -1) {
-    temp = temp.replace(stringToFind, stringToReplace);
-    index = temp.indexOf(stringToFind);
-  }
-  return temp;
-};
-
-/*
- * Supresses errors while removing files
- */
-module.exports.removeSilent = function removeSilent(file) {
-  try {
-    if ( _fs.existsSync(file) ) {
-      _fs.removeSync(file);
-
-      return true;
-    }
-  } catch (e) {}
-
-  return false;
-};
-
-/*
- * Supresses errors while making directories
- */
-module.exports.mkdirSilent = function mkdirSilent(file) {
-  try {
-    _fs.mkdirSync(file);
-  } catch (e) {}
-};
-
-/*
- * Make a dictionary from list
- */
-module.exports.makedict = function makedict(list, fn) {
-  let result = {};
-  list.forEach((iter, idx) => {
-    let data = fn(iter, idx);
-    result[data[0]] = data[1];
-  });
-  return result;
-};
-
-/*
- * Merges given objects together
- */
-module.exports.mergeObject = function mergeObject(into, from) {
+const mergeObject = (into, from) => {
   function mergeJSON(obj1, obj2) {
     for ( let p in obj2 ) {
       if ( obj2.hasOwnProperty(p) ) {
@@ -158,216 +155,14 @@ module.exports.mergeObject = function mergeObject(into, from) {
   return mergeJSON(into, from);
 };
 
-/*
- * Compiles given less file
- */
-module.exports.compileLess = function compileLess(debug, src, dest, opts, cb, onRead) {
-  try {
-    let css = _fs.readFileSync(src).toString();
-    if ( typeof onRead === 'function' ) {
-      css = onRead(css);
-    }
+///////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+///////////////////////////////////////////////////////////////////////////////
 
-    _less.render(css, opts).then((result) => {
-      _fs.writeFileSync(dest, result.css);
-      _fs.writeFileSync(dest + '.map', result.map);
-
-      const footer = '\n/*# sourceMappingURL=' + _path.basename(dest.replace(/\.css$/, '.min.css.map')) + ' */';
-
-      try {
-        const minified = new Cleancss({
-          sourceMapInlineSources: debug,
-          sourceMap: true
-        }).minify(_fs.readFileSync(dest), _fs.readJsonSync(dest + '.map'));
-
-        _fs.writeFileSync(dest.replace(/\.css$/, '.min.css'), minified.styles + footer);
-        _fs.writeFileSync(dest.replace(/\.css$/, '.min.css.map'), minified.sourceMap);
-      } catch ( e ) {
-        console.warn(e);
-      }
-
-      module.exports.removeSilent(dest, result.css);
-      module.exports.removeSilent(dest + '.map', result.map);
-
-      cb(false, true);
-    }, (error) => {
-      console.warn(error);
-      cb(error);
-    });
-  } catch ( e ) {
-    console.warn(e, e.stack);
-    cb(e);
-  }
-};
-
-/*
- * Creates standalone scheme files
- */
-module.exports.createStandaloneScheme = function createStandaloneScheme(src, name, dest) {
-  let data = module.exports.addslashes(_fs.readFileSync(src).toString().replace(/\n/g, ''));
-
-  let tpl = module.exports.readTemplate('dist/schemes.js');
-  tpl = tpl.replace('%DATA%', data);
-  tpl = tpl.replace('%NAME%', name);
-
-  _fs.writeFileSync(dest, tpl);
-};
-
-/*
- * Escapes given string
- */
-module.exports.addslashes = function addslashes(str) {
-  return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-};
-
-/*
- * Helper for running promises in sequence
- */
-module.exports.eachp = function(list, onentry) {
-  onentry = onentry || function() {};
-
-  return new Promise((resolve, reject) => {
-    (function next(i) {
-      if ( i >= list.length ) {
-        resolve();
-        return;
-      }
-
-      const iter = list[i]();
-      iter.then((arg) => {
-        onentry(arg);
-        next(i + 1);
-      }).catch(reject);
-    })(0);
-  });
-};
-
-/*
- * Logging helper
- */
-module.exports.logger = {
-  log: function() {
-    console.log.apply(console, arguments);
-  },
-  warn: function() {
-    console.warn.apply(console, arguments);
-  },
-  info: function() {
-    console.info.apply(console, arguments);
-  },
-  error: function() {
-    console.error.apply(console, arguments);
-  },
-  color: (str, color) => {
-    str = String(str);
-    color.split(',').forEach((key) => {
-      str = str[key.trim()] || str;
-    });
-    return str;
-  }
-};
-
-/*
- * Helper for compiling scripts
- */
-module.exports.writeScripts = function writeScripts(write) {
-  const outm = write.dest.replace(/\.min\.js$/, '.min.js.map');
-  const header = module.exports.readTemplate('dist/header.js');
-  const headerFile = _path.join(_os.tmpdir(), '__header.js');
-  const finalList = [headerFile].concat(write.sources.filter((i) => {
-    return _filter(i, write.debug);
-  }).map((i) => {
-    if ( write.verbose ) {
-      console.log(i);
-    }
-
-    if ( i.match(/^(dev|prod):/) ) {
-      return _path.join(ROOT, i.replace(/^(dev|prod):/, ''));
-    }
-
-    return i;
-  }));
-
-  _fs.writeFileSync(headerFile, header);
-
-  const pureFuncs = write.debug ? [] : ['console.log', 'console.group', 'console.groupEnd', 'console.warn', 'console.info', 'console.dir', 'console.debug'];
-  let compression = {
-    pure_funcs: pureFuncs
-  };
-
-  if ( write.optimizations === 'none' ) {
-    compression = false;
-  } else if ( write.optimizations === 'all' ) {
-    compression.passes = 2;
-  }
-
-  const minified = _ugly.minify(finalList, {
-    sourceMapIncludeSources: write.debug,
-    outSourceMap: _path.basename(outm),
-    compress: compression,
-    output: {
-      comments: /\*!/
-    }
-  });
-
-  _fs.writeFileSync(write.dest, minified.code);
-  _fs.writeFileSync(outm, minified.map);
-  module.exports.removeSilent(headerFile);
-};
-
-/*
- * Helper for compiling stylesheets
- */
-module.exports.writeStyles = function writeStyles(write) {
-  const outm = write.dest.replace(/\.min\.css$/, '.min.css.map');
-  const header = module.exports.readTemplate('dist/header.css');
-  const headerFile = _path.join(_os.tmpdir(), '__header.css');
-  const finalList = [headerFile].concat(write.sources.filter((i) => {
-    return _filter(i, write.debug);
-  }).map((i) => {
-    if ( write.verbose ) {
-      console.log(i);
-    }
-    return i.substr(0, 1) === '/' ? i : _path.join(ROOT, i.replace(/^(dev|prod):/, ''));
-  }));
-
-  _fs.writeFileSync(headerFile, header);
-
-  let compressionLevel = 1;
-  if ( write.optimizations === 'none' ) {
-    compressionLevel = 0;
-  } else if ( write.optimizations === 'all' ) {
-    compressionLevel = 2;
-  }
-
-  const minified = new Cleancss({
-    level: compressionLevel,
-    rebase: false,
-    sourceMapInlineSources: write.debug,
-    sourceMap: true
-  }).minify(finalList);
-
-  const footer = '\n/*# sourceMappingURL=' + _path.basename(outm) + ' */';
-  _fs.writeFileSync(write.dest, minified.styles + footer);
-  _fs.writeFileSync(outm, minified.sourceMap);
-  module.exports.removeSilent(headerFile);
-};
-
-/*
- * Helper for enumerating overlay paths
- */
-module.exports.enumOverlayPaths = function enumOverlayPaths(cfg, key, onentry) {
-  const overlays = cfg.build.overlays;
-  const paths = [];
-
-  if ( overlays ) {
-    Object.keys(overlays).forEach((n) => {
-      const overlay = overlays[n];
-      if ( overlay[key] instanceof Array ) {
-        overlay[key].forEach(onentry);
-      }
-    });
-  }
-
-  return paths;
+module.exports = {
+  mutateManifest,
+  checkEnabledState,
+  getPackagePaths,
+  readOverlayPaths,
+  mergeObject
 };

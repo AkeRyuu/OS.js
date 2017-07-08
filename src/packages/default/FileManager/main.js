@@ -29,34 +29,38 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-(function(Application, Window, Utils, API, VFS, GUI) {
-  'use strict';
+'use strict';
 
-  function getSelected(view) {
-    var selected = [];
-    (view.get('value') || []).forEach(function(sub) {
-      if ( !sub.data.shortcut ) {
-        selected.push(sub.data);
-      }
-    });
-    return selected;
-  }
+const {API, VFS, GUI, Utils} = OSjs;
+const {Window, Application} = OSjs.Core;
+const doTranslate = require('./locales.js');
 
-  var notificationWasDisplayed = {};
+function getSelected(view) {
+  var selected = [];
+  (view.get('value') || []).forEach(function(sub) {
+    if ( !sub.data.shortcut ) {
+      selected.push(sub.data);
+    }
+  });
+  return selected;
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // WINDOWS
-  /////////////////////////////////////////////////////////////////////////////
+var notificationWasDisplayed = {};
 
-  function ApplicationFileManagerWindow(app, metadata, scheme, path, settings) {
-    Window.apply(this, ['ApplicationFileManagerWindow', {
+/////////////////////////////////////////////////////////////////////////////
+// WINDOWS
+/////////////////////////////////////////////////////////////////////////////
+
+class ApplicationFileManagerWindow extends Window {
+  constructor(app, metadata, scheme, path, settings) {
+    super('ApplicationFileManagerWindow', {
       icon: metadata.icon,
       title: metadata.name,
       allow_drop: true,
       width: 650,
       height: 420,
-      translator: OSjs.Applications.ApplicationFileManager._
-    }, app, scheme]);
+      translator: doTranslate
+    }, app, scheme);
 
     this.wasFileDropped = false;
     this.currentPath = path;
@@ -110,11 +114,8 @@
     });
   }
 
-  ApplicationFileManagerWindow.prototype = Object.create(Window.prototype);
-  ApplicationFileManagerWindow.constructor = Window.prototype;
-
-  ApplicationFileManagerWindow.prototype.init = function(wm, app, scheme) {
-    var root = Window.prototype.init.apply(this, arguments);
+  init(wm, app, scheme) {
+    const root = super.init(...arguments);
     var self = this;
     var view;
 
@@ -300,9 +301,9 @@
     this.toggleColumn();
 
     return root;
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.checkSelection = function(files) {
+  checkSelection(files) {
     files = files || [];
 
     var scheme = this._scheme;
@@ -314,7 +315,7 @@
     var self = this;
     var content = '';
     var statusbar = this._find('Statusbar');
-    var doTranslate = OSjs.Applications.ApplicationFileManager._;
+    var doTranslate = doTranslate;
 
     var sum, label;
 
@@ -370,9 +371,9 @@
     }
 
     statusbar.set('value', content);
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.checkActivation = function(files) {
+  checkActivation(files) {
     var self = this;
     (files || []).forEach(function(f) {
       if ( f.data.type === 'dir' ) {
@@ -384,9 +385,9 @@
 
       return true;
     });
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.updateSideView = function(updateModule) {
+  updateSideView(updateModule) {
     if ( this._destroyed || !this._scheme ) {
       return;
     }
@@ -406,9 +407,9 @@
 
     var view = this._find('SideView');
     view.set('selected', found, 'root');
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.renderSideView = function() {
+  renderSideView() {
     if ( this._destroyed || !this._scheme ) {
       return;
     }
@@ -444,9 +445,9 @@
     var side = this._find('SideView');
     side.clear();
     side.add(sideViewItems);
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.onMountEvent = function(module, msg) {
+  onMountEvent(module, msg) {
     var m = OSjs.Core.getMountManager().getModule(module);
     if ( m ) {
       if ( msg === 'vfs:unmount' ) {
@@ -456,15 +457,15 @@
       }
       this.updateSideView(m);
     }
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.onFileEvent = function(chk, isDest) {
+  onFileEvent(chk, isDest) {
     if ( (this.currentPath === Utils.dirname(chk.path)) || (this.currentPath === chk.path) ) {
       this.changePath(null, this.wasFileDropped, false, false, !this.wasFileDroped);
     }
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.changeHistory = function(dir) {
+  changeHistory(dir) {
     if ( this.historyIndex !== -1 ) {
       if ( dir < 0 ) {
         if ( this.historyIndex > 0 ) {
@@ -478,9 +479,9 @@
 
       this.changePath(this.history[this.historyIndex], null, true);
     }
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.changePath = function(dir, selectFile, isNav, isInput, applyScroll) {
+  changePath(dir, selectFile, isNav, isInput, applyScroll) {
     if ( this._destroyed || !this._scheme ) {
       return;
     }
@@ -555,9 +556,9 @@
       }
     });
 
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.changeView = function(viewType, set) {
+  changeView(viewType, set) {
     if ( this._destroyed || !this._scheme ) {
       return;
     }
@@ -568,9 +569,9 @@
     if ( set ) {
       this._app._setSetting('ViewType', viewType, true);
     }
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.toggleSidebar = function(toggle, set) {
+  toggleSidebar(toggle, set) {
     if ( this._destroyed || !this._scheme ) {
       return null;
     }
@@ -590,9 +591,9 @@
       this._app._setSetting('ViewSide', toggle, true);
     }
     return toggle;
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.toggleVFSOption = function(opt, key, toggle, set) {
+  toggleVFSOption(opt, key, toggle, set) {
     if ( this._destroyed || !this._scheme ) {
       return null;
     }
@@ -607,25 +608,25 @@
     view.set(key, toggle);
 
     return toggle;
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.toggleHidden = function(toggle, set) {
+  toggleHidden(toggle, set) {
     if ( this._destroyed || !this._scheme ) {
       return null;
     }
 
     return this.toggleVFSOption('showHiddenFiles', 'dotfiles', toggle, set);
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.toggleExtension = function(toggle, set) {
+  toggleExtension(toggle, set) {
     if ( this._destroyed || !this._scheme ) {
       return null;
     }
 
     return this.toggleVFSOption('showFileExtensions', 'extensions', toggle, set);
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.toggleNavbar = function(toggle, set) {
+  toggleNavbar(toggle, set) {
     if ( this._destroyed || !this._scheme ) {
       return null;
     }
@@ -644,9 +645,9 @@
     }
 
     return toggle;
-  };
+  }
 
-  ApplicationFileManagerWindow.prototype.toggleColumn = function(col, set) {
+  toggleColumn(col, set) {
     if ( this._destroyed || !this._scheme ) {
       return;
     }
@@ -674,25 +675,22 @@
     viewMenu.set('checked', 'MenuColumnCreated', viewColumns.indexOf('ctime') >= 0);
     viewMenu.set('checked', 'MenuColumnModified', viewColumns.indexOf('mtime') >= 0);
     viewMenu.set('checked', 'MenuColumnSize', viewColumns.indexOf('size') >= 0);
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // APPLICATION
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  var ApplicationFileManager = function(args, metadata) {
-    Application.apply(this, ['ApplicationFileManager', args, metadata]);
-  };
+/////////////////////////////////////////////////////////////////////////////
+// APPLICATION
+/////////////////////////////////////////////////////////////////////////////
 
-  ApplicationFileManager.prototype = Object.create(Application.prototype);
-  ApplicationFileManager.constructor = Application;
+class ApplicationFileManager extends Application {
 
-  ApplicationFileManager.prototype.destroy = function() {
-    return Application.prototype.destroy.apply(this, arguments);
-  };
+  constructor(args, metadata) {
+    super('ApplicationFileManager', args, metadata);
+  }
 
-  ApplicationFileManager.prototype.init = function(settings, metadata, scheme) {
-    Application.prototype.init.apply(this, arguments);
+  init(settings, metadata, scheme) {
+    super.init(...arguments);
 
     var self = this;
     var path = this._getArgument('path') || API.getDefaultPath();
@@ -714,9 +712,9 @@
     });
 
     this._addWindow(new ApplicationFileManagerWindow(this, metadata, scheme, path, settings));
-  };
+  }
 
-  ApplicationFileManager.prototype.download = function(items) {
+  download(items) {
     if ( !items.length ) {
       return;
     }
@@ -728,9 +726,9 @@
         }
       }, {download: true});
     });
-  };
+  }
 
-  ApplicationFileManager.prototype.rm = function(items, win) {
+  rm(items, win) {
     var self = this;
     if ( !items.length ) {
       return;
@@ -746,7 +744,7 @@
     win._toggleDisabled(true);
     API.createDialog('Confirm', {
       buttons: ['yes', 'no'],
-      message: Utils.format(OSjs.Applications.ApplicationFileManager._('Delete **{0}** ?'), files)
+      message: Utils.format(doTranslate('Delete **{0}** ?'), files)
     }, function(ev, button) {
       win._toggleDisabled(false);
       if ( button !== 'ok' && button !== 'yes' ) {
@@ -761,9 +759,9 @@
       });
     }, win);
 
-  };
+  }
 
-  ApplicationFileManager.prototype.info = function(items, win) {
+  info(items, win) {
     if ( !items.length ) {
       return;
     }
@@ -775,9 +773,9 @@
         }, null, win);
       }
     });
-  };
+  }
 
-  ApplicationFileManager.prototype.open = function(items) {
+  open(items) {
     if ( !items.length ) {
       return;
     }
@@ -787,9 +785,9 @@
         API.open(new VFS.File(item), {forceList: true});
       }
     });
-  };
+  }
 
-  ApplicationFileManager.prototype.rename = function(items, win) {
+  rename(items, win) {
     // TODO: These must be async
     var self = this;
     if ( !items.length ) {
@@ -812,7 +810,7 @@
 
     items.forEach(function(item) {
       var dialog = API.createDialog('Input', {
-        message: OSjs.Applications.ApplicationFileManager._('Rename **{0}**', item.filename),
+        message: doTranslate('Rename **{0}**', item.filename),
         value: item.filename
       }, function(ev, button, result) {
         if ( button === 'ok' && result ) {
@@ -821,9 +819,9 @@
       }, win);
       dialog.setRange(Utils.getFilenameRange(item.filename));
     });
-  };
+  }
 
-  ApplicationFileManager.prototype.mkfile = function(dir, win) {
+  mkfile(dir, win) {
     var self = this;
 
     win._toggleDisabled(true);
@@ -839,7 +837,7 @@
 
     API.createDialog('Input', {
       value: 'My new File',
-      message: OSjs.Applications.ApplicationFileManager._('Create a new file in **{0}**', dir)
+      message: doTranslate('Create a new file in **{0}**', dir)
     }, function(ev, button, result) {
       if ( !result ) {
         win._toggleDisabled(false);
@@ -862,14 +860,14 @@
         }
       });
     }, win);
-  };
+  }
 
-  ApplicationFileManager.prototype.mkdir = function(dir, win) {
+  mkdir(dir, win) {
     var self = this;
 
     win._toggleDisabled(true);
     API.createDialog('Input', {
-      message: OSjs.Applications.ApplicationFileManager._('Create a new directory in **{0}**', dir)
+      message: doTranslate('Create a new directory in **{0}**', dir)
     }, function(ev, button, result) {
       if ( !result ) {
         win._toggleDisabled(false);
@@ -882,12 +880,12 @@
         win.changePath(null, item);
       });
     }, win);
-  };
+  }
 
-  ApplicationFileManager.prototype.copy = function(src, dest, win) {
+  copy(src, dest, win) {
     var self = this;
     var dialog = API.createDialog('FileProgress', {
-      message: OSjs.Applications.ApplicationFileManager._('Copying **{0}** to **{1}**', src.filename, dest.path)
+      message: doTranslate('Copying **{0}** to **{1}**', src.filename, dest.path)
     }, function() {
     }, win);
 
@@ -905,9 +903,9 @@
         return;
       }
     }, {dialog: dialog}, this._app);
-  };
+  }
 
-  ApplicationFileManager.prototype.upload = function(dest, files, win) {
+  upload(dest, files, win) {
     var self = this;
 
     function upload() {
@@ -951,9 +949,9 @@
         }
       }, win);
     }
-  };
+  }
 
-  ApplicationFileManager.prototype.showStorageNotification = function(type) {
+  showStorageNotification(type) {
     if ( notificationWasDisplayed[type] ) {
       return;
     }
@@ -967,9 +965,9 @@
         icon: 'status/dialog-information.png'
       });
     }
-  };
+  }
 
-  ApplicationFileManager.prototype._action = function(name, args, callback) {
+  _action(name, args, callback) {
     callback = callback || function() {};
     var self = this;
     var _onError = function(error) {
@@ -984,14 +982,13 @@
       }
       callback(error, result);
     }, null, this));
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Applications = OSjs.Applications || {};
-  OSjs.Applications.ApplicationFileManager = OSjs.Applications.ApplicationFileManager || {};
-  OSjs.Applications.ApplicationFileManager.Class = Object.seal(ApplicationFileManager);
-
-})(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.API, OSjs.VFS, OSjs.GUI);
+OSjs.Applications = OSjs.Applications || {};
+OSjs.Applications.ApplicationFileManager = OSjs.Applications.ApplicationFileManager || {};
+OSjs.Applications.ApplicationFileManager.Class = Object.seal(ApplicationFileManager);

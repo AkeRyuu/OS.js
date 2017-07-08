@@ -28,15 +28,18 @@
  * @licence Simplified BSD License
  */
 /*eslint valid-jsdoc: "off"*/
-(function(Application, Window, Utils, API, VFS, GUI) {
-  'use strict';
+'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // WINDOWS
-  /////////////////////////////////////////////////////////////////////////////
+const {Window, Application} = OSjs.Core;
 
-  function ApplicationAboutWindow(app, metadata, scheme) {
-    Window.apply(this, ['ApplicationAboutWindow', {
+/////////////////////////////////////////////////////////////////////////////
+// WINDOWS
+/////////////////////////////////////////////////////////////////////////////
+
+class ApplicationAboutWindow extends Window {
+
+  constructor(app, metadata, scheme) {
+    super('ApplicationAboutWindow', {
       icon: metadata.icon,
       title: metadata.name,
       gravity: 'center',
@@ -46,43 +49,42 @@
       height: 320,
       min_width: 320,
       min_height: 320
-    }, app, scheme]);
+    }, app, scheme);
   }
 
-  ApplicationAboutWindow.prototype = Object.create(Window.prototype);
-  ApplicationAboutWindow.constructor = Window.prototype;
-
-  ApplicationAboutWindow.prototype.init = function(wm, app, scheme) {
-    var root = Window.prototype.init.apply(this, arguments);
+  init(wm, app, scheme) {
+    const root = super.init(...arguments);
 
     this._render('AboutWindow');
 
     root.getElementsByTagName('img')[0].src = app._getResource('about.png');
+
     return root;
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // APPLICATION
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// APPLICATION
+/////////////////////////////////////////////////////////////////////////////
 
-  var ApplicationAbout = function(args, metadata) {
-    Application.apply(this, ['ApplicationAbout', args, metadata]);
-  };
+class ApplicationAbout extends Application {
 
-  ApplicationAbout.prototype = Object.create(Application.prototype);
-  ApplicationAbout.constructor = Application;
+  constructor(args, metadata) {
+    super('ApplicationAbout', args, metadata);
+  }
 
-  ApplicationAbout.prototype.init = function(settings, metadata, scheme) {
-    Application.prototype.init.apply(this, arguments);
+  init(settings, metadata, scheme) {
+    super.init.apply(...arguments);
     this._addWindow(new ApplicationAboutWindow(this, metadata, scheme));
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Applications = OSjs.Applications || {};
-  OSjs.Applications.ApplicationAbout = OSjs.Applications.ApplicationAbout || {};
-  OSjs.Applications.ApplicationAbout.Class = Object.seal(ApplicationAbout);
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.API, OSjs.VFS, OSjs.GUI);
+OSjs.Applications = OSjs.Applications || {};
+OSjs.Applications.ApplicationAbout = OSjs.Applications.ApplicationAbout || {};
+OSjs.Applications.ApplicationAbout.Class = Object.seal(ApplicationAbout);
+

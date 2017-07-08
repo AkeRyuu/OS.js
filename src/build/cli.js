@@ -27,57 +27,133 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-/*eslint strict:["error", "global"]*/
 'use strict';
 
-const _fs = require('fs');
-const _path = require('path');
-const _build = require('./index.js');
-const _utils = require('./utils.js');
-const _minimist = require('minimist');
+const colors = require('colors');
+const ygor = require('ygor');
+const promise = require('bluebird');
+const path = require('path');
+const opkg = require('./packages.js');
+const ocfg = require('./configuration.js');
 
-module.exports.run = function(args, done) {
-  args = _minimist(args);
+const ROOT = path.dirname(path.dirname(path.join(__dirname)));
 
-  if ( process.argv.length < 3 || args.help ) {
-    console.log(_fs.readFileSync(_path.join(__dirname, 'help.txt'), 'utf-8'));
-    done(true);
-    return;
+const debug = true;
+
+/**
+ * Wrapper for CLI object
+ * @param {Object} cli CLI
+ * @return {Object}
+ */
+const cliWrapper = (cli) => {
+  return {
+    debug: debug,
+    cli: cli,
+    option: (k, defaultValue) => {
+      if ( typeof cli[k] === 'undefined' ) {
+        return defaultValue;
+      }
+      return cli[k];
+    }
+  };
+};
+
+/**
+ * Wrapper for creating new tasks
+ * @param {Object} cli CLI
+ * @param {Function} fn Callback function => (cfg, resolve, reject)
+ * @return {Promise}
+ */
+const newTask = (cli, fn) => new Promise((resolve, reject) => {
+  ocfg.readConfigurationTree().then((cfg) => {
+    const promise = fn(cliWrapper(cli), cfg, resolve, reject);
+    if ( promise instanceof Promise ) {
+      promise.then(resolve).catch(reject);
+    }
+  }).catch(reject);
+});
+
+/*
+ * All tasks
+ */
+const tasks = {
+
+  'watch': () => Promise.reject('Not implemented'),
+
+  'config:set': (cli) => newTask(cli, (cli, cfg, resolve, reject) => {
+    const name = cli.option('name');
+    ocfg.setConfiguration(name,
+                          cli.option('value'),
+                          cli.option('import'),
+                          cli.option('out')
+    ).then((value) => {
+      console.log(name, '=', value);
+      resolve();
+    }).catch(reject);
+  }),
+
+  'config:get': (cli) => newTask(cli, (cli, cfg, resolve, reject) => {
+    const name = cli.option('name');
+    if ( name ) {
+      console.log(name, '=', ocfg.getConfiguration(cfg, name));
+      resolve();
+    } else {
+      reject('You need to give --name');
+    }
+  }),
+
+  'build:config': (cli) => newTask(cli, (cli, cfg, resolve, reject) => {
+    console.info('Building', colors.blue('configuration'));
+    return Promise.all([
+      ocfg.buildClientConfiguration(cfg, cli),
+      ocfg.buildServerConfiguration(cfg, cli)
+    ]);
+  }),
+
+  'build:manifest': (cli) => newTask(cli, (cli, cfg, resolve, reject) => {
+    console.info('Building', colors.blue('manifest'));
+    return Promise.all([
+      opkg.buildClientManifest(cfg, cli),
+      opkg.buildServerManifest(cfg, cli)
+    ]);
+  }),
+
+  'build:packages': (cli) => newTask(cli, (cli, cfg, resolve, reject) => {
+    console.info('Building', colors.blue('packages'));
+    opkg.buildPackages(cfg, cli, ygor).then(resolve).catch(reject);
+  }),
+
+  'build:package': (cli, ygor) => newTask(cli, (cli, cfg, resolve, reject) => {
+    opkg.buildPackage(cfg, cli, ygor).then(resolve).catch(reject);
+  }),
+
+  'build:core': (cli, ygor) => {
+    console.info('Building', colors.blue('core'));
+
+    return ygor.shell('webpack', {
+      env: {
+        OSJS_DEBUG: String(debug)
+      }
+    });
+  },
+
+  'build': (cli, ygor) => {
+    const tasks = [
+      'build:config',
+      'build:manifest',
+      'build:core',
+      'build:packages'
+    ];
+
+    return promise.each(tasks, ygor.run);
+  },
+
+  'run': () => {
+    const exe = path.join(ROOT, 'src', 'server', 'node', 'server.js');
+    const args = process.argv.slice(2).join(' ');
+    return ygor.shell(['node', exe, args].join(' '));
   }
 
-  _build._init();
-
-  const actions = args._.map((iter) => {
-    let action = iter.trim().split(':');
-    let task = action[0];
-    let arg = action[1];
-
-    if ( task.substr(0, 1) === '_' || !_build[task] ) {
-      console.error('Invalid task', task);
-      return done(true);
-    }
-
-    return [task, arg];
-  });
-
-  process.on('uncaughtException', (error) => {
-    console.error('An uncaught exception occured', error);
-    console.error(error.stack);
-    done(true);
-  });
-
-  _utils.eachp(actions.map((action) => {
-    return function() {
-      return _build[action[0]]({
-        option: function(k, d) {
-          return typeof args[k] === 'undefined' ? d : args[k];
-        }
-      }, action[1]);
-    };
-  })).then(() => {
-    done();
-  }).catch((err) => {
-    console.error(err);
-    done(err);
-  });
 };
+
+Object.keys(tasks).forEach((name) => ygor.task(name, tasks[name]));

@@ -32,10 +32,6 @@
   ],
   "preload": [
     {
-      "src": "locales.js",
-      "type": "javascript"
-    },
-    {
       "src": "main.js",
       "type": "javascript"
     },

@@ -29,6 +29,8 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
+const _ = require('./locale.js');
+
 (function(Application, Window, Utils, API, VFS, GUI) {
   'use strict';
 
@@ -62,8 +64,6 @@
     },
 
     render: function(win, scheme, root, settings, wm) {
-      var _ = OSjs.Applications.ApplicationSettings._;
-
       function _createDialog(n, a, done) {
         win._toggleDisabled(true);
         API.createDialog(n, a, function(ev, button, result) {

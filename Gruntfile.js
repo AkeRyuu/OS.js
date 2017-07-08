@@ -27,9 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-module.exports = function(grunt) {
-  'use strict';
+'use strict';
 
+module.exports = function(grunt) {
   grunt.file.defaultEncoding = 'utf-8';
 
   grunt.loadNpmTasks('grunt-eslint');

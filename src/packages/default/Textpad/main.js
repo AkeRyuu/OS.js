@@ -29,64 +29,64 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-(function(DefaultApplication, DefaultApplicationWindow, Application, Window, Utils, API, VFS, GUI) {
-  'use strict';
+'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // WINDOWS
-  /////////////////////////////////////////////////////////////////////////////
+const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
 
-  function ApplicationTextpadWindow(app, metadata, scheme, file) {
-    DefaultApplicationWindow.apply(this, ['ApplicationTextpadWindow', {
+/////////////////////////////////////////////////////////////////////////////
+// WINDOWS
+/////////////////////////////////////////////////////////////////////////////
+
+class ApplicationTextpadWindow extends DefaultApplicationWindow {
+
+  constructor(app, metadata, scheme, file) {
+    super('ApplicationTextpadWindow', {
       allow_drop: true,
       icon: metadata.icon,
       title: metadata.name,
       width: 450,
       height: 300
-    }, app, scheme, file]);
+    }, app, scheme, file);
   }
 
-  ApplicationTextpadWindow.prototype = Object.create(DefaultApplicationWindow.prototype);
-  ApplicationTextpadWindow.constructor = DefaultApplicationWindow.prototype;
-
-  ApplicationTextpadWindow.prototype.init = function(wmRef, app, scheme) {
-    var root = DefaultApplicationWindow.prototype.init.apply(this, arguments);
-    var self = this;
+  init(wmRef, app, scheme) {
+    const root = super.init(...arguments);
 
     // Load and set up scheme (GUI) here
     this._render('TextpadWindow');
 
-    this._find('Text').on('change', function() {
-      self.hasChanged = true;
+    this._find('Text').on('change', () => {
+      this.hasChanged = true;
     });
 
     return root;
-  };
+  }
 
-  ApplicationTextpadWindow.prototype.updateFile = function(file) {
-    DefaultApplicationWindow.prototype.updateFile.apply(this, arguments);
-    var gel = this._find('Text');
+  updateFile(file) {
+    super.updateFile(...arguments);
+
+    const gel = this._find('Text');
     if ( gel ) {
       gel.$element.focus();
     }
-  };
+  }
 
-  ApplicationTextpadWindow.prototype.showFile = function(file, content) {
-    var gel = this._find('Text');
+  showFile(file, content) {
+    const gel = this._find('Text');
     if ( gel ) {
       gel.set('value', content || '');
     }
 
-    DefaultApplicationWindow.prototype.showFile.apply(this, arguments);
-  };
+    super.showFile(...arguments);
+  }
 
-  ApplicationTextpadWindow.prototype.getFileData = function() {
+  getFileData() {
     var gel = this._find('Text');
     return gel ? gel.get('value') : '';
-  };
+  }
 
-  ApplicationTextpadWindow.prototype._focus = function() {
-    if ( DefaultApplicationWindow.prototype._focus.apply(this, arguments) ) {
+  _focus() {
+    if ( super._focus(...arguments) ) {
       var gel = this._find('Text');
       if ( gel ) {
         if ( gel.$element ) {
@@ -96,35 +96,37 @@
       return true;
     }
     return false;
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // APPLICATION
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// APPLICATION
+/////////////////////////////////////////////////////////////////////////////
 
-  var ApplicationTextpad = function(args, metadata) {
-    DefaultApplication.apply(this, ['ApplicationTextpad', args, metadata, {
+class ApplicationTextpad extends DefaultApplication {
+
+  constructor(args, metadata) {
+    super('ApplicationTextpad', args, metadata, {
       extension: 'txt',
       mime: 'text/plain',
       filename: 'New text file.txt'
-    }]);
-  };
+    });
+  }
 
-  ApplicationTextpad.prototype = Object.create(DefaultApplication.prototype);
-  ApplicationTextpad.constructor = DefaultApplication;
+  init(settings, metadata, scheme) {
+    super.init(...arguments);
 
-  ApplicationTextpad.prototype.init = function(settings, metadata, scheme) {
-    Application.prototype.init.call(this, settings, metadata, scheme);
-    var file = this._getArgument('file');
+    const file = this._getArgument('file');
+
     this._addWindow(new ApplicationTextpadWindow(this, metadata, scheme, file));
-  };
+  }
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+}
 
-  OSjs.Applications = OSjs.Applications || {};
-  OSjs.Applications.ApplicationTextpad = OSjs.Applications.ApplicationTextpad || {};
-  OSjs.Applications.ApplicationTextpad.Class = Object.seal(ApplicationTextpad);
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-})(OSjs.Helpers.DefaultApplication, OSjs.Helpers.DefaultApplicationWindow, OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.API, OSjs.VFS, OSjs.GUI);
+OSjs.Applications = OSjs.Applications || {};
+OSjs.Applications.ApplicationTextpad = OSjs.Applications.ApplicationTextpad || {};
+OSjs.Applications.ApplicationTextpad.Class = Object.seal(ApplicationTextpad);

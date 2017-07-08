@@ -29,6 +29,8 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
+const _ = require('./locale.js');
+
 (function(Application, Window, Utils, API, VFS, GUI) {
   'use strict';
 
@@ -82,7 +84,6 @@
   }
 
   function updateLabel(win, lbl, value) {
-    var _ = OSjs.Applications.ApplicationSettings._;
 
     var map = {
       DesktopMargin: 'Desktop Margin ({0}px)',

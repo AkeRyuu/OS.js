@@ -28,78 +28,78 @@
  * @licence Simplified BSD License
  */
 
-/*eslint valid-jsdoc: "off"*/
-(function(Application, Window, Utils, API, VFS, GUI) {
-  /*eslint eqeqeq: "off"*/
-  'use strict';
+/*eslint eqeqeq: "off"*/
+'use strict';
 
-  var ops = {
-    dec: '.',
-    perc: '%',
-    minus: '-',
-    plus: '+',
-    multiply: '*',
-    divide: '/'
-  };
+const {Utils, GUI} = OSjs;
+const {Window, Application} = OSjs.Core;
 
-  var keys = {
-    107: 'plus',
-    109: 'minus',
-    106: 'multiply',
-    111: 'divide',
-    110: 'dec',
-    188: 'dec',
-    13: 'equal',
-    47: 'divide',
-    46: 'CE',
-    45: 'minus',
-    44: 'dec',
-    43: 'plus',
-    42: 'multiply',
-    27: 'CE',
-    8: 'nbs'
-  };
+var ops = {
+  dec: '.',
+  perc: '%',
+  minus: '-',
+  plus: '+',
+  multiply: '*',
+  divide: '/'
+};
 
-  var labels = {
-    'CE': 'CE',  'AC': 'AC', 'perc': '%',  'plus': '+',
-    '7': '7',   '8': '8',  '9': '9',  'minus': '-',
-    '4': '4',   '5': '5',  '6': '6',  'multiply': 'x',
-    '1': '1',   '2': '2',  '3': '3',  'divide': '÷',
-    '0': '0',   'swap': '±',  'dec': ',',  'equal': '='
-  };
+var keys = {
+  107: 'plus',
+  109: 'minus',
+  106: 'multiply',
+  111: 'divide',
+  110: 'dec',
+  188: 'dec',
+  13: 'equal',
+  47: 'divide',
+  46: 'CE',
+  45: 'minus',
+  44: 'dec',
+  43: 'plus',
+  42: 'multiply',
+  27: 'CE',
+  8: 'nbs'
+};
 
-  var buttons = [
-    ['CE', 'AC',   'perc', 'plus'],
-    ['7',  '8',    '9',    'minus'],
-    ['4',  '5',    '6',    'multiply'],
-    ['1',  '2',    '3',    'divide'],
-    ['0',  'dec',  'equal']
-  ];
+var labels = {
+  'CE': 'CE',  'AC': 'AC', 'perc': '%',  'plus': '+',
+  '7': '7',   '8': '8',  '9': '9',  'minus': '-',
+  '4': '4',   '5': '5',  '6': '6',  'multiply': 'x',
+  '1': '1',   '2': '2',  '3': '3',  'divide': '÷',
+  '0': '0',   'swap': '±',  'dec': ',',  'equal': '='
+};
 
-  /////////////////////////////////////////////////////////////////////////////
-  // WINDOWS
-  /////////////////////////////////////////////////////////////////////////////
+var buttons = [
+  ['CE', 'AC',   'perc', 'plus'],
+  ['7',  '8',    '9',    'minus'],
+  ['4',  '5',    '6',    'multiply'],
+  ['1',  '2',    '3',    'divide'],
+  ['0',  'dec',  'equal']
+];
 
-  function ApplicationCalculatorWindow(app, metadata, scheme) {
-    Window.apply(this, ['ApplicationCalculatorWindow', {
+/////////////////////////////////////////////////////////////////////////////
+// WINDOWS
+/////////////////////////////////////////////////////////////////////////////
+
+class ApplicationCalculatorWindow extends Window {
+  constructor(app, metadata, scheme) {
+    super('ApplicationCalculatorWindow', {
       icon: metadata.icon,
       title: metadata.name,
       allow_resize: false,
       allow_maximize: false,
       width: 220,
       height: 340
-    }, app, scheme]);
+    }, app, scheme);
 
     this.total = 0;
     this.entries = [];
     this.temp = '';
   }
 
-  ApplicationCalculatorWindow.prototype = Object.create(Window.prototype);
-  ApplicationCalculatorWindow.constructor = Window.prototype;
+  init(wm, app, scheme) {
+    const root = super.init(...arguments);
 
-  ApplicationCalculatorWindow.prototype.init = function(wm, app, scheme) {
-    var root = Window.prototype.init.apply(this, arguments);
     var self = this;
 
     // Load and gel.set up scheme (GUI) here
@@ -139,9 +139,9 @@
     });
 
     return root;
-  };
+  }
 
-  ApplicationCalculatorWindow.prototype.operation = function(val) {
+  operation(val) {
     var self = this;
 
     if (this.temp == '' && ['plus', 'minus', 'multiply', 'divide'].indexOf(val) !== -1) {
@@ -228,31 +228,30 @@
     }
 
     this._find('Output').focus();
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // APPLICATION
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// APPLICATION
+/////////////////////////////////////////////////////////////////////////////
 
-  var ApplicationCalculator = function(args, metadata) {
-    Application.apply(this, ['ApplicationCalculator', args, metadata]);
-  };
+class ApplicationCalculator extends Application {
+  constructor(args, metadata) {
+    super('ApplicationCalculator', args, metadata);
+  }
 
-  ApplicationCalculator.prototype = Object.create(Application.prototype);
-  ApplicationCalculator.constructor = Application;
-
-  ApplicationCalculator.prototype.init = function(settings, metadata, scheme) {
-    Application.prototype.init.apply(this, arguments);
+  init(settings, metadata, scheme) {
+    super.init(...arguments);
 
     this._addWindow(new ApplicationCalculatorWindow(this, metadata, scheme));
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Applications = OSjs.Applications || {};
-  OSjs.Applications.ApplicationCalculator = OSjs.Applications.ApplicationCalculator || {};
-  OSjs.Applications.ApplicationCalculator.Class = Object.seal(ApplicationCalculator);
+OSjs.Applications = OSjs.Applications || {};
+OSjs.Applications.ApplicationCalculator = OSjs.Applications.ApplicationCalculator || {};
+OSjs.Applications.ApplicationCalculator.Class = Object.seal(ApplicationCalculator);
 
-})(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.API, OSjs.VFS, OSjs.GUI);

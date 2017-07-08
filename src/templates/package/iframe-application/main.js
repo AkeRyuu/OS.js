@@ -29,15 +29,17 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-(function(Application, GUI, Dialogs, Utils, API, VFS) {
-  'use strict';
+'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // APPLICATION
-  /////////////////////////////////////////////////////////////////////////////
+const {IFrameApplication} = OSjs.Helpers;
 
-  function ApplicationEXAMPLE(args, metadata) {
-    Application.apply(this, ['ApplicationEXAMPLE', args, metadata, {
+/////////////////////////////////////////////////////////////////////////////
+// APPLICATION
+/////////////////////////////////////////////////////////////////////////////
+
+class ApplicationEXAMPLE extends IFrameApplication {
+  constructor(args, metadata) {
+    super('ApplicationEXAMPLE', args, metadata, {
       src: 'data/index.html',
       title: metadata.name,
       icon: metadata.icon,
@@ -46,17 +48,15 @@
       allow_resize: false,
       allow_restore: false,
       allow_maximize: false
-    }]);
+    });
   }
+}
 
-  ApplicationEXAMPLE.prototype = Object.create(Application.prototype);
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Applications = OSjs.Applications || {};
-  OSjs.Applications.ApplicationEXAMPLE = OSjs.Applications.ApplicationEXAMPLE || {};
-  OSjs.Applications.ApplicationEXAMPLE.Class = Object.seal(ApplicationEXAMPLE);
-
-})(OSjs.Helpers.IFrameApplication, OSjs.GUI, OSjs.Dialogs, OSjs.Utils, OSjs.API, OSjs.VFS);
+OSjs.Applications = OSjs.Applications || {};
+OSjs.Applications.ApplicationEXAMPLE = OSjs.Applications.ApplicationEXAMPLE || {};
+OSjs.Applications.ApplicationEXAMPLE.Class = Object.seal(ApplicationEXAMPLE);

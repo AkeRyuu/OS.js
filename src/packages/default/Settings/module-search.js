@@ -29,6 +29,8 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
+const _ = require('./locale.js');
+
 (function(Application, Window, Utils, API, VFS, GUI) {
   'use strict';
 
@@ -109,7 +111,6 @@
     },
 
     save: function(win, scheme, settings, wm) {
-      var _ = OSjs.Applications.ApplicationSettings._;
       var tmpPaths = win._find('SearchPaths').get('entry', null, null, true).sort();
       var paths = [];
 

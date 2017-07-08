@@ -29,41 +29,30 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-(function(Service, Window, Utils, API, VFS, GUI) {
-  'use strict';
+'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // SERVICE
-  /////////////////////////////////////////////////////////////////////////////
+const {Service} = OSjs.Core;
 
-  function EXAMPLEService(args, metadata) {
-    Service.apply(this, ['EXAMPLEService', args, metadata]);
+/////////////////////////////////////////////////////////////////////////////
+// SERVICE
+/////////////////////////////////////////////////////////////////////////////
+
+class EXAMPLEService extends Service {
+  constructor(args, metadata) {
+    super('EXAMPLEService', args, metadata);
   }
 
-  EXAMPLEService.prototype = Object.create(Service.prototype);
-  EXAMPLEService.constructor = Service;
-
-  EXAMPLEService.prototype.destroy = function() {
-    // This is where you remove objects, dom elements etc attached to your
-    // instance. You can remove this if not used.
-    if ( Service.prototype.destroy.apply(this, arguments) ) {
-      return true;
-    }
-    return false;
-  };
-
-  EXAMPLEService.prototype.init = function(settings, metadata) {
-    Service.prototype.init.apply(this, arguments);
+  init(settings, metadata) {
+    super.init(...arguments);
 
     // Put your stuff here
-  };
+  }
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Applications = OSjs.Applications || {};
-  OSjs.Applications.EXAMPLEService = OSjs.Applications.EXAMPLEService || {};
-  OSjs.Applications.EXAMPLEService.Class = Object.seal(EXAMPLEService);
-
-})(OSjs.Core.Service, OSjs.Core.Window, OSjs.Utils, OSjs.API, OSjs.VFS, OSjs.GUI);
+OSjs.Applications = OSjs.Applications || {};
+OSjs.Applications.EXAMPLEService = OSjs.Applications.EXAMPLEService || {};
+OSjs.Applications.EXAMPLEService.Class = Object.seal(EXAMPLEService);

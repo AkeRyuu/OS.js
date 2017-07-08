@@ -1,3 +1,5 @@
+'use strict';
+
 require('polyfill.js')();
 require('compability.js')();
 

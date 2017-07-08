@@ -29,28 +29,24 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-(function(Application, Window, Utils, API, VFS, GUI) {
-  'use strict';
 
-  /////////////////////////////////////////////////////////////////////////////
-  // WINDOWS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// WINDOWS
+/////////////////////////////////////////////////////////////////////////////
 
-  function ApplicationEXAMPLEWindow(app, metadata, scheme) {
-    Window.apply(this, ['ApplicationEXAMPLEWindow', {
+class ApplicationEXAMPLEWindow extends Window {
+
+  constructor(app, metadata, scheme) {
+    super('ApplicationEXAMPLEWindow', {
       icon: metadata.icon,
       title: metadata.name,
       width: 400,
       height: 200
-    }, app, scheme]);
+    }, app, scheme);
   }
 
-  ApplicationEXAMPLEWindow.prototype = Object.create(Window.prototype);
-  ApplicationEXAMPLEWindow.constructor = Window.prototype;
-
-  ApplicationEXAMPLEWindow.prototype.init = function(wmRef, app, scheme) {
-    var root = Window.prototype.init.apply(this, arguments);
-    var self = this;
+  init(wmRef, app, scheme) {
+    const root = super.init(...arguments);
 
     // Render our Scheme file fragment into this Window
     this._render('EXAMPLEWindow');
@@ -58,39 +54,24 @@
     // Put your GUI code here (or make a new prototype function and call it):
 
     return root;
-  };
-
-  ApplicationEXAMPLEWindow.prototype.destroy = function() {
-    // This is where you remove objects, dom elements etc attached to your
-    // instance. You can remove this if not used.
-    if ( Window.prototype.destroy.apply(this, arguments) ) {
-      return true;
-    }
-    return false;
-  };
-
-  /////////////////////////////////////////////////////////////////////////////
-  // APPLICATION
-  /////////////////////////////////////////////////////////////////////////////
-
-  function ApplicationEXAMPLE(args, metadata) {
-    Application.apply(this, ['ApplicationEXAMPLE', args, metadata]);
   }
 
-  ApplicationEXAMPLE.prototype = Object.create(Application.prototype);
-  ApplicationEXAMPLE.constructor = Application;
+}
 
-  ApplicationEXAMPLE.prototype.destroy = function() {
-    // This is where you remove objects, dom elements etc attached to your
-    // instance. You can remove this if not used.
-    if ( Application.prototype.destroy.apply(this, arguments) ) {
-      return true;
-    }
-    return false;
-  };
 
-  ApplicationEXAMPLE.prototype.init = function(settings, metadata, scheme) {
-    Application.prototype.init.apply(this, arguments);
+/////////////////////////////////////////////////////////////////////////////
+// APPLICATION
+/////////////////////////////////////////////////////////////////////////////
+
+class ApplicationEXAMPLE extends Application {
+
+  constructor(args, metadata) {
+    super('ApplicationEXAMPLE', args, metadata);
+  }
+
+  init(settings, metadata, scheme) {
+    super.init(...arguments);
+
     this._addWindow(new ApplicationEXAMPLEWindow(this, metadata, scheme));
 
     // Example on how to call `api.js` methods
@@ -98,13 +79,12 @@
       console.log('Result from your server API method', err, res);
     });
   };
+}
 
-  /////////////////////////////////////////////////////////////////////////////
-  // EXPORTS
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// EXPORTS
+/////////////////////////////////////////////////////////////////////////////
 
-  OSjs.Applications = OSjs.Applications || {};
-  OSjs.Applications.ApplicationEXAMPLE = OSjs.Applications.ApplicationEXAMPLE || {};
-  OSjs.Applications.ApplicationEXAMPLE.Class = Object.seal(ApplicationEXAMPLE);
-
-})(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.API, OSjs.VFS, OSjs.GUI);
+OSjs.Applications = OSjs.Applications || {};
+OSjs.Applications.ApplicationEXAMPLE = OSjs.Applications.ApplicationEXAMPLE || {};
+OSjs.Applications.ApplicationEXAMPLE.Class = Object.seal(ApplicationEXAMPLE);

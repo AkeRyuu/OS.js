@@ -724,6 +724,7 @@ module.exports.launch = function(name, args, ondone, onerror, onconstruct) {
 
     function __onschemesloaded(scheme) {
       try {
+        // TODO: simple applications are deprecated
         if ( metadata.classType === 'simple' ) {
           instance = new Application(name, args, metadata);
           OSjs.Applications[name].run(instance);
