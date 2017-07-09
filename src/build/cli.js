@@ -33,12 +33,12 @@ const colors = require('colors');
 const ygor = require('ygor');
 const promise = require('bluebird');
 const path = require('path');
+const qs = require('querystring');
 const opkg = require('./packages.js');
 const ocfg = require('./configuration.js');
 
-const ROOT = path.dirname(path.dirname(path.join(__dirname)));
-
-const debug = true;
+const ROOT = process.env.OSJS_ROOT || path.dirname(process.argv[1]);
+const DEBUG = process.argv.indexOf('--debug') !== -1;
 
 /**
  * Wrapper for CLI object
@@ -47,7 +47,7 @@ const debug = true;
  */
 const cliWrapper = (cli) => {
   return {
-    debug: debug,
+    debug: DEBUG,
     cli: cli,
     option: (k, defaultValue) => {
       if ( typeof cli[k] === 'undefined' ) {
@@ -132,7 +132,9 @@ const tasks = {
 
     return ygor.shell('webpack', {
       env: {
-        OSJS_DEBUG: String(debug)
+        OSJS_OPTIONS: qs.stringify(cli),
+        OSJS_DEBUG: String(DEBUG),
+        OSJS_ROOT: ROOT
       }
     });
   },

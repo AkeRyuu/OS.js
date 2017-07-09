@@ -41,7 +41,7 @@ const ocfg = require('./configuration.js');
 const opkg = require('./packages.js');
 const outils = require('./utils.js');
 
-const ROOT = path.dirname(path.dirname(path.join(__dirname)));
+const ROOT = process.env.OSJS_ROOT || path.dirname(process.argv[1]);
 
 ///////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -77,6 +77,9 @@ function getPlugins(cfg, options) {
  */
 function getAttrs(attrs) {
   return '?' + Object.keys(attrs).map((a) => {
+    if ( attrs[a] === true ) {
+      return a;
+    }
     return a + '=' + encodeURIComponent(String(attrs[a]));
   }).join('&');
 }
@@ -115,22 +118,33 @@ function transformScheme(content) {
  * @return {Promise}
  */
 const createConfiguration = (options) => new Promise((resolve, reject) => {
+  const origOptions = Object.assign({}, options);
+
   options = Object.assign({
     debug: process.env.OSJS_DEBUG === 'true',
     minimize: true,
-    sourceMaps: true
+    sourceMaps: true,
+    devtool: 'cheap-source-map'
   }, (options || {}));
 
-  const cssAttrs = getAttrs({sourceMap: options.sourceMaps, minimize: options.minimize});
+  if ( options.debug && !origOptions.devtool ) {
+    options.devtool = 'source-map';
+  }
+
+  const cssLoader = {
+    loader: 'css-loader',
+    options: {
+      sourceMap: options.sourceMaps,
+      minimize: options.minimize
+    }
+  };
 
   ocfg.readConfigurationTree().then((cfg) => {
-    const sourceMapType = options.debug ? 'eval-source-map' : 'source-map';
-
     resolve({
       cfg: cfg,
       webpack: {
         plugins: getPlugins(cfg, options),
-        devtool: sourceMapType,
+        devtool: options.devtool,
 
         resolve: {
           modules: [
@@ -143,7 +157,7 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
         },
 
         output: {
-          sourceMapFilename: '[name].js.map',
+          sourceMapFilename: '[file].map',
           filename: '[name].js'
         },
 
@@ -173,14 +187,22 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
               test: /\.css$/,
               loader: ExtractTextPlugin.extract({
                 fallback: 'style-loader',
-                use: 'css-loader' + cssAttrs
+                use: [cssLoader]
               })
             },
             {
               test: /\.less$/,
               loader: ExtractTextPlugin.extract({
                 fallback: 'style-loader',
-                use: 'css-loader' + cssAttrs + '!less-loader'
+                use: [
+                  cssLoader,
+                  {
+                    loader: 'less-loader',
+                    options: {
+                      sourceMap: options.sourceMaps
+                    }
+                  }
+                ]
               })
             }
           ]

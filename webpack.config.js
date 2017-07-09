@@ -36,6 +36,7 @@ const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const path = require('path');
+const qs = require('querystring');
 const osjs = require('./src/build/index.js');
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -147,8 +148,15 @@ function getStaticFiles(cfg) {
 ///////////////////////////////////////////////////////////////////////////////
 
 module.exports = new Promise((resolve, reject) => {
+  const env = qs.parse(process.env.OSJS_OPTIONS || '');
+  const options = {
+    debug: debug,
+    devtool: env.devtool,
+    minimize: String(env.minimize) !== 'false',
+    sourceMaps: String(env.sourcemap) !== 'false'
+  };
 
-  osjs.webpack.createConfiguration({debug: debug}).then((result) => {
+  osjs.webpack.createConfiguration(options).then((result) => {
     let {cfg, webpack} = result;
 
     webpack.plugins = webpack.plugins.concat([

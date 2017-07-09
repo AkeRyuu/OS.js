@@ -31,7 +31,7 @@
 
 const path = require('path');
 
-const ROOT = path.dirname(path.dirname(path.join(__dirname)));
+const ROOT = process.env.OSJS_ROOT || path.dirname(process.argv[1]);
 
 ///////////////////////////////////////////////////////////////////////////////
 // HELPERS

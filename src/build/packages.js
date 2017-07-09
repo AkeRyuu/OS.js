@@ -37,7 +37,7 @@ const util = require('util');
 const promise = require('bluebird');
 const outils = require('./utils.js');
 
-const ROOT = path.dirname(path.dirname(path.join(__dirname)));
+const ROOT = process.env.OSJS_ROOT || path.dirname(process.argv[1]);
 
 ///////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -245,12 +245,12 @@ const buildPackage = (cfg, cli, ygor, name) => new Promise((resolve, reject) => 
   getPackageMetadata(cfg, name).then((metadata) => {
     console.info('Building', colors.green(metadata.path));
 
-    //const cmd = 'webpack --display-error-details';
-    const cmd = util.format('OSJS_DEBUG=%s webpack', String(cli.debug));
-    const cwd = path.join(ROOT, metadata._src);
-
-    ygor.shell(cmd, {
-      cwd: cwd
+    ygor.shell('webpack', {
+      cwd: path.join(ROOT, metadata._src),
+      env: {
+        OSJS_DEBUG: String(cli.debug),
+        OSJS_ROOT: ROOT
+      }
     }).then(resolve).catch(reject);
   }).catch(reject);
 });
