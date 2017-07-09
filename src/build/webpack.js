@@ -34,14 +34,49 @@
 const Webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 const fs = require('fs-extra');
+const qs = require('querystring');
 const path = require('path');
 const ocfg = require('./configuration.js');
 const opkg = require('./packages.js');
 const outils = require('./utils.js');
 
 const ROOT = process.env.OSJS_ROOT || path.dirname(process.argv[1]);
+
+const BANNER = `
+/**
+ * OS.js - JavaScript Cloud/Web Desktop Platform
+ *
+ * Copyright (c) 2011-2017, Anders Evenrud <andersevenrud@gmail.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @author  Anders Evenrud <andersevenrud@gmail.com>
+ * @licence Simplified BSD License
+ * @preserve
+ */
+`;
 
 ///////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -55,33 +90,43 @@ const ROOT = process.env.OSJS_ROOT || path.dirname(process.argv[1]);
  */
 function getPlugins(cfg, options) {
   const plugins = [
+    new Webpack.BannerPlugin({
+      banner: BANNER,
+      raw: true
+    }),
     new ExtractTextPlugin('[name].css')
   ];
 
-  if ( options.debug ) {
+  if ( options.clean ) {
+    if ( options.package ) {
+      const packageRoot = path.dirname(options.package);
+
+      plugins.unshift(new CleanWebpackPlugin([
+        path.basename(packageRoot)
+      ], {
+        root: path.dirname(packageRoot),
+        exclude: []
+      }));
+    } else {
+      plugins.unshift(new CleanWebpackPlugin([
+        'dist'
+      ], {
+        root: ROOT,
+        exclude: ['packages', 'vendor', '.htaccess']
+      }));
+    }
+  }
+
+  if ( options.minimize ) {
     plugins.push(new Webpack.optimize.UglifyJsPlugin({
-      minimize: options.minimize === true,
-      level: 1, // FIXME
+      comments: /@preserve/,
+      minimize: true,
       rebase: false,
-      sourceMap: options.sourceMaps === true
+      sourceMap: options.sourcemaps === true
     }));
   }
 
   return plugins;
-}
-
-/**
- * Builds an attribute (query) string for loaders
- * @param {Object} attrs Attribute map
- * @return {String}
- */
-function getAttrs(attrs) {
-  return '?' + Object.keys(attrs).map((a) => {
-    if ( attrs[a] === true ) {
-      return a;
-    }
-    return a + '=' + encodeURIComponent(String(attrs[a]));
-  }).join('&');
 }
 
 /**
@@ -105,6 +150,44 @@ function transformScheme(content) {
   return content;
 }
 
+/**
+ * Parses options coming from OS.js build system
+ * @param {Object} inp Merge with other input
+ * @return {Object}
+ */
+function parseOptions(inp) {
+  inp = inp || {};
+
+  const env = qs.parse(process.env.OSJS_OPTIONS || '');
+  const isNumeric = (n) => !isNaN(parseFloat(n)) && isFinite(n);
+  const debugMode = process.env.OSJS_DEBUG === 'true';
+
+  const options = Object.assign({
+    debug: debugMode,
+    minimize: !debugMode,
+    sourcemaps: true,
+    devtool: 'cheap-source-map'
+  }, env, inp);
+
+  // Our values does not come back identical :/
+  Object.keys(options).forEach((k) => {
+    const val = options[k];
+    if ( val === 'true' ) {
+      options[k] = true;
+    } else if ( val === 'false' ) {
+      options[k] = false;
+    } else if ( isNumeric(val) ) {
+      options[k] = Math.round(parseFloat(val));
+    }
+  });
+
+  if ( options.debug && !inp.devtool ) {
+    options.devtool = 'source-map';
+  }
+
+  return options;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // API
 ///////////////////////////////////////////////////////////////////////////////
@@ -114,27 +197,17 @@ function transformScheme(content) {
  * @param {Object} options Options
  * @param {Boolean} [options.debug] Debug mode
  * @param {Boolean} [options.minimize] Minimize output
- * @param {Boolean} [options.sourceMaps] Generate source maps
+ * @param {Boolean} [options.sourcemaps] Generate source maps
+ * @param {String} [options.devtool] Specify devtool
  * @return {Promise}
  */
 const createConfiguration = (options) => new Promise((resolve, reject) => {
-  const origOptions = Object.assign({}, options);
-
-  options = Object.assign({
-    debug: process.env.OSJS_DEBUG === 'true',
-    minimize: true,
-    sourceMaps: true,
-    devtool: 'cheap-source-map'
-  }, (options || {}));
-
-  if ( options.debug && !origOptions.devtool ) {
-    options.devtool = 'source-map';
-  }
+  options = parseOptions(options);
 
   const cssLoader = {
     loader: 'css-loader',
     options: {
-      sourceMap: options.sourceMaps,
+      sourceMap: options.sourcemaps,
       minimize: options.minimize
     }
   };
@@ -142,6 +215,7 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
   ocfg.readConfigurationTree().then((cfg) => {
     resolve({
       cfg: cfg,
+      options: options,
       webpack: {
         plugins: getPlugins(cfg, options),
         devtool: options.devtool,
@@ -199,7 +273,7 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
                   {
                     loader: 'less-loader',
                     options: {
-                      sourceMap: options.sourceMaps
+                      sourceMap: options.sourcemaps
                     }
                   }
                 ]
@@ -219,10 +293,14 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
  * @param {Object} options Options
  * @param {Boolean} [options.debug] Debug mode
  * @param {Boolean} [options.minimize] Minimize output
- * @param {Boolean} [options.sourceMaps] Generate source maps
+ * @param {Boolean} [options.sourcemaps] Generate source maps
+ * @param {String} [options.devtool] Specify devtool
  * @return {Promise}
  */
 const createPackageConfiguration = (metadataFile, options) => new Promise((resolve, reject) => {
+  options = options || {};
+  options.package = metadataFile;
+
   opkg.readMetadataFile(metadataFile).then((metadata) => {
     const dest = path.join(ROOT, 'dist/packages', metadata.path);
 

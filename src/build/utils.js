@@ -29,6 +29,7 @@
  */
 'use strict';
 
+const qs = require('querystring');
 const path = require('path');
 
 const ROOT = process.env.OSJS_ROOT || path.dirname(process.argv[1]);
@@ -155,6 +156,27 @@ const mergeObject = (into, from) => {
   return mergeJSON(into, from);
 };
 
+/**
+ * A wrapper for executing Webpack
+ * @param {Object} cli CLI
+ * @param {Object} ygor Ygor
+ * @param {String} cwd Working directory
+ * @param {String} [params] Parameters to use
+ * @return {Promise}
+ */
+const execWebpack = (cli, ygor, cwd, params) => {
+  params = params || '';
+
+  return ygor.shell('webpack' + (params ? ' ' + params : ''), {
+    cwd: cwd,
+    env: {
+      OSJS_OPTIONS: qs.stringify(cli),
+      OSJS_DEBUG: String(cli.debug === true),
+      OSJS_ROOT: ROOT
+    }
+  });
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 // EXPORTS
 ///////////////////////////////////////////////////////////////////////////////
@@ -164,5 +186,6 @@ module.exports = {
   checkEnabledState,
   getPackagePaths,
   readOverlayPaths,
-  mergeObject
+  mergeObject,
+  execWebpack
 };

@@ -33,9 +33,10 @@ const colors = require('colors');
 const ygor = require('ygor');
 const promise = require('bluebird');
 const path = require('path');
-const qs = require('querystring');
+const fs = require('fs-extra');
 const opkg = require('./packages.js');
 const ocfg = require('./configuration.js');
+const outils = require('./utils.js');
 
 const ROOT = process.env.OSJS_ROOT || path.dirname(process.argv[1]);
 const DEBUG = process.argv.indexOf('--debug') !== -1;
@@ -130,13 +131,7 @@ const tasks = {
   'build:core': (cli, ygor) => {
     console.info('Building', colors.blue('core'));
 
-    return ygor.shell('webpack', {
-      env: {
-        OSJS_OPTIONS: qs.stringify(cli),
-        OSJS_DEBUG: String(DEBUG),
-        OSJS_ROOT: ROOT
-      }
-    });
+    return outils.execWebpack(cli, ygor, ROOT, '--progress');
   },
 
   'build': (cli, ygor) => {
@@ -150,10 +145,23 @@ const tasks = {
     return promise.each(tasks, ygor.run);
   },
 
+  'watch': (cli, ygor) => {
+    console.info('Starting', colors.blue('watch'));
+
+    return outils.execWebpack(cli, ygor, ROOT, '--watch');
+  },
+
   'run': () => {
+    console.info('Starting', colors.blue('server'));
+
     const exe = path.join(ROOT, 'src', 'server', 'node', 'server.js');
     const args = process.argv.slice(2).join(' ');
     return ygor.shell(['node', exe, args].join(' '));
+  },
+
+  'help': () => {
+    console.log(fs.readFileSync(path.join(__dirname, 'help.txt'), 'utf-8'));
+    return true;
   }
 
 };

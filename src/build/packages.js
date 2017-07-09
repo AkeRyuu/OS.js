@@ -33,7 +33,6 @@ const colors = require('colors');
 const glob = require('glob-promise');
 const path = require('path');
 const fs = require('fs-extra');
-const util = require('util');
 const promise = require('bluebird');
 const outils = require('./utils.js');
 
@@ -245,13 +244,8 @@ const buildPackage = (cfg, cli, ygor, name) => new Promise((resolve, reject) => 
   getPackageMetadata(cfg, name).then((metadata) => {
     console.info('Building', colors.green(metadata.path));
 
-    ygor.shell('webpack', {
-      cwd: path.join(ROOT, metadata._src),
-      env: {
-        OSJS_DEBUG: String(cli.debug),
-        OSJS_ROOT: ROOT
-      }
-    }).then(resolve).catch(reject);
+    outils.execWebpack(cli, ygor, path.join(ROOT, metadata._src))
+      .then(resolve).catch(reject);
   }).catch(reject);
 });
 

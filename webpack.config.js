@@ -36,7 +36,6 @@ const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const path = require('path');
-const qs = require('querystring');
 const osjs = require('./src/build/index.js');
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -126,6 +125,13 @@ function getStaticFiles(cfg) {
     }
   ];
 
+  files = files.concat(cfg.themes.styles.map((i) => {
+    return {
+      from: path.join(getThemeFile('styles', i), 'theme.js'),
+      to: 'themes/styles/' + i
+    };
+  }));
+
   files = files.concat(cfg.themes.icons.map((i) => {
     return {
       from: getThemeFile('icons', i),
@@ -148,41 +154,39 @@ function getStaticFiles(cfg) {
 ///////////////////////////////////////////////////////////////////////////////
 
 module.exports = new Promise((resolve, reject) => {
-  const env = qs.parse(process.env.OSJS_OPTIONS || '');
-  const options = {
-    debug: debug,
-    devtool: env.devtool,
-    minimize: String(env.minimize) !== 'false',
-    sourceMaps: String(env.sourcemap) !== 'false'
-  };
+  osjs.webpack.createConfiguration().then((result) => {
+    let {cfg, webpack, options} = result;
 
-  osjs.webpack.createConfiguration(options).then((result) => {
-    let {cfg, webpack} = result;
+    if ( options.verbose ) {
+      console.log('Build options', JSON.stringify(options));
+    }
 
-    webpack.plugins = webpack.plugins.concat([
-      new HtmlWebpackPlugin({
-        template: getTemplateFile('index.ejs'),
-        osjs: {
-          scripts: [
-            'settings.js',
-            'osjs.js',
-            'locales.js'
-          ],
-          styles: [
-            'osjs.css',
-            'themes.css'
+    if ( options.assets !== false ) {
+      webpack.plugins = webpack.plugins.concat([
+        new HtmlWebpackPlugin({
+          template: getTemplateFile('index.ejs'),
+          osjs: {
+            scripts: [
+              'settings.js',
+              'osjs.js',
+              'locales.js'
+            ],
+            styles: [
+              'osjs.css',
+              'themes.css'
+            ]
+          }
+        }),
+
+        new FaviconsWebpackPlugin(getTemplateFile('favicon.png')),
+
+        new CopyWebpackPlugin(getStaticFiles(cfg), {
+          ignore: [
+            '*.less'
           ]
-        }
-      }),
-
-      new FaviconsWebpackPlugin(getTemplateFile('favicon.png')),
-
-      new CopyWebpackPlugin(getStaticFiles(cfg), {
-        ignore: [
-          '*.less'
-        ]
-      })
-    ]);
+        })
+      ]);
+    }
 
     webpack.module.loaders.push({
       test: /((\w+)\.(eot|svg|ttf|woff|woff2))$/,
