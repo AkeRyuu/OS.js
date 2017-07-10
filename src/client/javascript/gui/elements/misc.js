@@ -27,13 +27,11 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DOM = require('utils/dom.js');
-const Utils = require('utils/misc.js');
-const Events = require('utils/events.js');
-const GUIElement = require('gui/element.js');
+import * as API from 'core/api';
+import * as DOM from 'utils/dom';
+import * as Utils from 'utils/misc';
+import * as Events from 'utils/events';
+import GUIElement from 'gui/element';
 
 /////////////////////////////////////////////////////////////////////////////
 // CLASSES
@@ -334,7 +332,7 @@ class GUIStatusBar extends GUIElement {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   GUIColorBox: GUIColorBox,
   GUIColorSwatch: GUIColorSwatch,
   GUIIframe: GUIIframe,

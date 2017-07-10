@@ -27,14 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-
-'use strict';
-
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const VFS = require('vfs/fs.js');
-const XHR = require('utils/xhr.js');
-const Utils = require('utils/misc.js');
+import Process from 'core/process';
+import FileMetadata from 'vfs/file';
+import * as VFS from 'vfs/fs';
+import * as FS from 'utils/fs';
+import * as Utils from 'utils/misc';
+import {preload} from 'utils/preloader';
+import {_} from 'core/locales';
 
 /**
  * @namespace ZipArchiver
@@ -187,9 +186,9 @@ class ZipArchiver {
       return;
     }
 
-    XHR.preload(this.preloads, (total, failed) => {
-      if ( failed.length ) {
-        cb(API._('ZIP_PRELOAD_FAIL'), failed);
+    preload(this.preloads).then((result) => {
+      if ( result.failed.length ) {
+        cb(_('ZIP_PRELOAD_FAIL'), result.failed);
         return;
       }
 
@@ -200,7 +199,7 @@ class ZipArchiver {
       }
 
       cb();
-    });
+    }).catch(() => cb());
   }
 
   /**
@@ -254,7 +253,7 @@ class ZipArchiver {
           writer = null;
 
           if ( type !== 'error' ) {
-            API.message('vfs:upload', file, {source: appRef ? appRef.__pid : null});
+            Process.message('vfs:upload', file, {source: appRef ? appRef.__pid : null});
           }
 
           cb(type === 'error' ? ev : false, type !== 'error');
@@ -406,7 +405,7 @@ class ZipArchiver {
     function finished(err, res, writer) {
       if ( err || !writer ) {
         console.groupEnd();
-        cb(err || API._('ZIP_NO_RESOURCE'));
+        cb(err || _('ZIP_NO_RESOURCE'));
         return;
       }
 
@@ -417,7 +416,7 @@ class ZipArchiver {
     }
 
     if ( !path ) {
-      finished(API._('ZIP_NO_PATH'));
+      finished(_('ZIP_NO_PATH'));
       return;
     }
 
@@ -464,7 +463,7 @@ class ZipArchiver {
 
     function finished(error, warnings, result) {
       if ( !error ) {
-        API.message('vfs:update', destination, {source: args.app ? args.app.__pid : null});
+        Process.message('vfs:update', destination, {source: args.app ? args.app.__pid : null});
       }
 
       console.groupEnd();
@@ -495,7 +494,7 @@ class ZipArchiver {
 
         console.log('Extract', item, dest);
         if ( item.directory ) {
-          VFS.mkdir(new VFS.File(dest), (error, result) => {
+          VFS.mkdir(new FileMetadata(dest), (error, result) => {
             if ( error ) {
               warnings.push(Utils.format('Could not create directory "{0}": {1}', item.filename, error));
             } else {
@@ -552,7 +551,7 @@ class ZipArchiver {
     function _checkDirectory(destination, cb) {
       console.debug('ZipArchiver::extract()', 'Checking destination');
 
-      const dst = new VFS.File({path: destination, type: 'dir'});
+      const dst = new FileMetadata({path: destination, type: 'dir'});
       VFS.mkdir(dst, (error, result) => {
         if ( error ) {
           console.warn('ZipArchiver::extract()', '_checkDirectory()', 'VFS::mkdir()', error);
@@ -605,23 +604,22 @@ class ZipArchiver {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
-  instance: function() {
-    return SingletonInstance;
-  },
-  create: function(args, callback) {
-    args = args || {};
-    if ( !SingletonInstance ) {
-      SingletonInstance = new ZipArchiver(args);
-    }
+export function instance() {
+  return SingletonInstance;
+}
 
-    SingletonInstance.init((error) => {
-      if ( !error ) {
-        if ( !window.zip ) {
-          error = API._('ZIP_VENDOR_FAIL');
-        }
-      }
-      callback(error, error ? false : SingletonInstance);
-    });
+export function create(args, callback) {
+  args = args || {};
+  if ( !SingletonInstance ) {
+    SingletonInstance = new ZipArchiver(args);
   }
-};
+
+  SingletonInstance.init((error) => {
+    if ( !error ) {
+      if ( !window.zip ) {
+        error = _('ZIP_VENDOR_FAIL');
+      }
+    }
+    callback(error, error ? false : SingletonInstance);
+  });
+}

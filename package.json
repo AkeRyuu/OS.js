@@ -29,6 +29,7 @@
     "run": "node osjs run"
   },
   "dependencies": {
+    "axios": "^0.16.2",
     "chokidar": "^1.7.0",
     "colors": "^1.1.2",
     "compression": "^1.6.2",
@@ -69,7 +70,9 @@
     "html-loader": "^0.4.5",
     "html-webpack-plugin": "^2.29.0",
     "less-loader": "^4.0.4",
+    "promise-limit": "^2.4.0",
     "style-loader": "^0.18.2",
+    "then-jsonp": "^1.0.3",
     "webpack": "^3.1.0"
   }
 }

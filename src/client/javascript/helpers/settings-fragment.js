@@ -28,9 +28,7 @@
  * @licence Simplified BSD License
  */
 
-'use strict';
-
-const Utils = require('utils/misc.js');
+import {mergeObject} from 'utils/misc';
 
 /////////////////////////////////////////////////////////////////////////////
 // Settings Fragment.
@@ -50,14 +48,21 @@ const Utils = require('utils/misc.js');
  * @memberof OSjs.Helpers
  * @see OSjs.Core.SettingsManager
  */
-class SettingsFragment {
+export default class SettingsFragment {
 
   /**
-   * @param   {Object}        obj         Settings tree
-   * @param   {String}        poolName    Name of the pool
+   * @param   {Object}          obj         Settings tree
+   * @param   {String}          poolName    Name of the pool
+   * @param   {SettingsManager} sm          SettigsManager instance
    */
-  constructor(obj, poolName) {
+  constructor(obj, poolName, sm) {
+    if ( !sm || !sm.changed ) {
+      console.error('NO SM FOR', poolName, sm)
+
+    }
+    this._sm = sm;
     this._pool = poolName;
+
     if ( obj.constructor !== {}.constructor ) {
       if ( !(obj instanceof Array) ) {
         throw new Error('SettingsFragment will not work unless you give it a object to manage.');
@@ -99,12 +104,10 @@ class SettingsFragment {
    * @return  {OSjs.Helpers.SettingsFragment}  Itself `this`
    */
   set(key, value, save, triggerWatch) {
-    const SettingsManager = require('core/settings-manager.js');
-
     // Key here is actually the value
     // So you can update the whole object if you want.
     if ( key === null ) {
-      Utils.mergeObject(this._settings, value);
+      mergeObject(this._settings, value);
     } else {
       if ( (['number', 'string']).indexOf(typeof key) >= 0 ) {
         this._settings[key] = value;
@@ -113,12 +116,12 @@ class SettingsFragment {
       }
     }
 
-    if (save) {
-      SettingsManager.save(this._pool, save);
+    if ( save ) {
+      this._sm.save(this._pool, save);
     }
 
     if ( typeof triggerWatch === 'undefined' || triggerWatch === true ) {
-      SettingsManager.changed(this._pool);
+      this._sm.changed(this._pool);
     }
 
     return this;
@@ -136,8 +139,7 @@ class SettingsFragment {
    * @return  Boolean
    */
   save(callback) {
-    const SettingsManager = require('core/settings-manager.js');
-    return SettingsManager.save(this._pool, callback);
+    return this._sm.save(this._pool, callback);
   }
 
   getChained() {
@@ -165,7 +167,7 @@ class SettingsFragment {
    * @return  {OSjs.Helpers.SettingsFragment}  Itself `this`
    */
   mergeDefaults(defaults) {
-    Utils.mergeObject(this._settings, defaults, {overwrite: false});
+    mergeObject(this._settings, defaults, {overwrite: false});
     return this;
   }
 
@@ -185,13 +187,8 @@ class SettingsFragment {
       throw new Error('The object doesn\'t contain that key. SettingsFragment will not work.');
     }
 
-    return new SettingsFragment(this._settings[key], this._pool);
+    return new SettingsFragment(this._settings[key], this._pool, this._sm);
   }
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = SettingsFragment;

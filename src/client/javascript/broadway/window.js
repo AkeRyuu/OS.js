@@ -27,11 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const Events = require('utils/events.js');
-const Window = require('core/window.js');
-const Broadway = require('broadway/broadway.js');
+import Events from 'utils/events';
+import Window from 'core/window';
 
 /**
  * @namespace Broadway
@@ -50,7 +47,7 @@ const Broadway = require('broadway/broadway.js');
  * @memberof OSjs.Broadway
  * @extends OSjs.Core.Window
  */
-class BroadwayWindow extends Window {
+export default class BroadwayWindow extends Window {
 
   /**
    * @param {Number}  id      Window ID
@@ -60,7 +57,7 @@ class BroadwayWindow extends Window {
    * @param {Number}  h       Height
    * @param {Node}    canvas  Canvas DOM Node
    */
-  constructor(id, x, y, w, h, canvas) {
+  constructor(id, x, y, w, h, canvas, broadway) {
     super('BroadwayWindow' + String(id), {
       width: w,
       height: h,
@@ -75,6 +72,7 @@ class BroadwayWindow extends Window {
       key_capture: true // IMPORTANT
     });
 
+    this._broadway = broadway;
     this._broadwayId = id;
     this._canvas = canvas;
   }
@@ -98,7 +96,7 @@ class BroadwayWindow extends Window {
 
     const inject = (type, ev) => {
       const pos = getMousePos(ev);
-      return Broadway.inject(this._broadwayId, type, ev, {
+      return this._broadway.inject(this._broadwayId, type, ev, {
         wx: this._position.x,
         wy: this._position.y,
         mx: parseInt(pos.x, 0),
@@ -148,7 +146,7 @@ class BroadwayWindow extends Window {
       return false;
     }
 
-    Broadway.close(this._broadwayId);
+    this._broadway.close(this._broadwayId);
 
     return true;
   }
@@ -183,7 +181,7 @@ class BroadwayWindow extends Window {
   }
 
   _onKeyEvent(ev, type) {
-    Broadway.inject(this._broadwayId, type, ev);
+    this._broadway.inject(this._broadwayId, type, ev);
   }
 
   _onChange(ev, byUser) {
@@ -192,16 +190,11 @@ class BroadwayWindow extends Window {
     }
 
     if ( ev === 'move' ) {
-      Broadway.move(this._broadwayId, this._position.x, this._position.y);
+      this._broadway.move(this._broadwayId, this._position.x, this._position.y);
     } else if ( ev === 'resize' ) {
-      Broadway.resize(this._broadwayId, this._dimension.w, this._dimension.h);
+      this._broadway.resize(this._broadwayId, this._dimension.w, this._dimension.h);
     }
   }
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = BroadwayWindow;

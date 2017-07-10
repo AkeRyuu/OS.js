@@ -27,10 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import {_} from 'core/locales';
 
 /**
  * An 'File Progress Indicator' dialog
@@ -44,7 +42,7 @@ const DialogWindow = require('core/dialog.js');
  * @constructor FileProgress
  * @memberof OSjs.Dialogs
  */
-class FileProgressDialog extends DialogWindow {
+export default class FileProgressDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args              An object with arguments
@@ -56,7 +54,7 @@ class FileProgressDialog extends DialogWindow {
     args = Object.assign({}, {}, args);
 
     super('FileProgressDialog', {
-      title: args.title || API._('DIALOG_FILEPROGRESS_TITLE'),
+      title: args.title || _('DIALOG_FILEPROGRESS_TITLE'),
       icon: 'actions/document-send.png',
       width: 400,
       height: 100
@@ -95,10 +93,4 @@ class FileProgressDialog extends DialogWindow {
   }
 
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = FileProgressDialog;
 

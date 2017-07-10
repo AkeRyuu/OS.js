@@ -27,13 +27,11 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 /**
  * @module core/service
  */
-
-const Process = require('core/process.js');
+import Process from 'core/process';
 
 /////////////////////////////////////////////////////////////////////////////
 // SERVICE
@@ -55,7 +53,7 @@ const Process = require('core/process.js');
  * @abstract
  * @extends core/process~Process
  */
-class Service extends Process {
+export default class Service extends Process {
 
   constructor(name, args, metadata) {
     console.group('Service::constructor()', name);
@@ -65,8 +63,3 @@ class Service extends Process {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports =  Service;

@@ -27,51 +27,62 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import {getBrowserPath} from 'core/config';
-import MountManager from 'core/mount-manager';
-import BaseTransport from 'vfs/transports/osjs';
 
 /**
- * @namespace Dist
- * @memberof OSjs.VFS.Transports
- */
-
-/////////////////////////////////////////////////////////////////////////////
-// API
-/////////////////////////////////////////////////////////////////////////////
-
-/*
- * OSjs 'dist' VFS Transport Module
+ * A collection of keycode mappings
  *
- * This is just a custom version of 'OSjs' module
+ * @memberof OSjs.Utils
+ * @var
  */
-const Transport = {
-  url: function(item, callback) {
-    const root = getBrowserPath();
-    const module = MountManager.getModuleFromPath(item.path, false, true);
-    const url = item.path.replace(module.match, root).replace(/^\/+/, '/');
+const Keycodes = (function() {
+  const list = {
+    F1: 112,
+    F2: 113,
+    F3: 114,
+    F4: 115,
+    F6: 118,
+    F7: 119,
+    F8: 120,
+    F9: 121,
+    F10: 122,
+    F11: 123,
+    F12: 124,
 
-    callback(false, url);
-  },
+    TILDE: 220,
+    GRAVE: 192,
 
-  scandir: function() {
-    return BaseTransport.module.scandir.apply(this, arguments);
-  },
+    CMD: 17,
+    LSUPER: 91,
+    RSUPER: 92,
 
-  read: function() {
-    return BaseTransport.module.read.apply(this, arguments);
+    DELETE: 46,
+    INSERT: 45,
+    HOME: 36,
+    END: 35,
+    PGDOWN: 34,
+    PGUP: 33,
+    PAUSE: 19,
+    BREAK: 19,
+    CAPS_LOCK: 20,
+    SCROLL_LOCK: 186,
+
+    BACKSPACE: 8,
+    SPACE: 32,
+    TAB: 9,
+    ENTER: 13,
+    ESC: 27,
+    LEFT: 37,
+    RIGHT: 39,
+    UP: 38,
+    DOWN: 40
+  };
+
+  // Add all ASCII chacters to the map
+  for ( let n = 33; n <= 126; n++ ) {
+    list[String.fromCharCode(n)] = n;
   }
-};
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
+  return Object.freeze(list);
+})();
 
-export default {
-  module: Transport,
-  defaults: function(opts) {
-    opts.readOnly = true;
-    opts.searchable = true;
-  }
-};
-
+export default Keycodes;

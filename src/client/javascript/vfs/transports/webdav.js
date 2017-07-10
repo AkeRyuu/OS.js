@@ -27,12 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const Utils = require('utils/misc.js');
-const MountManager = require('core/mount-manager.js');
+import MountManager from 'core/mount-manager';
+import Connection from 'core/connection';
+import * as FS from 'utils/fs';
+import * as Utils from 'utils/misc';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
+import FileMetadata from 'vfs/file';
 
 /**
  * @namespace WebDAV
@@ -46,7 +47,7 @@ const MountManager = require('core/mount-manager.js');
 function getModule(item) {
   const module = MountManager.getModuleFromPath(item.path, false, true);
   if ( !module ) {
-    throw new Error(API._('ERR_VFSMODULE_INVALID_FMT', item.path));
+    throw new Error(_('ERR_VFSMODULE_INVALID_FMT', item.path));
   }
   return module;
 }
@@ -63,7 +64,7 @@ function getCORSAllowed(item) {
 
 function getURL(item) {
   if ( typeof item === 'string' ) {
-    item = new OSjs.VFS.File(item);
+    item = new FileMetadata(item);
   }
   const module = getModule(item);
   const opts = module.options;
@@ -95,12 +96,12 @@ function davCall(method, args, callback, raw) {
 
   const mime = args.mime || 'application/octet-stream';
   const headers = {};
-  const sourceFile = new OSjs.VFS.File(args.path, mime);
+  const sourceFile = new FileMetadata(args.path, mime);
   const sourceUrl = getUrl(args.path, sourceFile);
 
   let destUrl = null;
   if ( args.dest ) {
-    destUrl = getUrl(args.dest, new OSjs.VFS.File(args.dest, mime));
+    destUrl = getUrl(args.dest, new FileMetadata(args.dest, mime));
     headers.Destination = destUrl;
   }
 
@@ -120,19 +121,19 @@ function davCall(method, args, callback, raw) {
       opts.query = args.data;
     }
 
-    API.call('curl', opts, (error, result) => {
+    Connection.request('curl', opts, (error, result) => {
       if ( error ) {
         callback(error);
         return;
       }
 
       if ( !result ) {
-        callback(API._('ERR_VFS_REMOTEREAD_EMPTY'));
+        callback(_('ERR_VFS_REMOTEREAD_EMPTY'));
         return;
       }
 
       if ( ([200, 201, 203, 204, 205, 207]).indexOf(result.httpCode) < 0 ) {
-        callback(API._('ERR_VFSMODULE_XHR_ERROR') + ': ' + result.httpCode);
+        callback(_('ERR_VFSMODULE_XHR_ERROR') + ': ' + result.httpCode);
         return;
       }
 
@@ -230,7 +231,7 @@ const Transport = {
         }
       });
 
-      return OSjs.VFS.Helpers.filterScandir(list, options);
+      return list;
     }
 
     davCall('PROPFIND', {path: item.path}, (error, doc) => {
@@ -238,7 +239,7 @@ const Transport = {
       if ( !error && doc ) {
         const result = parse(doc);
         result.forEach((iter) => {
-          list.push(new OSjs.VFS.File(iter));
+          list.push(new FileMetadata(iter));
         });
       }
       callback(error, list);
@@ -300,7 +301,7 @@ const Transport = {
  */
 function makePath(item) {
   if ( typeof item === 'string' ) {
-    item = new OSjs.VFS.File(item);
+    item = new FileMetadata(item);
   }
 
   const url = getURL(item);
@@ -308,7 +309,7 @@ function makePath(item) {
 
   let fullpath = url + reqpath;
   if ( !getCORSAllowed(item) ) {
-    fullpath = API.getConfig('Connection.FSURI') + '/get/' + fullpath;
+    fullpath = getConfig('Connection.FSURI') + '/get/' + fullpath;
   }
 
   return fullpath;
@@ -318,7 +319,7 @@ function makePath(item) {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   module: Transport,
   path: makePath
 };

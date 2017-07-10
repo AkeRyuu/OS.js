@@ -27,11 +27,11 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const VFS = require('vfs/fs.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import * as VFS from 'vfs/fs';
+import * as Main from 'core/main';
+import {_} from 'core/locales';
+import {getConfig, getDefaultPath} from 'core/config';
 
 /**
  * An 'FileUpload' dialog
@@ -43,7 +43,7 @@ const DialogWindow = require('core/dialog.js');
  * @constructor FileUpload
  * @memberof OSjs.Dialogs
  */
-class FileUploadDialog extends DialogWindow {
+export default class FileUploadDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args              An object with arguments
@@ -54,7 +54,7 @@ class FileUploadDialog extends DialogWindow {
    */
   constructor(args, callback) {
     args = Object.assign({}, {
-      dest: API.getDefaultPath(),
+      dest: getDefaultPath(),
       progress: {},
       file: null
     }, args);
@@ -63,11 +63,11 @@ class FileUploadDialog extends DialogWindow {
       args.dest = args.destination;
     }
     if ( !args.dest ) {
-      args.dest = API.getDefaultPath();
+      args.dest = getDefaultPath();
     }
 
     super('FileUploadDialog', {
-      title: args.title || API._('DIALOG_UPLOAD_TITLE'),
+      title: args.title || _('DIALOG_UPLOAD_TITLE'),
       icon: 'actions/document-new.png',
       width: 400,
       height: 100
@@ -77,9 +77,9 @@ class FileUploadDialog extends DialogWindow {
   init() {
     const root = super.init(...arguments);
     const message = this._find('Message');
-    const maxSize = API.getConfig('VFS.MaxUploadSize');
+    const maxSize = getConfig('VFS.MaxUploadSize');
 
-    message.set('value', API._('DIALOG_UPLOAD_DESC', this.args.dest, maxSize), true);
+    message.set('value', _('DIALOG_UPLOAD_DESC', this.args.dest, maxSize), true);
 
     const input = this._find('File');
     if ( this.args.file ) {
@@ -97,10 +97,10 @@ class FileUploadDialog extends DialogWindow {
     let progressDialog;
 
     const error = (msg, ev) => {
-      API.error(
-        API._('DIALOG_UPLOAD_FAILED'),
-        API._('DIALOG_UPLOAD_FAILED_MSG'),
-        msg || API._('DIALOG_UPLOAD_FAILED_UNKNOWN')
+      Main.error(
+        _('DIALOG_UPLOAD_FAILED'),
+        _('DIALOG_UPLOAD_FAILED_MSG'),
+        msg || _('DIALOG_UPLOAD_FAILED_UNKNOWN')
       );
 
       progressDialog._close(true);
@@ -121,9 +121,9 @@ class FileUploadDialog extends DialogWindow {
 
       this._find('ButtonCancel').set('disabled', true);
 
-      const desc = OSjs.API._('DIALOG_UPLOAD_MSG_FMT', file.name, file.type, fileSize, this.args.dest);
+      const desc = _('DIALOG_UPLOAD_MSG_FMT', file.name, file.type, fileSize, this.args.dest);
 
-      progressDialog = API.createDialog('FileProgress', {
+      progressDialog = DialogWindow.create('FileProgress', {
         message: desc,
         dest: this.args.dest,
         filename: file.name,
@@ -168,8 +168,3 @@ class FileUploadDialog extends DialogWindow {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = FileUploadDialog;

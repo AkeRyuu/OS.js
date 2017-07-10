@@ -27,12 +27,10 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import Authenticator from 'core/authenticator';
+import {isStandalone} from 'core/config';
 
-const API = require('core/api.js');
-const Authenticator = require('core/authenticator.js');
-
-class DemoAuthenticator extends Authenticator {
+export default class DemoAuthenticator extends Authenticator {
 
   login(login, callback) {
     let settings = {};
@@ -49,7 +47,7 @@ class DemoAuthenticator extends Authenticator {
       }
     }
 
-    if ( API.isStandalone() ) {
+    if ( isStandalone() ) {
       return callback(false, {
         userData: {
           id: 0,
@@ -80,10 +78,4 @@ class DemoAuthenticator extends Authenticator {
   }
 
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = DemoAuthenticator;
 

@@ -27,17 +27,15 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
 /**
  * @module core/connection
  */
 
-const API = require('core/api.js');
-const XHR = require('utils/xhr.js');
-const Events = require('utils/events.js');
+import axios from 'axios';
+import EventHandler from 'helpers/event-handler';
+import {getConfig} from 'core/config';
 
-let _CALL_INDEX = 1;
+//let _CALL_INDEX = 1;
 
 /*
  * Attaches options to a XHR call
@@ -65,8 +63,6 @@ function appendRequestOptions(data, options) {
   return data;
 }
 
-let _instance;
-
 /**
  * Default Connection Implementation
  *
@@ -75,10 +71,10 @@ let _instance;
  * @constructor Connection
  * @mixes utils/event-handler~EventHandler
  */
-class Connection {
+export default class Connection {
 
   static get instance() {
-    return _instance;
+    return window.___osjs__connection_instance;
   }
 
   /**
@@ -86,7 +82,9 @@ class Connection {
    */
   constructor() {
     /* eslint consistent-this: "warn" */
-    _instance = this;
+    if ( !window.___osjs__connection_instance ) {
+      window.___osjs__connection_instance = this;
+    }
 
     /**
      * If browser is offline
@@ -95,7 +93,10 @@ class Connection {
     this.offline    = false;
 
     this.index = 0;
-    this._evHandler = new OSjs.Helpers.EventHandler(name, []);
+    this._evHandler = new EventHandler(name, []);
+
+    this.onlineFn = () => this.onOnline();
+    this.offlineFn = () => this.onOffline();
   }
 
   /**
@@ -105,12 +106,8 @@ class Connection {
    */
   init(callback) {
     if ( typeof navigator.onLine !== 'undefined' ) {
-      Events.$bind(window, 'offline', (ev) => {
-        this.onOffline();
-      });
-      Events.$bind(window, 'online', (ev) => {
-        this.onOnline();
-      });
+      window.addEventListener('offline', this.offlineFn);
+      window.addEventListener('online', this.onlineFn);
     }
 
     callback();
@@ -120,14 +117,14 @@ class Connection {
    * Destroys the instance
    */
   destroy() {
-    Events.$unbind(window, 'offline');
-    Events.$unbind(window, 'online');
+    window.removeEventListener('offline', this.offlineFn);
+    window.removeEventListener('online', this.onlineFn);
 
     if ( this._evHandler ) {
       this._evHandler = this._evHandler.destroy();
     }
 
-    _instance = null;
+    window.___osjs__connection_instance = null;
   }
 
   /**
@@ -143,12 +140,12 @@ class Connection {
   getVFSPath(item, options) {
     options = options || {};
 
-    const base = API.getConfig('Connection.RootURI', '/');
+    const base = getConfig('Connection.RootURI', '/');
     if ( window.location.protocol === 'file:' ) {
       return base + item.path.replace(/^osjs:\/\/\//, '');
     }
 
-    let url = API.getConfig('Connection.FSURI', '/');
+    let url = getConfig('Connection.FSURI', '/');
     if ( item ) {
       url += '/read';
       options.path = item.path;
@@ -230,11 +227,6 @@ class Connection {
     console.warn('Connection::onOnline()', 'Going online...');
     this.offline = false;
 
-    const wm = require('core/windowmanager.js').instance;
-    if ( wm ) {
-      wm.notification({title: API._('LBL_INFO'), message: API._('CONNECTION_RESTORED')});
-    }
-
     if ( this._evHandler ) {
       this._evHandler.emit('online');
     }
@@ -249,15 +241,10 @@ class Connection {
     console.warn('Connection::onOffline()', 'Going offline...');
 
     if ( !this.offline && this._evHandler ) {
-      this._evHandler.emit('offline');
+      this._evHandler.emit('offline', [reconnecting]);
     }
 
     this.offline = true;
-
-    const wm = require('core/windowmanager.js').instance;
-    if ( wm ) {
-      wm.notification({title: API._('LBL_WARNING'), message: API._(reconnecting ? 'CONNECTION_RESTORE_FAILED' : 'CONNECTION_LOST')});
-    }
   }
 
   /**
@@ -284,7 +271,7 @@ class Connection {
     if ( this.offline ) {
       cbError('You are currently off-line and cannot perform this operation!');
       return false;
-    } else if ( (API.getConfig('Connection.Type') === 'standalone') ) {
+    } else if ( (getConfig('Connection.Type') === 'standalone') ) {
       cbError('You are currently running locally and cannot perform this operation!');
       return false;
     }
@@ -351,20 +338,17 @@ class Connection {
       console.warn('Connection::_requestPOST()', 'error', arguments);
     };
 
-    XHR.ajax(appendRequestOptions({
+    const requestOptions = appendRequestOptions({
       url: OSjs.VFS.Transports.OSjs.path(),
       method: 'POST',
-      body: form,
-      onsuccess: function Connection_POST_success(result) {
-        onsuccess(false, result);
-      },
-      onerror: function Connection_POST_error(result) {
-        onerror('error', null, result);
-      },
-      oncanceled: function Connection_POST_cancel(evt) {
-        onerror('canceled', null, evt);
-      }
-    }, options));
+      data: form
+    }, options);
+
+    axios(requestOptions).then((result) => {
+      onsuccess(result.data);
+    }).catch((error) => {
+      onerror(error.message || error, null, error);
+    });
 
     return true;
   }
@@ -384,19 +368,21 @@ class Connection {
       console.warn('Connection::_requestGET()', 'error', arguments);
     }).bind(this);
 
-    XHR.ajax(appendRequestOptions({
-      url: args.url || OSjs.VFS.Transports.OSjs.path(args.path),
-      method: args.method || 'GET',
+    const requestOptions = appendRequestOptions({
       responseType: 'arraybuffer',
-      onsuccess: (response, xhr) => {
-        if ( !xhr || xhr.status === 404 || xhr.status === 500 ) {
-          onsuccess({error: xhr.statusText || response, result: null});
-          return;
-        }
-        onsuccess.bind(this)({error: false, result: response});
-      },
-      onerror: onerror
-    }, options));
+      url: args.url || OSjs.VFS.Transports.OSjs.path(args.path),
+      method: args.method || 'GET'
+    }, options);
+
+    axios(requestOptions).then((result) => {
+      if ( result.status === 404 || result.status === 500 ) {
+        onsuccess({error: result.statusText || result.status, result: null});
+        return;
+      }
+      onsuccess({error: false, result: result.data});
+    }).catch((error) => {
+      onerror(error.message || error, null, error);
+    });
 
     return true;
   }
@@ -417,14 +403,18 @@ class Connection {
       console.warn('Connection::_requestXHR()', 'error', arguments);
     };
 
-    XHR.ajax(appendRequestOptions({
+    const requestOptions = appendRequestOptions({
+      responseType: 'json',
       url: url,
       method: 'POST',
-      json: true,
-      body: args,
-      onsuccess: onsuccess.bind(this),
-      onerror: onerror.bind(this)
-    }, options));
+      data: args
+    }, options);
+
+    axios(requestOptions).then((result) => {
+      onsuccess(result.data);
+    }).catch((error) => {
+      onerror(error.message || error, null, error);
+    });
 
     return true;
   }
@@ -463,7 +453,7 @@ class Connection {
     a = a || {};
     options = options || {};
 
-    const lname = 'APICall_' + _CALL_INDEX;
+    //const lname = 'APICall_' + _CALL_INDEX;
 
     if ( typeof cb !== 'function' ) {
       throw new TypeError('call() expects a function as callback');
@@ -473,31 +463,26 @@ class Connection {
       throw new TypeError('call() expects an object as options');
     }
 
+    /* FIXME FIXME FIXME
     if ( options.indicator !== false ) {
-      API.createLoading(lname, {className: 'BusyNotification', tooltip: 'API Call'});
+      Main.createLoading(lname, {className: 'BusyNotification', tooltip: 'API Call'});
     }
+    */
 
     if ( typeof options.indicator !== 'undefined' ) {
       delete options.indicator;
     }
 
-    _CALL_INDEX++;
+    //_CALL_INDEX++;
 
-    return Connection.instance.createRequest(m, a, function API_call_success(response) {
-      API.destroyLoading(lname);
+    return this.instance.createRequest(m, a, function API_call_success(response) {
+      //Main.destroyLoading(lname);
       response = response || {};
       cb(response.error || false, response.result);
     }, function API_call_error(err) {
-      API.destroyLoading(lname);
+      //Main.destroyLoading(lname);
       cb(err);
     }, options);
 
   }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = Connection;
-

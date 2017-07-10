@@ -29,12 +29,13 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-'use strict';
-
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const Application = require('core/application.js');
-const VFS = require('vfs/fs.js');
+import Application from 'core/application';
+import DialogWindow from 'core/dialog';
+import FileMetadata from 'vfs/file';
+import * as VFS from 'vfs/fs';
+import * as FS from 'utils/fs';
+import * as Main from 'core/main';
+import {_} from 'core/locales';
 
 /////////////////////////////////////////////////////////////////////////////
 // Default Application Helper
@@ -52,7 +53,7 @@ const VFS = require('vfs/fs.js');
  * @see OSjs.Helpers.DefaultApplicationWindow
  * @see OSjs.Core.Application
  */
-class DefaultApplication extends Application {
+export default class DefaultApplication extends Application {
 
   constructor(name, args, metadata, opts) {
     super(...arguments);
@@ -85,12 +86,12 @@ class DefaultApplication extends Application {
 
     if ( msg === 'vfs' && args.source !== null && args.source !== this.__pid && args.file ) {
       if ( win && current && current.path === args.file.path ) {
-        API.createDialog('Confirm', {
+        DialogWindow.create('Confirm', {
           buttons: ['yes', 'no'],
-          message: API._('MSG_FILE_CHANGED')
+          message: _('MSG_FILE_CHANGED')
         }, (ev, button) => {
           if ( button === 'ok' || button === 'yes' ) {
-            this.openFile(new VFS.File(args.file), win);
+            this.openFile(new FileMetadata(args.file), win);
           }
         }, {parent: win, modal: true});
       }
@@ -113,10 +114,10 @@ class DefaultApplication extends Application {
 
     const onError = (error) => {
       if ( error ) {
-        API.error(this.__label,
-                  API._('ERR_FILE_APP_OPEN'),
-                  API._('ERR_FILE_APP_OPEN_ALT_FMT',
-                        file.path, error)
+        Main.error(this.__label,
+                   _('ERR_FILE_APP_OPEN'),
+                   _('ERR_FILE_APP_OPEN_ALT_FMT',
+                     file.path, error)
         );
         return true;
       }
@@ -130,9 +131,9 @@ class DefaultApplication extends Application {
 
     const check = this.__metadata.mime || [];
     if ( !FS.checkAcceptMime(file.mime, check) ) {
-      API.error(this.__label,
-                API._('ERR_FILE_APP_OPEN'),
-                API._('ERR_FILE_APP_OPEN_FMT', file.path, file.mime)
+      Main.error(this.__label,
+                 _('ERR_FILE_APP_OPEN'),
+                 _('ERR_FILE_APP_OPEN_FMT', file.path, file.mime)
       );
       return false;
     }
@@ -176,9 +177,9 @@ class DefaultApplication extends Application {
       win._toggleLoading(false);
 
       if ( error ) {
-        API.error(this.__label,
-                  API._('ERR_FILE_APP_SAVE'),
-                  API._('ERR_FILE_APP_SAVE_ALT_FMT', file.path, error)
+        Main.error(this.__label,
+                   _('ERR_FILE_APP_SAVE'),
+                   _('ERR_FILE_APP_SAVE_ALT_FMT', file.path, error)
         );
         return;
       }
@@ -207,7 +208,7 @@ class DefaultApplication extends Application {
       return;
     }
 
-    API.createDialog('File', {
+    DialogWindow.create('File', {
       file: file,
       filename: file ? file.filename : this.defaultOptions.filename,
       filetypes: this.defaultOptions.filetypes,
@@ -237,12 +238,12 @@ class DefaultApplication extends Application {
   openDialog(file, win) {
 
     const openDialog = () => {
-      API.createDialog('File', {
+      DialogWindow.create('File', {
         file: file,
         filter: this.__metadata.mime
       }, (ev, button, result) => {
         if ( button === 'ok' && result ) {
-          this.openFile(new VFS.File(result), win);
+          this.openFile(new FileMetadata(result), win);
         }
       }, {parent: win, modal: true});
     };
@@ -273,10 +274,4 @@ class DefaultApplication extends Application {
   }
 
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = DefaultApplication;
 

@@ -28,12 +28,14 @@
  * @licence Simplified BSD License
  */
 /*eslint no-use-before-define: "off"*/
-'use strict';
+import axios from 'axios';
 
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const XHR = require('utils/xhr.js');
-const VFS = require('vfs/fs.js');
+import Process from 'core/process';
+import * as FS from 'utils/fs';
+import * as VFS from 'vfs/fs';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
+import FileMetadata from 'vfs/file';
 
 /**
  * @namespace OneDrive
@@ -87,7 +89,7 @@ function getItemType(iter) {
 function getMetadataFromItem(dir, item) {
   const path = 'onedrive://' + dir.replace(/^\/+/, '').replace(/\/+$/, '') + '/' + item.name; // FIXME
 
-  const itemFile = new VFS.File({
+  const itemFile = new FileMetadata({
     id: item.id,
     filename: item.name,
     size: item.size || 0,
@@ -105,7 +107,7 @@ function getMetadataFromItem(dir, item) {
  */
 function getItemMime(iter) {
   if ( !_mimeCache ) {
-    _mimeCache = API.getConfig('MIME.mapping', {});
+    _mimeCache = getConfig('MIME.mapping', {});
   }
   let mime = null;
   if ( getItemType(iter) !== 'dir' ) {
@@ -128,7 +130,7 @@ function createDirectoryList(dir, list, item, options) {
   const result = [];
 
   if ( dir !== '/' ) {
-    result.push(new VFS.File({
+    result.push(new FileMetadata({
       id: item.id,
       filename: '..',
       path: FS.dirname(item.path),
@@ -275,7 +277,7 @@ function resolvePath(item, callback, useParent) {
     if ( foundId ) {
       callback(false, foundId);
     } else {
-      callback(API._('ONEDRIVE_ERR_RESOLVE'));
+      callback(_('ONEDRIVE_ERR_RESOLVE'));
     }
   });
 }
@@ -338,7 +340,7 @@ OneDriveStorage.read = function(item, callback, options) {
       return;
     }
 
-    const file = new VFS.File(url, item.mime);
+    const file = new FileMetadata(url, item.mime);
     VFS.read(file, (error, response) => {
       if ( error ) {
         callback(error);
@@ -357,8 +359,7 @@ OneDriveStorage.write = function(file, data, callback) {
   const fd  = new FormData();
   FS.addFormFile(fd, 'file', data, file);
 
-  /*
-  API.curl({
+  /*API.curl({
     url: url,
     method: 'POST',
     json: true,
@@ -369,24 +370,21 @@ OneDriveStorage.write = function(file, data, callback) {
   });
   */
 
-  XHR.ajax({
+  axios({
     url: url,
     method: 'POST',
-    json: true,
-    body: fd,
-    onsuccess: (result) => {
-      if ( result && result.id ) {
-        callback(false, result.id);
-        return;
-      }
-      callback(API._('ERR_APP_UNKNOWN_ERROR'));
-    },
-    onerror: (error, result) => {
-      if ( result && result.error ) {
-        error += ' - ' + result.error.message;
-      }
-      callback(error);
+    responseType: 'json',
+    data: fd
+  }).then((response) => {
+    const result = response.data;
+    if ( result && result.id ) {
+      callback(false, result.id);
+      return;
     }
+    callback(_('ERR_APP_UNKNOWN_ERROR'));
+
+  }).catch((error) => {
+    callback(error.message);
   });
 };
 
@@ -532,9 +530,9 @@ OneDriveStorage.mkdir = function(dir, callback) {
 OneDriveStorage.upload = function(file, dest, callback) {
   console.info('OneDrive::upload()', file, dest);
 
-  const item = new VFS.File({
+  const item = new FileMetadata({
     filename: file.name,
-    path: FS.pathJoin((new VFS.File(dest)).path, file.name),
+    path: FS.pathJoin((new FileMetadata(dest)).path, file.name),
     mime: file.type,
     size: file.size
   });
@@ -574,15 +572,15 @@ OneDriveStorage.url = function(item, callback) {
 };
 
 OneDriveStorage.trash = function(file, callback) {
-  callback(API._('ERR_VFS_UNAVAILABLE'));
+  callback(_('ERR_VFS_UNAVAILABLE'));
 };
 
 OneDriveStorage.untrash = function(file, callback) {
-  callback(API._('ERR_VFS_UNAVAILABLE'));
+  callback(_('ERR_VFS_UNAVAILABLE'));
 };
 
 OneDriveStorage.emptyTrash = function(callback) {
-  callback(API._('ERR_VFS_UNAVAILABLE'));
+  callback(_('ERR_VFS_UNAVAILABLE'));
 };
 
 OneDriveStorage.freeSpace = function(root, callback) {
@@ -613,7 +611,7 @@ function getOneDrive(callback, onerror) {
         onerror(error);
       } else {
         _isMounted = true;
-        API.message('vfs:mount', 'OneDrive', {source: null});
+        Process.message('vfs:mount', 'OneDrive', {source: null});
         callback(OneDriveStorage);
       }
     });
@@ -650,13 +648,13 @@ function makeRequest(name, args, callback, options) {
 /*
  * This is the Microsoft OneDrive VFS Abstraction for OS.js
  */
-module.exports = {
+export default {
   module: OneDriveStorage,
   unmount: (cb) => {
     // FIXME: Should we sign out here too ?
     cb = cb || function() {};
     _isMounted = false;
-    API.message('vfs:unmount', 'OneDrive', {source: null});
+    Process.message('vfs:unmount', 'OneDrive', {source: null});
     cb(false, true);
   },
   mounted: () => {
@@ -664,7 +662,7 @@ module.exports = {
   },
   enabled: () => {
     try {
-      if ( API.getConfig('VFS.OneDrive.Enabled') ) {
+      if ( getConfig('VFS.OneDrive.Enabled') ) {
         return true;
       }
     } catch ( e ) {

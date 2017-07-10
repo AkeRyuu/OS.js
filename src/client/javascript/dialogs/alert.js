@@ -27,10 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import {_} from 'core/locales';
 
 /**
  * An 'Alert' dialog
@@ -42,7 +40,7 @@ const DialogWindow = require('core/dialog.js');
  * @constructor Alert
  * @memberof OSjs.Dialogs
  */
-class AlertDialog extends DialogWindow {
+export default class AlertDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args              An object with arguments
@@ -54,7 +52,7 @@ class AlertDialog extends DialogWindow {
     args = Object.assign({}, {}, args);
 
     super('AlertDialog', {
-      title: args.title || API._('DIALOG_ALERT_TITLE'),
+      title: args.title || _('DIALOG_ALERT_TITLE'),
       icon: 'status/dialog-warning.png',
       width: 400,
       height: 100
@@ -73,8 +71,3 @@ class AlertDialog extends DialogWindow {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = AlertDialog;

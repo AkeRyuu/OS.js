@@ -27,11 +27,10 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import axios from 'axios';
 
-const FS = require('utils/fs.js');
-const XHR = require('utils/xhr.js');
-const MountManager = require('core/mount-manager.js');
+import * as FS from 'utils/fs';
+import MountManager from 'core/mount-manager';
 
 /**
  * @namespace Web
@@ -84,20 +83,18 @@ function httpCall(func, item, callback) {
 
   const args = {
     method: func === 'exists' ? 'HEAD' : 'GET',
-    url: url,
-    onerror: (error) => {
-      callback(error);
-    },
-    onsuccess: (response) => {
-      callback(false, response);
-    }
+    url: url
   };
 
   if ( func === 'read' ) {
     args.responseType = 'arraybuffer';
   }
 
-  XHR.ajax(args);
+  axios(args).then((response) => {
+    callback(false, response.data);
+  }).catch((error) => {
+    callback(error.message);
+  });
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -177,7 +174,7 @@ const Transport = {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   defaults: (iter) => {
     iter.readOnly = true;
     iter.match = /^https?\:\/\//;

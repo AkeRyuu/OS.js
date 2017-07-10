@@ -28,12 +28,13 @@
  * @licence Simplified BSD License
  */
 /*eslint no-use-before-define: "off"*/
-'use strict';
-
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const Utils = require('utils/misc.js');
-const VFS = require('vfs/fs.js');
+import Process from 'core/process';
+import * as FS from 'utils/fs';
+import * as Utils from 'utils/misc';
+import * as VFS from 'vfs/fs';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
+import FileMetadata from 'vfs/file';
 
 /**
  * @namespace LocalStorage
@@ -93,7 +94,7 @@ function createMetadata(i, path, p) {
   }
   i.path = p + i.filename;
 
-  return new VFS.File(i);
+  return new FileMetadata(i);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -119,7 +120,7 @@ function initStorage() {
 
     _isMounted = true;
 
-    API.message('vfs:mount', 'LocalStorage', {source: null});
+    Process.message('vfs:mount', 'LocalStorage', {source: null});
   }
 }
 
@@ -149,7 +150,7 @@ function addToCache(iter, data, dab) {
   const dirname = FS.dirname(path);
 
   const type = typeof data === 'undefined' || data === null ? 'dir' : 'file';
-  const mimeConfig = API.getConfig('MIME.mapping');
+  const mimeConfig = getConfig('MIME.mapping');
 
   const mime = ((type) => {
     if ( type !== 'dir' ) {
@@ -332,7 +333,7 @@ const LocalStorageStorage = {
 
   scandir: function(item, callback, options) {
     const list = scanStorage(item, true);
-    callback(list === false ? API._('ERR_VFSMODULE_NOSUCH') : false, list);
+    callback(list === false ? _('ERR_VFSMODULE_NOSUCH') : false, list);
   },
 
   read: function(item, callback, options) {
@@ -370,7 +371,7 @@ const LocalStorageStorage = {
     }
 
     if ( readStorage(callback) === false ) {
-      callback(API._('ERR_VFS_FATAL'), false);
+      callback(_('ERR_VFS_FATAL'), false);
     }
   },
 
@@ -398,7 +399,7 @@ const LocalStorageStorage = {
         if ( addToCache(file, res, data) && commitStorage() ) {
           callback(err, true);
         } else {
-          callback(API._('ERR_VFS_FATAL'), false);
+          callback(_('ERR_VFS_FATAL'), false);
         }
       } catch ( e ) {
         callback(e);
@@ -413,7 +414,7 @@ const LocalStorageStorage = {
       if ( removeFromCache(src) && commitStorage() ) {
         callback(false, true);
       } else {
-        callback(API._('ERR_VFS_FATAL'), false);
+        callback(_('ERR_VFS_FATAL'), false);
       }
     } catch ( e ) {
       callback(e);
@@ -450,7 +451,7 @@ const LocalStorageStorage = {
             if ( list && list.length ) {
               Utils.asyncs(list, (entry, idx, next) => {
                 const rp = entry.path.substr(src.path.length);
-                const nd = new VFS.File(dest.path + rp);
+                const nd = new FileMetadata(dest.path + rp);
 
                 //console.warn('----->', 'source root', s);
                 //console.warn('----->', 'dest root', d);
@@ -478,7 +479,7 @@ const LocalStorageStorage = {
     // Check if destination exists
     const droot = getRealPath(FS.dirname(dest.path));
     if ( droot !== '/' && !getFromCache(droot) ) {
-      callback(API._('ERR_VFS_TARGET_NOT_EXISTS'));
+      callback(_('ERR_VFS_TARGET_NOT_EXISTS'));
       return;
     }
 
@@ -498,7 +499,7 @@ const LocalStorageStorage = {
     const ddirname = FS.dirname(dpath);
 
     if ( _fileCache[dpath] ) {
-      callback(API._('ERR_VFS_FILE_EXISTS'));
+      callback(_('ERR_VFS_FILE_EXISTS'));
       return;
     }
 
@@ -544,13 +545,13 @@ const LocalStorageStorage = {
 
   fileinfo: function(item, callback) {
     const data = getFromCache(item.path);
-    callback(data ? false : API._('ERR_VFSMODULE_NOSUCH'), data);
+    callback(data ? false : _('ERR_VFSMODULE_NOSUCH'), data);
   },
 
   mkdir: function(dir, callback) {
     const dpath = getRealPath(dir.path);
     if ( dpath !== '/' && getFromCache(dpath) ) {
-      callback(API._('ERR_VFS_FILE_EXISTS'));
+      callback(_('ERR_VFS_FILE_EXISTS'));
       return;
     }
 
@@ -562,7 +563,7 @@ const LocalStorageStorage = {
       if ( addToCache(dir) && commitStorage() ) {
         callback(false, true);
       } else {
-        callback(API._('ERR_VFS_FATAL'));
+        callback(_('ERR_VFS_FATAL'));
       }
     } catch ( e ) {
       callback(e);
@@ -570,13 +571,13 @@ const LocalStorageStorage = {
   },
 
   upload: function(file, dest, callback) {
-    const check = new VFS.File(FS.pathJoin((new VFS.File(dest)).path, file.name), file.type);
+    const check = new FileMetadata(FS.pathJoin((new FileMetadata(dest)).path, file.name), file.type);
     check.size = file.size;
     check.type = 'file';
 
     VFS.exists(check, (err, exists) => {
       if ( err || exists ) {
-        callback(err || API._('ERR_VFS_FILE_EXISTS'));
+        callback(err || _('ERR_VFS_FILE_EXISTS'));
       } else {
         const reader = new FileReader();
         reader.onerror = (e) => {
@@ -593,7 +594,7 @@ const LocalStorageStorage = {
   url: function(item, callback) {
     VFS.exists(item, (err, exists) => {
       if ( err || !exists ) {
-        callback(err || API._('ERR_VFS_FILE_EXISTS'));
+        callback(err || _('ERR_VFS_FILE_EXISTS'));
       } else {
         VFS.read(item, callback, {url: true});
       }
@@ -601,19 +602,19 @@ const LocalStorageStorage = {
   },
 
   find: function(file, callback) {
-    callback(API._('ERR_VFS_UNAVAILABLE'));
+    callback(_('ERR_VFS_UNAVAILABLE'));
   },
 
   trash: function(file, callback) {
-    callback(API._('ERR_VFS_UNAVAILABLE'));
+    callback(_('ERR_VFS_UNAVAILABLE'));
   },
 
   untrash: function(file, callback) {
-    callback(API._('ERR_VFS_UNAVAILABLE'));
+    callback(_('ERR_VFS_UNAVAILABLE'));
   },
 
   emptyTrash: function(callback) {
-    callback(API._('ERR_VFS_UNAVAILABLE'));
+    callback(_('ERR_VFS_UNAVAILABLE'));
   },
 
   freeSpace: function(root, callback) {
@@ -643,12 +644,12 @@ function makeRequest(name, args, callback, options) {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   module: LocalStorageStorage,
   unmount: (cb) => {
     cb = cb || function() {};
     _isMounted = false;
-    API.message('vfs:unmount', 'LocalStorage', {source: null});
+    Process.message('vfs:unmount', 'LocalStorage', {source: null});
     cb(false, true);
   },
   mounted: () => {
@@ -656,7 +657,7 @@ module.exports = {
   },
   enabled: () => {
     try {
-      if ( API.getConfig('VFS.LocalStorage.Enabled') ) {
+      if ( getConfig('VFS.LocalStorage.Enabled') ) {
         return true;
       }
     } catch ( e ) {

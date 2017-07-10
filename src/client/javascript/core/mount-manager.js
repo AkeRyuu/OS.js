@@ -27,15 +27,16 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 /**
  * @module core/mount-manager
  */
+import Promise from 'bluebird';
 
-const API = require('core/api.js');
-const Utils = require('utils/misc.js');
-const SettingsManager = require('core/settings-manager.js');
+import Process from 'core/process';
+import SettingsManager from 'core/settings-manager';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
 
 /**
  * A mountpoint object for use in MountManager
@@ -106,7 +107,7 @@ const MountManager = (() => {
 
     const sname = name.replace(/\s/g, '-').toLowerCase();
     if ( _modules[name] ) {
-      throw new Error(API._('ERR_VFSMODULE_ALREADY_MOUNTED_FMT', name));
+      throw new Error(_('ERR_VFSMODULE_ALREADY_MOUNTED_FMT', name));
     }
 
     const match = new RegExp('^' + (sname + '://').replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'));
@@ -128,7 +129,7 @@ const MountManager = (() => {
         MountManager._request(mount, n, a, callback, options);
       },
       unmount: (cb) => {
-        (cb || function() {})(API._('ERR_VFS_UNAVAILABLE'), false);
+        (cb || function() {})(_('ERR_VFS_UNAVAILABLE'), false);
       },
       mounted: () => {
         return true;
@@ -167,7 +168,7 @@ const MountManager = (() => {
       })();
 
       if ( validModule !== true ) {
-        throw new Error(API._('ERR_VFSMODULE_INVALID_CONFIG_FMT', validModule));
+        throw new Error(_('ERR_VFSMODULE_INVALID_CONFIG_FMT', validModule));
       }
     }
 
@@ -189,7 +190,7 @@ const MountManager = (() => {
       if ( _inited ) {
         _modules[opts.name] = Object.seal(opts);
         if ( emitEvent ) {
-          API.message('vfs:mount', opts.name, {source: null});
+          Process.message('vfs:mount', opts.name, {source: null});
         }
 
         console.debug('MountManager::_add()', 'Created mountpoint...', opts);
@@ -214,7 +215,7 @@ const MountManager = (() => {
 
       _inited = true;
 
-      const config = API.getConfig('VFS.Mountpoints', {});
+      const config = getConfig('VFS.Mountpoints', {});
 
       _queue.forEach((args) => {
         const mount = createMountPoint(null, args[0]);
@@ -256,12 +257,12 @@ const MountManager = (() => {
 
       const target = OSjs.VFS.Transports[mount.transport];
       if ( !target ) {
-        callback(API._('ERR_VFSMODULE_INVALID_TYPE_FMT', mount.transport));
+        callback(_('ERR_VFSMODULE_INVALID_TYPE_FMT', mount.transport));
         return;
       }
 
       if ( isReadOnly(method, mount, args) ) {
-        callback(API._('ERR_VFSMODULE_READONLY'));
+        callback(_('ERR_VFSMODULE_READONLY'));
         return;
       }
 
@@ -277,7 +278,7 @@ const MountManager = (() => {
 
       const module = target.module || {};
       if ( !module[method] ) {
-        callback(API._('ERR_VFS_UNAVAILABLE'));
+        callback(_('ERR_VFS_UNAVAILABLE'));
       } else {
         const fargs = args || [];
         fargs.push(callback);
@@ -296,16 +297,17 @@ const MountManager = (() => {
      * @param {Function} callback Callback when done
      */
     restore: function(callback) {
-      Utils.asyncs(SettingsManager.instance('VFS').get('mounts', []), (iter, idx, next) => {
-        try {
-          MountManager.add(iter, next);
-        } catch ( e ) {
-          console.warn('MountManager::restore()', e, e.stack);
-          next();
-        }
-      }, () => {
-        callback();
-      });
+      const mountPoints = SettingsManager.instance('VFS').get('mounts', []);
+      Promise.each(mountPoints, (iter) => {
+        return new Promise((yes, no) => {
+          try {
+            MountManager.add(iter, yes);
+          } catch ( e ) {
+            console.warn('MountManager::restore()', e, e.stack);
+            yes();
+          }
+        });
+      }).then(callback).catch(callback);
     },
 
     /**
@@ -333,7 +335,7 @@ const MountManager = (() => {
           searchable: false,
           unmount: (done) => {
             isMounted = false;
-            API.message('vfs:unmount', opts.name, {source: null});
+            Process.message('vfs:unmount', opts.name, {source: null});
             (done || function() {})(false, true);
           },
           mounted: () => {
@@ -360,7 +362,7 @@ const MountManager = (() => {
      */
     remove: function(moduleName, cb) {
       if ( !_modules[moduleName] ) {
-        throw new Error(API._('ERR_VFSMODULE_NOT_MOUNTED_FMT', moduleName));
+        throw new Error(_('ERR_VFSMODULE_NOT_MOUNTED_FMT', moduleName));
       }
 
       _modules[moduleName].unmount(function() {
@@ -498,4 +500,4 @@ const MountManager = (() => {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = MountManager;
+export default MountManager;

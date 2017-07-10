@@ -394,7 +394,7 @@
           storedItem.options = {};
         }
 
-        var panelSettings = new OSjs.Helpers.SettingsFragment(storedItem.options, 'CoreWM');
+        var panelSettings = new OSjs.Helpers.SettingsFragment(storedItem.options, 'CoreWM', OSjs.Core.getSettingsManager()); // FIXME: SettingsManager method to fet one
         var p = new OSjs.Applications.CoreWM.Panel('Default', panelSettings, self);
         p.init(document.body);
 
@@ -406,7 +406,7 @@
 
             var itemSettings = {};
             try {
-              itemSettings = new OSjs.Helpers.SettingsFragment(iter.settings, 'CoreWM');
+              itemSettings = new OSjs.Helpers.SettingsFragment(iter.settings, 'CoreWM', OSjs.Core.getSettingsManager()); // FIXME: SettingsManager method to fet one
             } catch ( ex ) {
               console.warn('An error occured while loading PanelItem settings', ex);
               console.warn('stack', ex.stack);
@@ -476,7 +476,7 @@
         item.settings = {};
       }
 
-      var settings = new OSjs.Helpers.SettingsFragment(item.settings, 'CoreWM');
+      var settings = new OSjs.Helpers.SettingsFragment(item.settings, 'CoreWM', OSjs.Core.getSettingsManager()); // FIXME: SettingsManager method to fet one
 
       try {
         var w = new OSjs.Applications.CoreWM.Widgets[item.name](settings);
@@ -1063,6 +1063,8 @@
     }
 
     document.body.setAttribute('data-theme', settings.styleTheme);
+    document.body.setAttribute('data-icon-theme', settings.iconTheme);
+    document.body.setAttribute('data-sound-theme', settings.soundTheme);
   };
 
   CoreWM.prototype.setIconView = function(settings) {

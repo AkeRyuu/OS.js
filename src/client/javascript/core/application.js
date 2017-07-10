@@ -28,15 +28,14 @@
  * @licence Simplified BSD License
  */
 
-'use strict';
-
 /**
  * @module core/application
  */
-
-const Process = require('core/process.js');
-const SettingsManager = require('core/settings-manager.js');
-const WindowManager = require('core/windowmanager.js');
+import Process from 'core/process';
+import SettingsManager from 'core/settings-manager';
+import WindowManager from 'core/windowmanager';
+import Window from 'core/window';
+import Scheme from 'gui/scheme';
 
 /**
  * Look at the 'ProcessEvent' for more.
@@ -74,7 +73,7 @@ const WindowManager = require('core/windowmanager.js');
  * @abstract
  * @extends core/process~Process
  */
-class Application extends Process {
+export default class Application extends Process {
 
   constructor(name, args, metadata, settings) {
     console.group('Application::constructor()', arguments);
@@ -247,8 +246,6 @@ class Application extends Process {
    * @param   {Function}      cb      Callback => fn(scheme)
    */
   _loadScheme(str, cb) {
-    const Scheme = require('gui/scheme.js');
-
     const s = new Scheme(this._getResource(str));
     s.load(function __onApplicationLoadScheme(error, result) {
       if ( error ) {
@@ -272,7 +269,6 @@ class Application extends Process {
    * @return  {OSjs.Core.Window}
    */
   _addWindow(w, cb, setmain) {
-    const Window = require('core/window.js');
     if ( !(w instanceof Window) ) {
       throw new TypeError('Application::_addWindow() expects Core.Window');
     }
@@ -310,7 +306,6 @@ class Application extends Process {
    * @return  {Boolean}
    */
   _removeWindow(w) {
-    const Window = require('core/window.js');
     if ( !(w instanceof Window) ) {
       throw new TypeError('Application::_removeWindow() expects Core.Window');
     }
@@ -486,8 +481,3 @@ class Application extends Process {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = Application;

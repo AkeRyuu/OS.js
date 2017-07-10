@@ -27,11 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const DOM = require('utils/dom.js');
-const GUI = require('utils/gui.js');
-const GUIDataView = require('gui/dataview.js');
+import * as DOM from 'utils/dom';
+import * as GUI from 'utils/gui';
+import GUIDataView from 'gui/dataview';
 
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -291,6 +289,6 @@ class GUITreeView extends GUIDataView {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   GUITreeView: GUITreeView
 };

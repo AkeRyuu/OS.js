@@ -28,14 +28,13 @@
  * @licence Simplified BSD License
  */
 
-'use strict';
-
 /**
  * @module core/process
  */
 
-const FS = require('utils/fs.js');
-const Connection = require('core/connection.js');
+import Connection from 'core/connection';
+import EventHandler from 'helpers/event-handler';
+import * as Assets from 'core/assets';
 
 /**
  * The predefined events are as follows:
@@ -94,7 +93,7 @@ function _kill(pid) {
  * @abstract
  * @mixes EventHandler
  */
-class Process {
+export default class Process {
 
   /**
    * @param   {string}    name        Process Name
@@ -140,7 +139,7 @@ class Process {
      */
     this.__destroyed = false;
 
-    this.__evHandler = new OSjs.Helpers.EventHandler(name, [
+    this.__evHandler = new EventHandler(name, [
       'message', 'attention', 'hashchange', 'api', 'destroy', 'destroyWindow', 'vfs',
       'vfs:mount', 'vfs:unmount', 'vfs:mkdir', 'vfs:write', 'vfs:move',
       'vfs:copy', 'vfs:delete', 'vfs:upload', 'vfs:update'
@@ -191,15 +190,15 @@ class Process {
    * @param   {Object}    [opts]    Message options
    */
   _onMessage(msg, obj, opts) {
-    const Window = require('core/window.js');
-
     opts = opts || {};
 
     let sourceId = opts.source;
-    if ( sourceId instanceof Process ) {
-      sourceId = sourceId.__pid;
-    } else if ( sourceId instanceof Window ) {
-      sourceId = sourceId._app ? sourceId._app.__pid : -1;
+    if ( typeof sourceId === 'object' ) {
+      if ( sourceId instanceof Process ) {
+        sourceId = sourceId.__pid;
+      } else if ( sourceId.constructor.name === 'Window' ) {
+        sourceId = sourceId._app ? sourceId._app.__pid : -1;
+      }
     }
 
     if ( this.__evHandler && sourceId !== this.__pid ) {
@@ -328,15 +327,13 @@ class Process {
   /**
    * Get full path to a resorce belonging to this process (package)
    *
-   * @see Process::getResource()
-   *
    * @param   {String}      src       Resource name (path)
    * @param   {Boolean}     [vfspath] Return a valid VFS path
    *
    * @return  {String}
    */
   _getResource(src, vfspath) {
-    return Process.getResource(this, src, vfspath);
+    return Assets.getPackageResource(this, src, vfspath);
   }
 
   /**
@@ -479,57 +476,5 @@ class Process {
     return _PROCS;
   }
 
-  static getResource(app, name, vfspath) {
-    if ( name.match(/^(https?:)?\//) ) {
-      return name;
-    }
-    name = name.replace(/^\.\//, '');
-
-    function getName() {
-      let appname = null;
-      if ( app instanceof Process ) {
-        appname = app.__pname;
-      } else if ( typeof app === 'string' ) {
-        appname = app;
-      }
-
-      return appname;
-    }
-
-    function getResultPath(path, userpkg) {
-      if ( vfspath ) {
-        if ( userpkg ) {
-          path = path.substr(module.exports.getConfig('Connection.FSURI').length);
-        } else {
-          path = 'osjs:///' + path;
-        }
-      }
-
-      return path;
-    }
-
-    return (() => {
-      const pacman = require('core/package-manager.js');
-      const appname = getName();
-      const pkg = pacman.getPackage(appname);
-
-      let path = '';
-      if ( pkg ) {
-        if ( pkg.scope === 'user' ) {
-          path = '/user-package/' + FS.filename(pkg.path) + '/' + name.replace(/^\//, '');
-        } else {
-          path = 'packages/' + pkg.path + '/' + name;
-        }
-      }
-
-      return getResultPath(path, pkg.scope === 'user');
-    })();
-  }
-
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = Process;

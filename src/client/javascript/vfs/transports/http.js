@@ -27,12 +27,12 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 /**
  * @namespace HTTP
  * @memberof OSjs.VFS.Transports
  */
+import BaseTransport from 'vfs/transports/osjs';
 
 /////////////////////////////////////////////////////////////////////////////
 // EXPORTS
@@ -41,10 +41,9 @@
 /*
  * Default HTTP VFS Transport Module
  */
-module.exports = {
+export default {
   module: {
     read: function(item, callback, options) {
-      const BaseTransport = require('vfs/transports/osjs.js');
       return BaseTransport.fetch(item.path, item.mime, callback, options);
     }
   }

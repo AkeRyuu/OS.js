@@ -27,18 +27,23 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 /**
  * @module core/windowmanager
  */
+import * as DOM from 'utils/dom';
+import * as GUI from 'utils/gui';
+import * as Events from 'utils/events';
+import * as Utils from 'utils/misc';
 
-const API = require('core/api.js');
-const DOM = require('utils/dom.js');
-const Utils = require('utils/misc.js');
-const Events = require('utils/events.js');
-const Process = require('core/process.js');
-const SettingsManager = require('core/settings-manager.js');
+import Process from 'core/process';
+import Window from 'core/window';
+import DialogWindow from 'core/dialog';
+import Connection from 'core/connection';
+import SettingsManager from 'core/settings-manager';
+
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
 
 /////////////////////////////////////////////////////////////////////////////
 // WINDOW MOVEMENT BEHAVIOUR
@@ -343,7 +348,7 @@ function createWindowBehaviour(win, wm) {
    * When mouse button is pressed
    */
   function onMouseDown(ev, action, win, mousePosition) {
-    OSjs.API.blurMenu();
+    GUI.blurMenu();
     ev.preventDefault();
 
     if ( win._state.maximized ) {
@@ -400,8 +405,6 @@ function createWindowBehaviour(win, wm) {
 // WINDOW MANAGER
 /////////////////////////////////////////////////////////////////////////////
 
-let _instance;
-
 /**
  * WindowManager Process Class
  *
@@ -413,10 +416,10 @@ let _instance;
  * @abstract
  * @extends core/process~Process
  */
-class WindowManager extends Process {
+export default class WindowManager extends Process {
 
   static get instance() {
-    return _instance;
+    return window.___osjs__wm_instance;
   }
 
   /**
@@ -434,7 +437,7 @@ class WindowManager extends Process {
     super(name, args, metadata);
 
     /* eslint consistent-this: "warn" */
-    _instance = this;
+    window.___osjs__wm_instance = this;
 
     this._$notifications = null;
     this._windows        = [];
@@ -454,6 +457,14 @@ class WindowManager extends Process {
     this.__name    = (name || 'WindowManager');
     this.__path    = metadata.path;
     this.__iter    = metadata.iter;
+
+    Connection.instance.subscribe('online', () => {
+      this.notification({title: _('LBL_INFO'), message: _('CONNECTION_RESTORED')});
+    });
+
+    Connection.instance.subscribe('offline', (reconnecting) => {
+      this.notification({title: _('LBL_WARNING'), message: _(reconnecting ? 'CONNECTION_RESTORE_FAILED' : 'CONNECTION_LOST')});
+    });
 
     console.groupEnd();
   }
@@ -488,7 +499,7 @@ class WindowManager extends Process {
     this._lastWin = null;
     this._scheme = null;
 
-    _instance = null;
+    window.___osjs__wm_instance = null;
 
     return super.destroy();
   }
@@ -564,9 +575,6 @@ class WindowManager extends Process {
    * @return  {OSjs.Core.Window}                The added window
    */
   addWindow(w, focus) {
-    const Window = require('core/window.js');
-    const DialogWindow = require('core/dialog.js');
-
     if ( !(w instanceof Window) ) {
       console.warn('WindowManager::addWindow()', 'Got', w);
       throw new TypeError('given argument was not instance of Core.Window');
@@ -584,7 +592,7 @@ class WindowManager extends Process {
     this._windows.push(w);
     w._inited();
 
-    if ( focus === true || (w instanceof DialogWindow) ) {
+    if ( focus === true || w instanceof DialogWindow ) {
       setTimeout(() => {
         w._focus();
       }, 10);
@@ -603,8 +611,6 @@ class WindowManager extends Process {
    * @return  {Boolean}               On success
    */
   removeWindow(w) {
-    const Window = require('core/window.js');
-
     if ( !(w instanceof Window) ) {
       console.warn('WindowManager::removeWindow()', 'Got', w);
       throw new TypeError('given argument was not instance of Core.Window');
@@ -930,7 +936,7 @@ class WindowManager extends Process {
    * @return  {String[]}   The list of themes
    */
   getStyleThemes() {
-    return API.getConfig('Styles', []);
+    return getConfig('Styles', []);
   }
 
   /**
@@ -939,7 +945,7 @@ class WindowManager extends Process {
    * @return  {String[]}   The list of themes
    */
   getSoundThemes() {
-    return API.getConfig('Sounds', []);
+    return getConfig('Sounds', []);
   }
 
   /**
@@ -948,7 +954,7 @@ class WindowManager extends Process {
    * @return  {String[]}   The list of themes
    */
   getIconThemes() {
-    return API.getConfig('Icons', []);
+    return getConfig('Icons', []);
   }
 
   /**
@@ -1065,8 +1071,3 @@ class WindowManager extends Process {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = WindowManager;

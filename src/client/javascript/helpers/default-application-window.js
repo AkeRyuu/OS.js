@@ -29,12 +29,11 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-'use strict';
-
-const API = require('core/api.js');
-const VFS = require('vfs/fs.js');
-const Window = require('core/window.js');
-const Scheme = require('gui/scheme.js');
+import FileMetadata from 'vfs/file';
+import Scheme from 'gui/scheme';
+import Window from 'core/window';
+import DialogWindow from 'core/dialog';
+import {_} from 'core/locales';
 
 /////////////////////////////////////////////////////////////////////////////
 // Default Application Window Helper
@@ -52,12 +51,12 @@ const Scheme = require('gui/scheme.js');
  * @see OSjs.Helpers.DefaultApplication
  * @see OSjs.Core.Window
  */
-class DefaultApplicationWindow extends Window {
+export default class DefaultApplicationWindow extends Window {
 
   constructor(name, args, app, scheme, file) {
     super(...arguments);
     this.hasClosingDialog = false;
-    this.currentFile = file ? new VFS.File(file) : null;
+    this.currentFile = file ? new FileMetadata(file) : null;
     this.hasChanged = false;
   }
 
@@ -131,7 +130,7 @@ class DefaultApplicationWindow extends Window {
     if ( type === 'itemDrop' && item ) {
       const data = item.data;
       if ( data && data.type === 'file' && data.mime ) {
-        this._app.openFile(new VFS.File(data), this);
+        this._app.openFile(new FileMetadata(data), this);
       }
     }
   }
@@ -169,9 +168,9 @@ class DefaultApplicationWindow extends Window {
    */
   checkHasChanged(cb) {
     if ( this.hasChanged ) {
-      API.createDialog('Confirm', {
+      DialogWindow.create('Confirm', {
         buttons: ['yes', 'no'],
-        message: API._('MSG_GENERIC_APP_DISCARD')
+        message: _('MSG_GENERIC_APP_DISCARD')
       }, function(ev, button) {
         cb(button === 'ok' || button === 'yes');
       }, {parent: this, modal: true});
@@ -252,8 +251,3 @@ class DefaultApplicationWindow extends Window {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = DefaultApplicationWindow;

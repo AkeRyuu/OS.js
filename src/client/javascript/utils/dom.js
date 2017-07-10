@@ -27,11 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-/////////////////////////////////////////////////////////////////////////////
-// DOM
-/////////////////////////////////////////////////////////////////////////////
 
 /**
  * Get element by ID
@@ -43,9 +38,9 @@
  *
  * @return  {Node}        Found element or null
  */
-module.exports.$ = function Utils_$(id) {
+export function $(id) {
   return document.getElementById(id);
-};
+}
 
 /**
  * Remove unwanted characters from ID or className
@@ -57,9 +52,9 @@ module.exports.$ = function Utils_$(id) {
  *
  * @return  {String}            The new name
  */
-module.exports.$safeName = function Utils_$safeName(str) {
+export function $safeName(str) {
   return (str || '').replace(/[^a-zA-Z0-9]/g, '_');
-};
+}
 
 /**
  * Remove given element from parent
@@ -69,11 +64,11 @@ module.exports.$safeName = function Utils_$safeName(str) {
  *
  * @param   {Node}    node      The DOM Element
  */
-module.exports.$remove = function Utils_$remove(node) {
+export function $remove(node) {
   if ( node && node.parentNode ) {
     node.parentNode.removeChild(node);
   }
-};
+}
 
 /**
  * Empty this element (remove children)
@@ -83,13 +78,13 @@ module.exports.$remove = function Utils_$remove(node) {
  *
  * @param   {Node}             myNode                 The DOM Element
  */
-module.exports.$empty = function Utils_$empty(myNode) {
+export function $empty(myNode) {
   if ( myNode ) {
     while ( myNode.firstChild ) {
       myNode.removeChild(myNode.firstChild);
     }
   }
-};
+}
 
 /**
  * Get CSS style attribute
@@ -102,7 +97,7 @@ module.exports.$empty = function Utils_$empty(myNode) {
  *
  * @return  {String}                      Style attribute
  */
-module.exports.$getStyle = function Utils_$getStyle(oElm, strCssRule) {
+export function $getStyle(oElm, strCssRule) {
   let strValue = '';
   if ( document.defaultView && document.defaultView.getComputedStyle ) {
     strValue = document.defaultView.getComputedStyle(oElm, '').getPropertyValue(strCssRule);
@@ -113,7 +108,7 @@ module.exports.$getStyle = function Utils_$getStyle(oElm, strCssRule) {
     strValue = oElm.currentStyle[strCssRule];
   }
   return strValue;
-};
+}
 
 /**
  * Get element absolute position
@@ -129,7 +124,7 @@ module.exports.$getStyle = function Utils_$getStyle(oElm, strCssRule) {
  *
  * @return  {Object}                    The bounding box
  */
-module.exports.$position = function Utils_$position(el, parentEl) {
+export function $position(el, parentEl) {
   if ( el ) {
     if ( parentEl ) {
       const result = {left: 0, top: 0, width: el.offsetWidth, height: el.offsetHeight};
@@ -146,7 +141,7 @@ module.exports.$position = function Utils_$position(el, parentEl) {
     return el.getBoundingClientRect();
   }
   return null;
-};
+}
 
 /**
  * Traverses down to the parentnode validated by filter
@@ -159,7 +154,7 @@ module.exports.$position = function Utils_$position(el, parentEl) {
  *
  * @return  {Node}            el        The DOM element
  */
-module.exports.$parent = function Utils_$parent(el, cb) {
+export function $parent(el, cb) {
   let result = null;
 
   if ( el && cb ) {
@@ -174,7 +169,7 @@ module.exports.$parent = function Utils_$parent(el, cb) {
   }
 
   return result;
-};
+}
 
 /**
  * Get the index of an element within a node
@@ -187,7 +182,7 @@ module.exports.$parent = function Utils_$parent(el, cb) {
  *
  * @return  {Number}              The index
  */
-module.exports.$index = function Utils_$index(el, parentEl) {
+export function $index(el, parentEl) {
   if ( el ) {
     parentEl = parentEl || el.parentNode;
     if ( parentEl ) {
@@ -197,7 +192,7 @@ module.exports.$index = function Utils_$index(el, parentEl) {
     }
   }
   return -1;
-};
+}
 
 /**
  * Selects range in a text field
@@ -209,7 +204,7 @@ module.exports.$index = function Utils_$index(el, parentEl) {
  * @param     {Number}    start     Start position
  * @param     {Number}    end       End position
  */
-module.exports.$selectRange = function Utils_$selectRange(field, start, end) {
+export function $selectRange(field, start, end) {
   if ( !field ) {
     throw new Error('Cannot select range: missing element');
   }
@@ -233,7 +228,7 @@ module.exports.$selectRange = function Utils_$selectRange(field, start, end) {
     field.selectionEnd = end;
     field.focus();
   }
-};
+}
 
 /**
  * Add a className to a DOM Element
@@ -244,13 +239,13 @@ module.exports.$selectRange = function Utils_$selectRange(field, start, end) {
  * @param   {Node}      el      The dom Element
  * @param   {String}    name    The class name
  */
-module.exports.$addClass = function Utils_$addClass(el, name) {
+export function $addClass(el, name) {
   if ( el ) {
     name.split(' ').forEach((n) => {
       el.classList.add(n);
     });
   }
-};
+}
 
 /**
  * Remove a className from a DOM Element
@@ -261,13 +256,13 @@ module.exports.$addClass = function Utils_$addClass(el, name) {
  * @param   {Node}      el      The dom Element
  * @param   {String}    name    The class name
  */
-module.exports.$removeClass = function Utils_$removeClass(el, name) {
+export function $removeClass(el, name) {
   if ( el ) {
     name.split(' ').forEach((n) => {
       el.classList.remove(n);
     });
   }
-};
+}
 
 /**
  * Check if a DOM Element has given className
@@ -280,14 +275,14 @@ module.exports.$removeClass = function Utils_$removeClass(el, name) {
  *
  * @return {Boolean}
  */
-module.exports.$hasClass = function Utils_$hasClass(el, name) {
+export function $hasClass(el, name) {
   if ( el && name ) {
     return name.split(' ').every((n) => {
       return el.classList.contains(n);
     });
   }
   return false;
-};
+}
 
 /**
  * Escapes the given string for HTML
@@ -301,11 +296,11 @@ module.exports.$hasClass = function Utils_$hasClass(el, name) {
  *
  * @return  {String}              Escaped HTML
  */
-module.exports.$escape = function Utils_$escape(str) {
+export function $escape(str) {
   const div = document.createElement('div');
   div.appendChild(document.createTextNode(str));
   return div.innerHTML;
-};
+}
 
 /**
  * Creates a new DOM element
@@ -333,7 +328,7 @@ module.exports.$escape = function Utils_$escape(str) {
  *
  * @return  {Node}
  */
-module.exports.$create = function Utils_$create(tagName, properties) {
+export function $create(tagName, properties) {
   const element = document.createElement(tagName);
 
   function _foreach(dict, l) {
@@ -365,7 +360,7 @@ module.exports.$create = function Utils_$create(tagName, properties) {
   });
 
   return element;
-};
+}
 
 /**
  * Create a link stylesheet tag
@@ -379,7 +374,7 @@ module.exports.$create = function Utils_$create(tagName, properties) {
  *
  * @return  {Node}                The tag
  */
-module.exports.$createCSS = function Utils_$createCSS(src, onload, onerror) {
+export function $createCSS(src, onload, onerror) {
   const link = document.createElement('link');
   link.setAttribute('rel', 'stylesheet');
   link.setAttribute('type', 'text/css');
@@ -390,7 +385,7 @@ module.exports.$createCSS = function Utils_$createCSS(src, onload, onerror) {
   document.getElementsByTagName('head')[0].appendChild(link);
 
   return link;
-};
+}
 
 /**
  * Create a script tag
@@ -406,7 +401,7 @@ module.exports.$createCSS = function Utils_$createCSS(src, onload, onerror) {
  *
  * @return  {Node}                              The tag
  */
-module.exports.$createJS = function Utils_$createJS(src, onreadystatechange, onload, onerror, attrs) {
+export function $createJS(src, onreadystatechange, onload, onerror, attrs) {
   const res = document.createElement('script');
 
   res.onreadystatechange = onreadystatechange || function() {};
@@ -426,7 +421,7 @@ module.exports.$createJS = function Utils_$createJS(src, onreadystatechange, onl
   document.getElementsByTagName('head')[0].appendChild(res);
 
   return res;
-};
+}
 
 /**
  * Check if event happened on a form element
@@ -439,7 +434,7 @@ module.exports.$createJS = function Utils_$createJS(src, onreadystatechange, onl
  *
  * @return  {Boolean}             If is a form element
  */
-module.exports.$isFormElement = function Utils_$isFormElement(input, types) {
+export function $isFormElement(input, types) {
   types = types || ['TEXTAREA', 'INPUT', 'SELECT'];
 
   if ( input instanceof window.Event ) {
@@ -455,7 +450,7 @@ module.exports.$isFormElement = function Utils_$isFormElement(input, types) {
   }
 
   return false;
-};
+}
 
 /**
  * Set or Get element CSS
@@ -481,7 +476,7 @@ module.exports.$isFormElement = function Utils_$isFormElement(input, types) {
  * @function $css
  * @memberof OSjs.Utils
  */
-module.exports.$css = function Utils_$css(el, ink, inv) {
+export function $css(el, ink, inv) {
   function rep(k) {
     return k.replace(/\-(\w)/g, (strMatch, p1) => {
       return p1.toUpperCase();
@@ -491,7 +486,7 @@ module.exports.$css = function Utils_$css(el, ink, inv) {
   let obj = {};
   if ( arguments.length === 2 ) {
     if ( typeof ink === 'string' ) {
-      return el.parentNode ? module.exports.$getStyle(el, ink) : el.style[rep(ink)];
+      return el.parentNode ? $getStyle(el, ink) : el.style[rep(ink)];
     }
     obj = ink;
   } else if ( arguments.length === 3 ) {
@@ -501,7 +496,7 @@ module.exports.$css = function Utils_$css(el, ink, inv) {
   Object.keys(obj).forEach((k) => {
     el.style[rep(k)] = String(obj[k]);
   });
-};
+}
 
 /**
  * Gets the Xpath to a DOM Element
@@ -512,7 +507,7 @@ module.exports.$css = function Utils_$css(el, ink, inv) {
  * @function $path
  * @memberof OSjs.Utils
  */
-module.exports.$path = function Utils_$path(el) {
+export function $path(el) {
   function _path(e) {
     if ( e === document.body ) {
       return e.tagName;
@@ -544,7 +539,7 @@ module.exports.$path = function Utils_$path(el) {
   }
 
   return _path(el);
-};
+}
 
 /**
  * Gets a DOM Element from Xpath
@@ -556,10 +551,10 @@ module.exports.$path = function Utils_$path(el) {
  * @function $fromPath
  * @memberof OSjs.Utils
  */
-module.exports.$fromPath = function Uitls_$fromPath(path, doc) {
+export function $fromPath(path, doc) {
   doc = doc || document;
 
   const evaluator = new XPathEvaluator();
   const result = evaluator.evaluate(path, doc.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
   return result.singleNodeValue;
-};
+}

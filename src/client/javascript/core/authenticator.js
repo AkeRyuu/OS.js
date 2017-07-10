@@ -28,32 +28,29 @@
  * @licence Simplified BSD License
  */
 
-'use strict';
-
 /**
  * @module core/authenticator
  */
-
-const API = require('core/api.js');
-const Connection = require('core/connection.js');
-const Compability = require('utils/compability.js');
-
-let _instance;
+import {_, setLocale} from 'core/locales';
+import {getConfig, getUserLocale} from 'core/config';
+import Connection from 'core/connection';
+import SettingsManager from 'core/settings-manager';
+import PackageManager from 'core/package-manager';
 
 /**
  * Authenticator Base Class
  *
  * @abstract
  */
-class Authenticator {
+export default class Authenticator {
 
   static get instance() {
-    return _instance;
+    return window.___osjs__authenticator_instance;
   }
 
   constructor() {
     /* eslint consistent-this: "warn" */
-    _instance = this;
+    window.___osjs__authenticator_instance = this;
 
     /**
      * User data
@@ -92,7 +89,7 @@ class Authenticator {
    * Destroys the Authenticator
    */
   destroy() {
-    _instance = null;
+    window.___osjs__authenticator_instance = null;
   }
 
   /**
@@ -124,8 +121,8 @@ class Authenticator {
       if ( result ) {
         callback(false, result);
       } else {
-        error = error || API._('ERR_LOGIN_INVALID');
-        callback(API._('ERR_LOGIN_FMT', error), false);
+        error = error || _('ERR_LOGIN_INVALID');
+        callback(_('ERR_LOGIN_FMT', error), false);
       }
     });
   }
@@ -145,6 +142,33 @@ class Authenticator {
         callback('An error occured: ' + (error || 'Unknown error'));
       }
     });
+  }
+
+  /**
+   * Checks the given permission (groups) against logged in user
+   *
+   * @param   {Mixed}     group         Either a string or array of groups
+   *
+   * @return {Boolean}
+   */
+  checkPermission(group) {
+    const user = this.getUser();
+    const userGroups = user.groups || [];
+
+    if ( !(group instanceof Array) ) {
+      group = [group];
+    }
+
+    let result = true;
+    if ( userGroups.indexOf('admin') < 0 ) {
+      group.every((g) => {
+        if ( userGroups.indexOf(g) < 0 ) {
+          result = false;
+        }
+        return result;
+      });
+    }
+    return result;
   }
 
   /**
@@ -170,9 +194,6 @@ class Authenticator {
    * @param   {CallbackHandler}      callback        Callback function
    */
   onLogin(data, callback) {
-    const sm = require('core/settings-manager.js');
-    const pm = require('core/package-manager.js');
-
     let userSettings = data.userSettings;
     if ( !userSettings || userSettings instanceof Array ) {
       userSettings = {};
@@ -181,16 +202,16 @@ class Authenticator {
     this.userData = data.userData;
 
     // Ensure we get the user-selected locale configured from WM
-    function getUserLocale() {
-      let curLocale = API.getConfig('Locale');
-      let detectedLocale = Compability.getUserLocale();
+    function getLocale() {
+      let curLocale = getConfig('Locale');
+      let detectedLocale = getUserLocale();
 
-      if ( API.getConfig('LocaleOptions.AutoDetect', true) && detectedLocale ) {
+      if ( getConfig('LocaleOptions.AutoDetect', true) && detectedLocale ) {
         console.info('Auto-detected user locale via browser', detectedLocale);
         curLocale = detectedLocale;
       }
 
-      let result = sm.get('CoreWM');
+      let result = SettingsManager.get('CoreWM');
       if ( !result ) {
         try {
           result = userSettings.CoreWM;
@@ -201,11 +222,11 @@ class Authenticator {
 
     document.getElementById('LoadingScreen').style.display = 'block';
 
-    API.setLocale(getUserLocale());
-    sm.init(userSettings);
+    setLocale(getLocale());
+    SettingsManager.init(userSettings);
 
     if ( data.blacklistedPackages ) {
-      pm.setBlacklist(data.blacklistedPackages);
+      PackageManager.setBlacklist(data.blacklistedPackages);
     }
 
     this.loggedIn = true;
@@ -267,10 +288,4 @@ class Authenticator {
   }
 
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = Authenticator;
 

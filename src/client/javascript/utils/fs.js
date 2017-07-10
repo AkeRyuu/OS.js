@@ -27,7 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+
+import * as Utils from 'utils/misc';
 
 /////////////////////////////////////////////////////////////////////////////
 // FS
@@ -43,11 +44,11 @@
  *
  * @return  {String}
  */
-module.exports.getPathFromVirtual = function Utils_getPathFromVirtual(str) {
+export function getPathFromVirtual(str) {
   str = str || '';
   const res = str.split(/([A-z0-9\-_]+)\:\/\/(.*)/)[2] || '';
   return res.replace(/^\/?/, '/');
-};
+}
 
 /**
  * Gets the protocol from a location
@@ -59,12 +60,12 @@ module.exports.getPathFromVirtual = function Utils_getPathFromVirtual(str) {
  *
  * @return  {String}
  */
-module.exports.getPathProtocol = function Utils_getPathProtocol(orig) {
+export function getPathProtocol(orig) {
   //return orig.replace(/^([A-z0-9\-_]+)\:\/\//, '');
   const tmp = document.createElement('a');
   tmp.href = orig;
   return tmp.protocol.replace(/:$/, '');
-};
+}
 
 /**
  * Get file extension of filename/path
@@ -76,10 +77,10 @@ module.exports.getPathProtocol = function Utils_getPathProtocol(orig) {
  *
  * @return  {String}            The file extension
  */
-module.exports.filext = function Utils_filext(d) {
-  const ext = module.exports.filename(d).split('.').pop();
+export function filext(d) {
+  const ext = filename(d).split('.').pop();
   return ext ? ext.toLowerCase() : null;
-};
+}
 
 /**
  * Get directory from path
@@ -94,7 +95,7 @@ module.exports.filext = function Utils_filext(d) {
  *
  * @return  {String}            The resulted path
  */
-module.exports.dirname = function Utils_dirname(f) {
+export function dirname(f) {
 
   function _parentDir(p) {
     const pstr = p.split(/^(.*)\:\/\/(.*)/).filter(function(n) {
@@ -126,7 +127,7 @@ module.exports.dirname = function Utils_dirname(f) {
   }
 
   return f.match(/^((.*)\:\/\/)?\/$/) ? f : _parentDir(f.replace(/\/$/, ''));
-};
+}
 
 /**
  * Get filename from path
@@ -138,9 +139,9 @@ module.exports.dirname = function Utils_dirname(f) {
  *
  * @return  {String}          The filename
  */
-module.exports.filename = function Utils_filename(p) {
+export function filename(p) {
   return (p || '').replace(/\/$/, '').split('/').pop();
-};
+}
 
 /**
  * Get human-readable size from integer
@@ -156,7 +157,7 @@ module.exports.filename = function Utils_filename(p) {
  *
  * @return  {String}            Size
  */
-module.exports.humanFileSize = function Utils_humanFileSize(bytes, si) {
+export function humanFileSize(bytes, si) {
   const units = si ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'] : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
   const thresh = si ? 1000 : 1024;
 
@@ -170,7 +171,7 @@ module.exports.humanFileSize = function Utils_humanFileSize(bytes, si) {
     ++u;
   } while (bytes >= thresh);
   return bytes.toFixed(1) + ' ' + units[u];
-};
+}
 
 /**
  * Escape filename (removes invalid characters)
@@ -182,9 +183,9 @@ module.exports.humanFileSize = function Utils_humanFileSize(bytes, si) {
  *
  * @return  {String}          Escaped filename
  */
-module.exports.escapeFilename = function Utils_escapeFilename(n) {
+export function escapeFilename(n) {
   return (n || '').replace(/[\|&;\$%@"<>\(\)\+,\*\/]/g, '').trim();
-};
+}
 
 /**
  * Replace file extension of filename
@@ -197,12 +198,12 @@ module.exports.escapeFilename = function Utils_escapeFilename(n) {
  *
  * @return  {String}                  New filename
  */
-module.exports.replaceFileExtension = function Utils_replaceFileExtension(filename, rep) {
+export function replaceFileExtension(filename, rep) {
   const spl = filename.split('.');
   spl.pop();
   spl.push(rep);
   return spl.join('.');
-};
+}
 
 /**
  * Replace the filename of a path
@@ -215,12 +216,12 @@ module.exports.replaceFileExtension = function Utils_replaceFileExtension(filena
  *
  * @return  {String}              The new path
  */
-module.exports.replaceFilename = function Utils_replaceFilename(orig, newname) {
+export function replaceFilename(orig, newname) {
   const spl = orig.split('/');
   spl.pop();
   spl.push(newname);
   return spl.join('/');
-};
+}
 
 /**
  * Joins arguments to a path (path.join)
@@ -231,7 +232,7 @@ module.exports.replaceFilename = function Utils_replaceFilename(orig, newname) {
  * @param   {...String}   s   Input
  * @return  {String}
  */
-module.exports.pathJoin = function Utils_pathJoin() {
+export function pathJoin() {
   let parts = [];
   let prefix = '';
 
@@ -259,7 +260,7 @@ module.exports.pathJoin = function Utils_pathJoin() {
   }
 
   return prefix + parts.join('/').replace(/^\/?/, '/');
-};
+}
 
 /**
  * Gets the range of filename in a path (without extension)
@@ -273,7 +274,7 @@ module.exports.pathJoin = function Utils_pathJoin() {
  *
  * @return  {Object}            Range in form of min/max
  */
-module.exports.getFilenameRange = function Utils_getFileNameRange(val) {
+export function getFilenameRange(val) {
   val = val || '';
 
   const range = {min: 0, max: val.length};
@@ -293,7 +294,7 @@ module.exports.getFilenameRange = function Utils_getFileNameRange(val) {
     }
   }
   return range;
-};
+}
 
 /**
  * (Encode) Convert URL-safe String to Base64
@@ -305,12 +306,12 @@ module.exports.getFilenameRange = function Utils_getFileNameRange(val) {
  *
  * @return  {String}              Base64 String
  */
-module.exports.btoaUrlsafe = function Utils_btoaUrlsafe(str) {
+export function btoaUrlsafe(str) {
   return (!str || !str.length) ? '' : btoa(str)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
-};
+}
 
 /**
  * (Decode) Convert Base64 to URL-safe String
@@ -322,13 +323,13 @@ module.exports.btoaUrlsafe = function Utils_btoaUrlsafe(str) {
  *
  * @return  {String}              String
  */
-module.exports.atobUrlsafe = function Utils_atobUrlsafe(str) {
+export function atobUrlsafe(str) {
   if ( str && str.length ) {
     str = (str + '===').slice(0, str.length + (str.length % 4));
     return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
   }
   return '';
-};
+}
 
 /**
  * (Encode) Convert String to Base64 with UTF-8
@@ -340,7 +341,7 @@ module.exports.atobUrlsafe = function Utils_atobUrlsafe(str) {
  *
  * @return  {String}              Base64 String
  */
-module.exports.btoaUtf = function Utils_btoaUtfh(str) { // Encode
+export function btoaUtf(str) { // Encode
   const _unescape = window.unescape || function(s) {
     function d(x, n) {
       return String.fromCharCode(parseInt(n, 16));
@@ -349,7 +350,7 @@ module.exports.btoaUtf = function Utils_btoaUtfh(str) { // Encode
   };
   str = _unescape(encodeURIComponent(str));
   return btoa(str);
-};
+}
 
 /**
  * (Decode) Convert Base64 with UTF-8 to String
@@ -361,7 +362,7 @@ module.exports.btoaUtf = function Utils_btoaUtfh(str) { // Encode
  *
  * @return  {String}              String
  */
-module.exports.atobUtf = function Utils_atobUtf(str) { // Decode
+export function atobUtf(str) { // Decode
   const _escape = window.escape || function(s) {
     function q(c) {
       c = c.charCodeAt();
@@ -372,7 +373,7 @@ module.exports.atobUtf = function Utils_atobUtf(str) { // Decode
 
   const trans = _escape(atob(str));
   return decodeURIComponent(trans);
-};
+}
 
 /**
  * Check if this MIME type is inside list
@@ -386,7 +387,7 @@ module.exports.atobUtf = function Utils_atobUtf(str) { // Decode
  *
  * @return  {Boolean}               If found
  */
-module.exports.checkAcceptMime = function Utils_checkAcceptMime(mime, list) {
+export function checkAcceptMime(mime, list) {
   if ( mime && list.length ) {
     let re;
     for ( let i = 0; i < list.length; i++ ) {
@@ -397,7 +398,7 @@ module.exports.checkAcceptMime = function Utils_checkAcceptMime(mime, list) {
     }
   }
   return false;
-};
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -409,21 +410,20 @@ module.exports.checkAcceptMime = function Utils_checkAcceptMime(mime, list) {
  * @function filterScandir
  * @memberof OSjs.VFS.Helpers
  *
- * @param     {Array}     list                      List of results from scandir()
- * @param     {Object}    options                   Filter options
- * @param     {String}    options.typeFilter        `type` filter
- * @param     {Array}     options.mimeFilter        `mime` filter
- * @param     {Boolean}   options.showHiddenFiles   Show dotfiles
- * @param     {String}    [options.sortBy=null]     Sort by this key
- * @param     {String}    [options.sortDir='asc']   Sort in this direction
+ * @param {Array}     list                      List of results from scandir()
+ * @param {Object}    options                   Filter options
+ * @param {String}    options.typeFilter        `type` filter
+ * @param {Array}     options.mimeFilter        `mime` filter
+ * @param {Boolean}   options.showHiddenFiles   Show dotfiles
+ * @param {String}    [options.sortBy=null]     Sort by this key
+ * @param {String}    [options.sortDir='asc']   Sort in this direction
+ * @param {Object}    [defaultOptions]          The default options (usually loaded from SettingsManager)
  *
  * @return  {Boolean}
  */
-module.exports.filterScandir = function filterScandir(list, options) {
-  const Utils = require('utils/misc.js');
-  const SettingsManager = require('core/settings-manager.js');
+export function filterScandir(list, options, defaultOptions) {
+  defaultOptions = Utils.cloneObject(defaultOptions || {});
 
-  const defaultOptions = Utils.cloneObject(SettingsManager.get('VFS') || {});
   const ioptions = Utils.cloneObject(options, true);
 
   let ooptions = Object.assign({}, defaultOptions.scandir || {}, ioptions);
@@ -506,7 +506,7 @@ module.exports.filterScandir = function filterScandir(list, options) {
   }).concat(result.filter(function(iter) {
     return iter.type !== 'dir';
   }));
-};
+}
 
 /*
  * Wrapper for converting data
@@ -545,7 +545,7 @@ function _abToSomething(m, arrayBuffer, mime, callback) {
  * @param   {(window.File|window.Blob)}       data    File Data (see supported types)
  * @param   {OSjs.VFS.File}                   file    File Metadata
  */
-module.exports.addFormFile = function addFormFile(fd, key, data, file) {
+export function addFormFile(fd, key, data, file) {
   file = file || {mime: 'application/octet-stream', filename: 'filename'};
 
   if ( data instanceof window.File ) {
@@ -564,7 +564,7 @@ module.exports.addFormFile = function addFormFile(fd, key, data, file) {
       fd.append(key, data.data, data.filename);
     }
   }
-};
+}
 
 /**
  * Convert DataSourceURL to ArrayBuffer
@@ -576,7 +576,7 @@ module.exports.addFormFile = function addFormFile(fd, key, data, file) {
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
  */
-module.exports.dataSourceToAb = function dataSourceToAb(data, mime, callback) {
+export function dataSourceToAb(data, mime, callback) {
   const byteString = atob(data.split(',')[1]);
   //const mimeString = data.split(',')[0].split(':')[1].split(';')[0];
 
@@ -587,7 +587,7 @@ module.exports.dataSourceToAb = function dataSourceToAb(data, mime, callback) {
   }
 
   callback(false, ab);
-};
+}
 
 /**
  * Convert PlainText to ArrayBuffer
@@ -599,9 +599,9 @@ module.exports.dataSourceToAb = function dataSourceToAb(data, mime, callback) {
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
  */
-module.exports.textToAb = function textToAb(data, mime, callback) {
+export function textToAb(data, mime, callback) {
   _abToSomething('readAsArrayBuffer', data, mime, callback);
-};
+}
 
 /**
  * Convert ArrayBuffer to DataSourceURL
@@ -613,9 +613,9 @@ module.exports.textToAb = function textToAb(data, mime, callback) {
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
  */
-module.exports.abToDataSource = function abToDataSource(arrayBuffer, mime, callback) {
+export function abToDataSource(arrayBuffer, mime, callback) {
   _abToSomething('readAsDataURL', arrayBuffer, mime, callback);
-};
+}
 
 /**
  * Convert ArrayBuffer to PlainText
@@ -627,9 +627,9 @@ module.exports.abToDataSource = function abToDataSource(arrayBuffer, mime, callb
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
  */
-module.exports.abToText = function abToText(arrayBuffer, mime, callback) {
+export function abToText(arrayBuffer, mime, callback) {
   _abToSomething('readAsText', arrayBuffer, mime, callback);
-};
+}
 
 /**
  * Convert ArrayBuffer to BinaryString
@@ -641,9 +641,9 @@ module.exports.abToText = function abToText(arrayBuffer, mime, callback) {
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
  */
-module.exports.abToBinaryString = function abToBinaryString(arrayBuffer, mime, callback) {
+export function abToBinaryString(arrayBuffer, mime, callback) {
   _abToSomething('readAsBinaryString', arrayBuffer, mime, callback);
-};
+}
 
 /**
  * Convert ArrayBuffer to Blob
@@ -655,7 +655,7 @@ module.exports.abToBinaryString = function abToBinaryString(arrayBuffer, mime, c
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
  */
-module.exports.abToBlob = function abToBlob(arrayBuffer, mime, callback) {
+export function abToBlob(arrayBuffer, mime, callback) {
   mime = mime || 'application/octet-stream';
 
   try {
@@ -665,7 +665,7 @@ module.exports.abToBlob = function abToBlob(arrayBuffer, mime, callback) {
     console.warn(e, e.stack);
     callback(e);
   }
-};
+}
 
 /**
  * Convert Blob to ArrayBuffer
@@ -676,7 +676,7 @@ module.exports.abToBlob = function abToBlob(arrayBuffer, mime, callback) {
  * @param   {Blob}          data        The blob
  * @param   {Function}      callback    Callback function => fn(error, result)
  */
-module.exports.blobToAb = function blobToAb(data, callback) {
+export function blobToAb(data, callback) {
   try {
     const r = new FileReader();
     r.onerror = function(e) {
@@ -690,4 +690,4 @@ module.exports.blobToAb = function blobToAb(data, callback) {
     console.warn(e, e.stack);
     callback(e);
   }
-};
+}

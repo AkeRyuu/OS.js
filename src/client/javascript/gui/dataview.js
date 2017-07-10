@@ -27,14 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const GUI = require('utils/gui.js');
-const DOM = require('utils/dom.js');
-const VFS = require('vfs/fs.js');
-const Events = require('utils/events.js');
-const UIElement = require('gui/element.js');
+import * as GUI from 'utils/gui';
+import * as DOM from 'utils/dom';
+import * as VFS from 'vfs/fs';
+import * as Events from 'utils/events';
+import * as Clipboard from 'utils/clipboard';
+import * as Keycodes from 'utils/keycodes';
+import UIElement from 'gui/element';
 
 /////////////////////////////////////////////////////////////////////////////
 // ABSTRACTION HELPERS
@@ -128,12 +127,12 @@ function handleKeyPress(cls, el, ev) {
     return;
   }
 
-  if ( key === Events.Keys.ENTER ) {
+  if ( key === Keycodes.ENTER ) {
     el.dispatchEvent(new CustomEvent('_activate', {detail: {entries: cls.values()}}));
     return;
   }
 
-  map[Events.Keys.C] = function(ev) {
+  map[Keycodes.C] = function(ev) {
     if ( ev.ctrlKey ) {
       const selected = cls.values();
       if ( selected && selected.length ) {
@@ -145,7 +144,7 @@ function handleKeyPress(cls, el, ev) {
           }
         });
 
-        API.setClipboard(data);
+        Clipboard.setClipboard(data);
       }
     }
   };
@@ -202,19 +201,19 @@ function handleKeyPress(cls, el, ev) {
     }
 
     if ( type === 'gui-tree-view' || type === 'gui-list-view' ) {
-      map[Events.Keys.UP] = prev;
-      map[Events.Keys.DOWN] = next;
+      map[Keycodes.UP] = prev;
+      map[Keycodes.DOWN] = next;
     } else {
-      map[Events.Keys.UP] = function() {
+      map[Keycodes.UP] = function() {
         current = Math.max(0, first - getRowSize());
         select();
       };
-      map[Events.Keys.DOWN] = function() {
+      map[Keycodes.DOWN] = function() {
         current = Math.max(last, last + getRowSize());
         select();
       };
-      map[Events.Keys.LEFT] = prev;
-      map[Events.Keys.RIGHT] = next;
+      map[Keycodes.LEFT] = prev;
+      map[Keycodes.RIGHT] = next;
     }
 
     if ( map[key] ) {
@@ -279,7 +278,7 @@ function matchValueByKey(r, val, key, idx) {
  * @extends OSjs.GUI.Element
  * @abstract
  */
-class UIDataView extends UIElement {
+export default class UIDataView extends UIElement {
 
   /**
    * Clears the view
@@ -589,7 +588,7 @@ class UIDataView extends UIElement {
 
     const select = (ev) => {
       ev.stopPropagation();
-      API.blurMenu();
+      GUI.blurMenu();
 
       if ( wasResized ) {
         return false;
@@ -642,7 +641,7 @@ class UIDataView extends UIElement {
 
     const activate = (ev) => {
       ev.stopPropagation();
-      API.blurMenu();
+      GUI.blurMenu();
 
       if ( isHeader(ev) ) {
         return;
@@ -774,8 +773,3 @@ class UIDataView extends UIElement {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = UIDataView;

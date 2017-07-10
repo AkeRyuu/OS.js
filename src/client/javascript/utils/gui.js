@@ -27,12 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DOM = require('utils/dom.js');
-const Events = require('utils/events.js');
-const Compability = require('utils/compability.js');
+import * as Main from 'core/main';
+import * as DOM from 'utils/dom';
+import * as Events from 'utils/events';
+import * as Compability from 'utils/compability';
+import * as Assets from 'core/assets';
+import GUIElement from 'gui/element';
+import WindowManager from 'core/windowmanager';
 
 /**
  * @namespace GUI
@@ -60,7 +61,7 @@ let lastMenu;
  *
  * @return  {Number}
  */
-module.exports.getWindowId = function getWindowId(el) {
+export function getWindowId(el) {
   while ( el.parentNode ) {
     const attr = el.getAttribute('data-window-id');
     if ( attr !== null ) {
@@ -69,7 +70,7 @@ module.exports.getWindowId = function getWindowId(el) {
     el = el.parentNode;
   }
   return null;
-};
+}
 
 /**
  * Gets "label" from a node
@@ -81,10 +82,10 @@ module.exports.getWindowId = function getWindowId(el) {
  *
  * @return  {String}
  */
-module.exports.getLabel = function getLabel(el) {
+export function getLabel(el) {
   const label = el.getAttribute('data-label');
   return label || '';
-};
+}
 
 /**
  * Gets "label" from a node (Where it can be innerHTML and parameter)
@@ -97,7 +98,7 @@ module.exports.getLabel = function getLabel(el) {
  *
  * @return  {String}
  */
-module.exports.getValueLabel = function getValueLabel(el, attr) {
+export function getValueLabel(el, attr) {
   let label = attr ? el.getAttribute('data-label') : null;
 
   if ( el.childNodes.length && el.childNodes[0].nodeType === 3 && el.childNodes[0].nodeValue ) {
@@ -106,7 +107,7 @@ module.exports.getValueLabel = function getValueLabel(el, attr) {
   }
 
   return label || '';
-};
+}
 
 /**
  * Gets "value" from a node
@@ -118,7 +119,7 @@ module.exports.getValueLabel = function getValueLabel(el, attr) {
  *
  * @return  {String}
  */
-module.exports.getViewNodeValue = function getViewNodeValue(el) {
+export function getViewNodeValue(el) {
   let value = el.getAttribute('data-value');
   if ( typeof value === 'string' && value.match(/^\[|\{/) ) {
     try {
@@ -128,7 +129,7 @@ module.exports.getViewNodeValue = function getViewNodeValue(el) {
     }
   }
   return value;
-};
+}
 
 /**
  * Internal for getting
@@ -141,7 +142,7 @@ module.exports.getViewNodeValue = function getViewNodeValue(el) {
  *
  * @return  {String}
  */
-module.exports.getIcon = function getIcon(el, win) {
+export function getIcon(el, win) {
   let image = el.getAttribute('data-icon');
 
   if ( image && image !== 'undefined') {
@@ -158,17 +159,17 @@ module.exports.getIcon = function getIcon(el, win) {
           image = spl.join('/');
         }
 
-        image = API.getIcon(image, size);
+        image = Assets.getIcon(image, size);
       } catch ( e ) {}
     } else if ( image.match(/^app:\/\//) ) {
-      image = API.getApplicationResource(win._app, image.replace('app://', ''));
+      image = Assets.getPackageResource(win._app, image.replace('app://', ''));
     }
 
     return image;
   }
 
   return null;
-};
+}
 
 /**
  * Wrapper for getting custom dom element property value
@@ -182,9 +183,7 @@ module.exports.getIcon = function getIcon(el, win) {
  *
  * @return  {Mixed}
  */
-module.exports.getProperty = function getProperty(el, param, tagName) {
-  const GUIElement = require('gui/element.js');
-
+export function getProperty(el, param, tagName) {
   tagName = tagName || el.tagName.toLowerCase();
   const isDataView = tagName.match(/^gui\-(tree|icon|list|file)\-view$/);
 
@@ -204,7 +203,7 @@ module.exports.getProperty = function getProperty(el, param, tagName) {
   }
 
   return el.getAttribute('data-' + param);
-};
+}
 
 /**
  * Wrapper for setting custom dom element property value
@@ -217,7 +216,7 @@ module.exports.getProperty = function getProperty(el, param, tagName) {
  * @param   {Mixed}           value         Parameter value
  * @param   {String}          [tagName]     What tagname is in use? Automatic
  */
-module.exports.setProperty = function setProperty(el, param, value, tagName) {
+export function setProperty(el, param, value, tagName) {
   tagName = tagName || el.tagName.toLowerCase();
 
   function _setKnownAttribute(i, k, v, a) {
@@ -271,7 +270,7 @@ module.exports.setProperty = function setProperty(el, param, value, tagName) {
       label: function() {
         el.appendChild(firstChild);
         DOM.$remove(el.querySelector('label'));
-        module.exports.createInputLabel(el, tagName.replace(/^gui\-/, ''), firstChild, value);
+        createInputLabel(el, tagName.replace(/^gui\-/, ''), firstChild, value);
       }
     };
 
@@ -304,7 +303,7 @@ module.exports.setProperty = function setProperty(el, param, value, tagName) {
   if ( param !== 'value' ) {
     _setValueAttribute(el, 'data-' + param, value);
   }
-};
+}
 
 /**
  * Creates a label for given input element
@@ -317,8 +316,8 @@ module.exports.setProperty = function setProperty(el, param, value, tagName) {
  * @param   {Node}            input     The input element
  * @param   {String}          [label]   Used when updating
  */
-module.exports.createInputLabel = function createInputLabel(el, type, input, label) {
-  label = label || module.exports.getLabel(el);
+export function createInputLabel(el, type, input, label) {
+  label = label || getLabel(el);
 
   if ( label ) {
     const lbl = document.createElement('label');
@@ -336,7 +335,7 @@ module.exports.createInputLabel = function createInputLabel(el, type, input, lab
   } else {
     el.appendChild(input);
   }
-};
+}
 
 /**
  * Create a new custom DOM element
@@ -350,7 +349,7 @@ module.exports.createInputLabel = function createInputLabel(el, type, input, lab
  *
  * @return {Node}
  */
-module.exports.createElement = function createElement(tagName, params, ignoreParams) {
+export function createElement(tagName, params, ignoreParams) {
   ignoreParams = ignoreParams || [];
 
   const el = document.createElement(tagName);
@@ -396,7 +395,7 @@ module.exports.createElement = function createElement(tagName, params, ignorePar
   }
 
   return el;
-};
+}
 
 /**
  * Sets the flexbox CSS style properties for given container
@@ -410,7 +409,7 @@ module.exports.createElement = function createElement(tagName, params, ignorePar
  * @param   {String}          [basis=auto]    Basis
  * @param   {Node}            [checkel]       Take defaults from this node
  */
-module.exports.setFlexbox = function setFlexbox(el, grow, shrink, basis, checkel) {
+export function setFlexbox(el, grow, shrink, basis, checkel) {
   checkel = checkel || el;
   (function() {
     if ( typeof basis === 'undefined' || basis === null ) {
@@ -450,7 +449,7 @@ module.exports.setFlexbox = function setFlexbox(el, grow, shrink, basis, checkel
   if ( align ) {
     DOM.$addClass(el, 'gui-flex-align-' + align);
   }
-};
+}
 
 /**
  * Wrapper for creating a draggable container
@@ -463,7 +462,7 @@ module.exports.setFlexbox = function setFlexbox(el, grow, shrink, basis, checkel
  * @param   {Function}          onMove      On move action callback
  * @param   {Function}          onUp        On up action callback
  */
-module.exports.createDrag = function createDrag(el, onDown, onMove, onUp) {
+export function createDrag(el, onDown, onMove, onUp) {
   onDown = onDown || function() {};
   onMove = onMove || function() {};
   onUp = onUp || function() {};
@@ -507,7 +506,7 @@ module.exports.createDrag = function createDrag(el, onDown, onMove, onUp) {
   }
 
   Events.$bind(el, 'mousedown', _onMouseDown, false);
-};
+}
 
 /**
  * Method for getting the next (or previous) element in sequence
@@ -523,7 +522,7 @@ module.exports.createDrag = function createDrag(el, onDown, onMove, onUp) {
  *
  * @return {Node}
  */
-module.exports.getNextElement = function getNextElement(prev, current, root) {
+export function getNextElement(prev, current, root) {
   function getElements() {
     const ignore_roles = ['menu', 'menuitem', 'grid', 'gridcell', 'listitem'];
     const list = [];
@@ -615,7 +614,7 @@ module.exports.getNextElement = function getNextElement(prev, current, root) {
   }
 
   return null;
-};
+}
 
 /**
  * Create a draggable DOM element
@@ -632,7 +631,7 @@ module.exports.getNextElement = function getNextElement(prev, current, root) {
  * @param  {Function}      args.onStart                     Callback when drag started => fn(ev, el, args)
  * @param  {Function}      args.onEnd                       Callback when drag ended => fn(ev, el, args)
  */
-module.exports.createDraggable = function createDraggable(el, args) {
+export function createDraggable(el, args) {
   /* eslint no-invalid-this: "off" */
 
   args = Object.assign({}, {
@@ -702,7 +701,7 @@ module.exports.createDraggable = function createDraggable(el, args) {
     this.style.opacity = '1.0';
     return args.onEnd(ev, this, args);
   }, false);
-};
+}
 
 /**
  * Create a droppable DOM element
@@ -723,7 +722,7 @@ module.exports.createDraggable = function createDraggable(el, args) {
  * @param   {Function}        args.onFilesDropped             Callback when drag drop file => fn(ev, el, files, args)
  * @param   {Function}        args.onItemDropped              Callback when drag drop internal object => fn(ev, el, item, args)
  */
-module.exports.createDroppable = function createDroppable(el, args) {
+export function createDroppable(el, args) {
   /* eslint no-invalid-this: "off" */
 
   args = Object.assign({}, {
@@ -833,13 +832,13 @@ module.exports.createDroppable = function createDroppable(el, args) {
     //DOM.$removeClass(el, 'onDragEnter');
     return args.onLeave.call(this, ev, this, args);
   }, false);
-};
+}
 
-module.exports._menuSetActive = function(menu) {
+export function _menuSetActive(menu) {
   lastMenu = menu;
-};
+}
 
-module.exports._menuClickWrapper = function(ev, pos, onclick, original) {
+export function _menuClickWrapper(ev, pos, onclick, original) {
   let t = ev.isTrusted ? ev.target : (ev.relatedTarget || ev.target);
 
   if ( t && t.tagName === 'LABEL' ) {
@@ -870,9 +869,9 @@ module.exports._menuClickWrapper = function(ev, pos, onclick, original) {
 
     onclick(ev, pos, t, original);
   }
-};
+}
 
-module.exports._menuClamp = function(r) {
+export function _menuClamp(r) {
   function _clamp(rm) {
     rm.querySelectorAll('gui-menu-entry').forEach(function(srm) {
       const sm = srm.querySelector('gui-menu');
@@ -891,7 +890,7 @@ module.exports._menuClamp = function(r) {
 
   // this class is used in caclulations (DOM needs to be visible for that)
   DOM.$addClass(r, 'gui-showing');
-};
+}
 
 /**
  * Blur the currently open menu (aka hiding)
@@ -900,14 +899,14 @@ module.exports._menuClamp = function(r) {
  * @function blurMenu
  * @memberof OSjs.GUI.Helpers
  */
-module.exports.blurMenu = function blurMenu(ev) {
+export function blurMenu(ev) {
   if ( lastMenu ) {
     lastMenu(ev);
   }
   lastMenu = null;
 
-  API.triggerHook('onBlurMenu');
-};
+  Main.triggerHook('onBlurMenu');
+}
 
 /**
  * Create and show a new menu
@@ -929,12 +928,10 @@ module.exports.blurMenu = function blurMenu(ev) {
  * @function createMenu
  * @memberof OSjs.GUI.Helpers
  */
-module.exports.createMenu = function createMenu(items, ev, customInstance) {
-  const GUIElement = require('gui/element.js');
-
+export function createMenu(items, ev, customInstance) {
   items = items || [];
 
-  module.exports.blurMenu(ev);
+  blurMenu(ev);
 
   let root = customInstance;
   let callbackMap = [];
@@ -942,9 +939,9 @@ module.exports.createMenu = function createMenu(items, ev, customInstance) {
   function resolveItems(arr, par) {
     arr.forEach(function(iter) {
       const props = {label: iter.title, icon: iter.icon, disabled: iter.disabled, labelHTML: iter.titleHTML, type: iter.type, checked: iter.checked};
-      const entry = module.exports.createElement('gui-menu-entry', props);
+      const entry = createElement('gui-menu-entry', props);
       if ( iter.menu ) {
-        const nroot = module.exports.createElement('gui-menu', {});
+        const nroot = createElement('gui-menu', {});
         resolveItems(iter.menu, nroot);
         entry.appendChild(nroot);
       }
@@ -957,18 +954,18 @@ module.exports.createMenu = function createMenu(items, ev, customInstance) {
   }
 
   if ( !root ) {
-    root = module.exports.createElement('gui-menu', {});
+    root = createElement('gui-menu', {});
     resolveItems(items || [], root);
 
     GUIElement.createFromNode(root, null, 'gui-menu').build(true);
 
     Events.$bind(root, 'mousedown', function(ev, pos) {
-      module.exports._menuClickWrapper(ev, pos, function(ev, pos, t) {
+      _menuClickWrapper(ev, pos, function(ev, pos, t) {
         const index = parseInt(t.getAttribute('data-callback-id'), 10);
         if ( callbackMap[index] ) {
           callbackMap[index](ev, pos);
 
-          module.exports.blurMenu(ev); // !last!
+          blurMenu(ev); // !last!
         }
       });
     }, true);
@@ -982,7 +979,7 @@ module.exports.createMenu = function createMenu(items, ev, customInstance) {
     root = root.$element;
   }
 
-  const wm = require('core/windowmanager.js').instance;
+  const wm = WindowManager.instance;
   const space = wm.getWindowSpace(true);
   const pos = Events.mousePosition(ev);
 
@@ -1005,7 +1002,7 @@ module.exports.createMenu = function createMenu(items, ev, customInstance) {
       }
     }
 
-    module.exports._menuClamp(root);
+    _menuClamp(root);
   }, 1);
 
   lastMenu = function() {
@@ -1018,4 +1015,4 @@ module.exports.createMenu = function createMenu(items, ev, customInstance) {
     }
     root = DOM.$remove(root);
   };
-};
+}

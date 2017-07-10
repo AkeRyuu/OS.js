@@ -27,13 +27,11 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const DOM = require('utils/dom.js');
-const GUI = require('utils/gui.js');
-const Events = require('utils/events.js');
-const GUIElement = require('gui/element.js');
-const Compability = require('utils/compability.js');
+import * as DOM from 'utils/dom';
+import * as GUI from 'utils/gui';
+import * as Events from 'utils/events';
+import * as Compability from 'utils/compability';
+import GUIElement from 'gui/element';
 
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -393,7 +391,7 @@ class GUIMenuBar extends GUIElement {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   GUIMenuEntry: GUIMenuEntry,
   GUIMenuBar: GUIMenuBar,
   GUIMenu: GUIMenu

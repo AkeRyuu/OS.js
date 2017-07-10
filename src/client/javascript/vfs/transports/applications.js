@@ -27,9 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const PackageManager = require('core/package-manager.js');
+import PackageManager from 'core/package-manager';
+import FileMetadata from 'vfs/file';
 
 /**
  * @namespace Applications
@@ -53,7 +52,7 @@ const Transport = {
     Object.keys(metadata).forEach((m) => {
       const iter = metadata[m];
       if ( iter.type !== 'extension' ) {
-        files.push(new OSjs.VFS.File({
+        files.push(new FileMetadata({
           filename: iter.name,
           type: 'application',
           path: 'applications:///' + m,
@@ -70,7 +69,7 @@ const Transport = {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   module: Transport,
   defaults: function(opts) {
     opts.readOnly = true;

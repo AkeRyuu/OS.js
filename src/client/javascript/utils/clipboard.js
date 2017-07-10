@@ -27,51 +27,33 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import {getBrowserPath} from 'core/config';
-import MountManager from 'core/mount-manager';
-import BaseTransport from 'vfs/transports/osjs';
+let _CLIPBOARD;         // Current 'clipboard' data
 
 /**
- * @namespace Dist
- * @memberof OSjs.VFS.Transports
- */
-
-/////////////////////////////////////////////////////////////////////////////
-// API
-/////////////////////////////////////////////////////////////////////////////
-
-/*
- * OSjs 'dist' VFS Transport Module
+ * Set the "clipboard" data
  *
- * This is just a custom version of 'OSjs' module
+ * NOTE: This does not set the operating system clipboard (yet...)
+ *
+ * @function setClipboard
+ * @memberof OSjs.API
+ *
+ * @param   {Mixed}       data      What data to set
  */
-const Transport = {
-  url: function(item, callback) {
-    const root = getBrowserPath();
-    const module = MountManager.getModuleFromPath(item.path, false, true);
-    const url = item.path.replace(module.match, root).replace(/^\/+/, '/');
+export function setClipboard(data) {
+  console.debug('OSjs.module.exports.setClipboard()', data);
+  _CLIPBOARD = data;
+}
 
-    callback(false, url);
-  },
-
-  scandir: function() {
-    return BaseTransport.module.scandir.apply(this, arguments);
-  },
-
-  read: function() {
-    return BaseTransport.module.read.apply(this, arguments);
-  }
-};
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-export default {
-  module: Transport,
-  defaults: function(opts) {
-    opts.readOnly = true;
-    opts.searchable = true;
-  }
-};
-
+/**
+ * Get the "clipboard" data
+ *
+ * NOTE: This does not the operating system clipboard (yet...)
+ *
+ * @function getClipboard
+ * @memberof OSjs.API
+ *
+ * @return  {Mixed}
+ */
+export function getClipboard() {
+  return _CLIPBOARD;
+}

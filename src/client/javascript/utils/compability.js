@@ -27,18 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-/**
- * Gets browser compability flags
- *
- * @return    {Object}      List of compability
- */
-module.exports.getCompability = (function() {
+const compability = (function() {
   function _checkSupport(enabled, check, isSupported) {
     const supported = {};
 
@@ -283,39 +273,20 @@ module.exports.getCompability = (function() {
 })();
 
 /**
+ * Gets browser compability flags
+ *
+ * @return    {Object}      List of compability
+ */
+export function getCompability() {
+  return compability();
+}
+
+/**
  * Check if browser is IE
  *
  * @return    boolean       If IE
  */
-module.exports.isIE = function Utils_isIE() {
+export function isIE() {
   const dm = parseInt(document.documentMode, 10);
   return dm <= 11 || !!navigator.userAgent.match(/(MSIE|Edge)/);
-};
-
-/**
- * Gets the browser Locale
- *
- * For example 'en_EN'
- *
- * @return  {String}          Locale string
- */
-module.exports.getUserLocale = function Utils_getUserLocale() {
-  const loc = ((window.navigator.userLanguage || window.navigator.language) || 'en-EN').replace('-', '_');
-
-  // Restricts to a certain type of language.
-  // Example: There are lots of variants of the English language, but currently we only
-  // provide locales for one of them, so we force to use the one available.
-  const map = {
-    'nb': 'no_NO',
-    'es': 'es_ES',
-    'ru': 'ru_RU',
-    'en': 'en_EN'
-  };
-
-  const major = loc.split('_')[0] || 'en';
-  const minor = loc.split('_')[1] || major.toUpperCase();
-  if ( map[major] ) {
-    return map[major];
-  }
-  return major + '_' + minor;
-};
+}

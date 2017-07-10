@@ -27,17 +27,16 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 /**
  * @module core/search-engine
  */
-
-const API = require('core/api.js');
-const Utils = require('utils/misc.js');
-const VFS = require('vfs/fs.js');
-const PackageManager = require('core/package-manager.js');
-const SettingsManager = require('core/settings-manager.js');
+import PackageManager from 'core/package-manager';
+import SettingsManager from 'core/settings-manager';
+import FileMetadata from 'vfs/file';
+import * as Assets from 'core/assets';
+import * as VFS from 'vfs/fs';
+import * as Utils from 'utils/misc';
 
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -97,7 +96,7 @@ const ApplicationModule = (function() {
         value: {
           title: p.name,
           description: p.description,
-          icon: API.getFileIcon(new VFS.File('applications:///' + p.className, 'application'), '16x16'),
+          icon: Assets.getFileIcon(new FileMetadata('applications:///' + p.className, 'application'), '16x16'),
           launch: {application: pn, args: {}}
         },
         fields: [
@@ -153,7 +152,7 @@ const FilesystemModule = {
             return {
               title: iter.filename,
               description: iter.path,
-              icon: API.getFileIcon(new VFS.File(iter)),
+              icon: Assets.getFileIcon(new FileMetadata(iter)),
               launch: {application: '', args: '', file: iter}
             };
           });
@@ -329,4 +328,4 @@ const SearchEngine = (function() {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = SearchEngine;
+export default SearchEngine;

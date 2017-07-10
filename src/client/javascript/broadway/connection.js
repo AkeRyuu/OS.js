@@ -27,12 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-
-'use strict';
-
-const API = require('core/api.js');
-const BroadwayWindow = require('broadway/window.js');
-const Broadway = require('broadway/broadway.js');
+import DialogWindow from 'core/dialog';
+import BroadwayWindow from 'broadway/window';
+import Broadway from 'broadway/broadway';
+import Assets from 'core/assets';
+import Main from 'core/main';
+import GUI from 'utils/gui';
+import {getConfig} from 'core/config';
 
 /**
  * @namespace Broadway
@@ -101,7 +102,7 @@ function updateNotification() {
  */
 function createNotification() {
   const wm = require('core/windowmanager.js').instance;
-  const conf = API.getConfig('Broadway');
+  const conf = getConfig('Broadway');
 
   function displayMenu(ev) {
     const menuItems = [];
@@ -109,15 +110,15 @@ function createNotification() {
       menuItems.push({
         title: 'Disconnect from Broadway server',
         onClick: function() {
-          OSjs.Broadway.Connection.disconnect();
+          disconnect();
         }
       });
       menuItems.push({
         title: 'Create new process',
         onClick: function() {
-          API.createDialog('Input', {message: 'Launch process', value: '/usr/bin/gtk3-demo'}, function(ev, btn, value) {
+          DialogWindow.create('Input', {message: 'Launch process', value: '/usr/bin/gtk3-demo'}, function(ev, btn, value) {
             if ( btn === 'ok' && value ) {
-              OSjs.Broadway.Connection.spawn(value);
+              spawn(value);
             }
           });
         }
@@ -126,12 +127,12 @@ function createNotification() {
       menuItems.push({
         title: 'Connect to Broadway server',
         onClick: function() {
-          OSjs.Broadway.Connection.connect();
+          connect();
         }
       });
     }
 
-    API.createMenu(menuItems, ev);
+    GUI.createMenu(menuItems, ev);
   }
 
   removeNotification();
@@ -140,7 +141,7 @@ function createNotification() {
     removeNotification();
 
     wm.createNotificationIcon('BroadwayService', {
-      image: API.getIcon('gtk.png'),
+      image: Assets.getIcon('gtk.png'),
       onContextMenu: function(ev) {
         displayMenu(ev);
         return false;
@@ -170,7 +171,7 @@ function createSpawner(host, cb) {
   };
 
   _ws.onclose = function() {
-    OSjs.Broadway.Connection.disconnect();
+    disconnect();
   };
 }
 
@@ -254,13 +255,13 @@ function connect() {
     return;
   }
 
-  const conf = API.getConfig('Broadway');
+  const conf = getConfig('Broadway');
 
   createSpawner(createURL(conf.defaults.spawner), function(err) {
     _connected = true;
 
     if ( err ) {
-      API.error('Broadway', 'Failed to connect', err);
+      Main.error('Broadway', 'Failed to connect', err);
     } else {
       try {
         const host = createURL(conf.defaults.connection);
@@ -295,7 +296,7 @@ function spawn(cmd) {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   init: init,
   connect: connect,
   disconnect: disconnect,
@@ -350,7 +351,7 @@ module.exports = {
     onCreateSurface: function(id, surface) {
       const wm = require('core/windowmanager.js').instance;
       if ( !surface.isTemp ) {
-        const win = new BroadwayWindow(id, surface.x, surface.y, surface.width, surface.height, surface.canvas);
+        const win = new BroadwayWindow(id, surface.x, surface.y, surface.width, surface.height, surface.canvas, Broadway);
         wm.addWindow(win, true);
       }
     }

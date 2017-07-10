@@ -27,16 +27,17 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const Utils = require('utils/misc.js');
-const DialogWindow = require('core/dialog.js');
-const GUIElement = require('gui/element.js');
-const VFS = require('vfs/fs.js');
-const SettingsManager = require('core/settings-manager.js');
-const MountManager = require('core/mount-manager.js');
+import DialogWindow from 'core/dialog';
+import GUIElement from 'gui/element';
+import FileMetadata from 'vfs/file';
+import SettingsManager from 'core/settings-manager';
+import MountManager from 'core/mount-manager';
+import * as FS from 'utils/fs';
+import * as Main from 'core/main';
+import * as Utils from 'utils/misc';
+import * as VFS from 'vfs/fs';
+import {_} from 'core/locales';
+import {getDefaultPath} from 'core/config';
 
 /**
  * An 'File' dialog
@@ -62,12 +63,12 @@ const MountManager = require('core/mount-manager.js');
  * @constructor File
  * @memberof OSjs.Dialogs
  */
-class FileDialog extends DialogWindow {
+export default class FileDialog extends DialogWindow {
   constructor(args, callback) {
     args = Object.assign({}, {
       file: null,
       type: 'open',
-      path: API.getDefaultPath(),
+      path: getDefaultPath(),
       filename: '',
       filetypes: [],
       extension: '',
@@ -80,7 +81,7 @@ class FileDialog extends DialogWindow {
 
     args.multiple = (args.type === 'save' ? false : args.multiple === true);
 
-    if ( args.path && args.path instanceof VFS.File ) {
+    if ( args.path && args.path instanceof FileMetadata ) {
       args.path = FS.dirname(args.path.path);
     }
 
@@ -96,7 +97,7 @@ class FileDialog extends DialogWindow {
       }
     }
 
-    const title = args.title || API._(args.type === 'save' ? 'DIALOG_FILE_SAVE' : 'DIALOG_FILE_OPEN');
+    const title = args.title || _(args.type === 'save' ? 'DIALOG_FILE_SAVE' : 'DIALOG_FILE_OPEN');
     const icon = args.type === 'open' ? 'actions/document-open.png' : 'actions/documentsave-as.png';
 
     super('FileDialog', {
@@ -146,12 +147,12 @@ class FileDialog extends DialogWindow {
     filename.set('value', this.args.filename || '');
 
     this._find('ButtonMkdir').on('click', () => {
-      API.createDialog('Input', {message: API._('DIALOG_FILE_MKDIR_MSG', this.path), value: 'New folder'}, (ev, btn, value) => {
+      DialogWindow.create('Input', {message: _('DIALOG_FILE_MKDIR_MSG', this.path), value: 'New folder'}, (ev, btn, value) => {
         if ( btn === 'ok' && value ) {
           const path = FS.pathJoin(this.path, value);
-          VFS.mkdir(new VFS.File(path, 'dir'), (err) => {
+          VFS.mkdir(new FileMetadata(path, 'dir'), (err) => {
             if ( err ) {
-              API.error(API._('DIALOG_FILE_ERROR'), API._('ERR_VFSMODULE_MKDIR'), err);
+              Main.error(_('DIALOG_FILE_ERROR'), _('ERR_VFSMODULE_MKDIR'), err);
             } else {
               this.changePath(path);
             }
@@ -161,7 +162,7 @@ class FileDialog extends DialogWindow {
     });
 
     home.on('click', () => {
-      const dpath = API.getDefaultPath();
+      const dpath = getDefaultPath();
       this.changePath(dpath);
     });
 
@@ -174,7 +175,7 @@ class FileDialog extends DialogWindow {
       if ( ev && ev.detail && ev.detail.entries ) {
         const activated = ev.detail.entries[0];
         if ( activated ) {
-          this.selected = new VFS.File(activated.data);
+          this.selected = new FileMetadata(activated.data);
           if ( this.selected.type !== 'dir' ) {
             filename.set('value', this.selected.filename);
           }
@@ -190,7 +191,7 @@ class FileDialog extends DialogWindow {
       if ( ev && ev.detail && ev.detail.entries ) {
         const activated = ev.detail.entries[0];
         if ( activated ) {
-          this.selected = new VFS.File(activated.data);
+          this.selected = new FileMetadata(activated.data);
 
           if ( this.selected.type !== 'dir' ) {
             filename.set('value', this.selected.filename);
@@ -254,7 +255,7 @@ class FileDialog extends DialogWindow {
       return true;
     }).map((m) => {
       return {
-        label: m.name + (m.module.readOnly ? Utils.format(' ({0})', API._('LBL_READONLY')) : ''),
+        label: m.name + (m.module.readOnly ? Utils.format(' ({0})', _('LBL_READONLY')) : ''),
         value: m.module.root
       };
     });
@@ -352,11 +353,11 @@ class FileDialog extends DialogWindow {
       let check = this.checkFileExtension();
 
       if ( !this.path || !check.filename ) {
-        API.error(API._('DIALOG_FILE_ERROR'), API._('DIALOG_FILE_MISSING_FILENAME'));
+        Main.error(_('DIALOG_FILE_ERROR'), _('DIALOG_FILE_MISSING_FILENAME'));
         return false;
       }
 
-      this.selected = new VFS.File(this.path.replace(/^\//, '') + '/' + check.filename, check.mime);
+      this.selected = new FileMetadata(this.path.replace(/^\//, '') + '/' + check.filename, check.mime);
       this._toggleDisabled(true);
 
       VFS.exists(this.selected, (error, result) => {
@@ -367,15 +368,15 @@ class FileDialog extends DialogWindow {
         }
 
         if ( error ) {
-          API.error(API._('DIALOG_FILE_ERROR'), API._('DIALOG_FILE_MISSING_FILENAME'));
+          Main.error(_('DIALOG_FILE_ERROR'), _('DIALOG_FILE_MISSING_FILENAME'));
         } else {
           if ( result ) {
             this._toggleDisabled(true);
 
             if ( this.selected ) {
-              API.createDialog('Confirm', {
+              DialogWindow.create('Confirm', {
                 buttons: ['yes', 'no'],
-                message: API._('DIALOG_FILE_OVERWRITE', this.selected.filename)
+                message: _('DIALOG_FILE_OVERWRITE', this.selected.filename)
               }, (ev, button) => {
                 this._toggleDisabled(false);
 
@@ -394,13 +395,13 @@ class FileDialog extends DialogWindow {
       return false;
     } else {
       if ( !this.selected && this.args.select !== 'dir' ) {
-        API.error(API._('DIALOG_FILE_ERROR'), API._('DIALOG_FILE_MISSING_SELECTION'));
+        Main.error(_('DIALOG_FILE_ERROR'), _('DIALOG_FILE_MISSING_SELECTION'));
         return false;
       }
 
       let res = this.selected;
       if ( !res && this.args.select === 'dir' ) {
-        res = new VFS.File({
+        res = new FileMetadata({
           filename: FS.filename(this.path),
           path: this.path,
           type: 'dir'
@@ -423,8 +424,3 @@ class FileDialog extends DialogWindow {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = FileDialog;

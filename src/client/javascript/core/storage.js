@@ -28,34 +28,28 @@
  * @licence Simplified BSD License
  */
 
-'use strict';
-
 /**
  * @module core/storage
  */
-
-const API = require('core/api.js');
-const Utils = require('utils/misc.js');
-const Connection = require('core/connection.js');
-const Application = require('core/application.js');
-const SettingsManager = require('core/settings-manager.js');
-
-let _instance;
+import Connection from 'core/connection';
+import Process from 'core/process';
+import SettingsManager from 'core/settings-manager';
+import * as Utils from 'utils/misc';
 
 /**
  * Storage Base Class
  *
  * @abstract
  */
-class Storage {
+export default class Storage {
 
   static get instance() {
-    return _instance;
+    return window.___osjs__storage_instance;
   }
 
   constructor() {
     /* eslint consistent-this: "warn" */
-    _instance = this;
+    window.___osjs__storage_instance = this;
 
     this.saveTimeout = null;
   }
@@ -73,7 +67,7 @@ class Storage {
    * Destroys the Storage
    */
   destroy() {
-    _instance = null;
+    window.___osjs__storage_instance = null;
   }
 
   /**
@@ -109,8 +103,8 @@ class Storage {
    */
   saveSession(callback) {
     const data = [];
-    API.getProcesses().forEach((proc, i) => {
-      if ( proc && (proc instanceof Application) ) {
+    Process.getProcesses().forEach((proc, i) => {
+      if ( proc && (typeof proc._getSessionData === 'function') ) {
         data.push(proc._getSessionData());
       }
     });
@@ -137,30 +131,5 @@ class Storage {
 
     callback(false, list);
   }
-
-  /**
-   * Default method to restore last running session
-   *
-   * @param   {Function}  callback      Callback function => fn()
-   */
-  loadSession(callback) {
-    callback = callback || function() {};
-
-    console.info('Storage::loadSession()');
-
-    this.getLastSession((err, list) => {
-      if ( err ) {
-        callback();
-      } else {
-        API.launchList(list, null, null, callback);
-      }
-    });
-  }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = Storage;
 

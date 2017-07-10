@@ -27,18 +27,18 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import {getConfig} from 'core/config';
+import {_} from 'core/locales';
+import * as VFS from 'vfs/fs';
+import FileMetadata from 'vfs/file';
+import Connection from 'core/connection';
 
-const API = require('core/api.js');
-const VFS = require('vfs/fs.js');
-const Connection = require('core/connection.js');
-
-class WSConnection extends Connection {
+export default class WSConnection extends Connection {
   constructor() {
     super(...arguments);
 
-    const port = API.getConfig('Connection.WSPort');
-    const path = API.getConfig('Connection.WSPath') || '';
+    const port = getConfig('Connection.WSPort');
+    const path = getConfig('Connection.WSPath') || '';
 
     let url = window.location.protocol.replace('http', 'ws') + '//' + window.location.host;
     if ( port !== 'upgrade' ) {
@@ -98,7 +98,7 @@ class WSConnection extends Connection {
 
     this.ws.onclose = (ev) => {
       if ( !connected && ev.code !== 3001 ) {
-        callback(API._('CONNECTION_ERROR'));
+        callback(_('CONNECTION_ERROR'));
         return;
       }
       this._onclose();
@@ -142,7 +142,7 @@ class WSConnection extends Connection {
   message(data) {
     // Emit a VFS event when a change occures
     if ( data.action === 'vfs:watch' ) {
-      OSjs.VFS.Helpers.triggerWatch(data.args.event, new VFS.File(data.args.file));
+      VFS.triggerWatch(data.args.event, new FileMetadata(data.args.file));
     }
 
     // Emit a subscription event
@@ -185,10 +185,4 @@ class WSConnection extends Connection {
     return false;
   }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = WSConnection;
 

@@ -27,12 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import Authenticator from 'core/authenticator';
 
-const Authenticator = require('core/authenticator.js');
-
-class DatabaseAuthenticator extends Authenticator {
+export default class DatabaseAuthenticator extends Authenticator {
 }
-
-module.exports = DatabaseAuthenticator;
 

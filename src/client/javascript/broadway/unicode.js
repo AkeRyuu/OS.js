@@ -27,14 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 /* Some of the keyboard handling code is from noVNC and
  * (c) Joel Martin (github@martintribe.org), used with permission
  *  Original code at:
  * https://github.com/kanaka/noVNC/blob/master/include/input.js
  */
-module.exports = {
+export default {
   0x0104: 0x01a1,
   0x02D8: 0x01a2,
   0x0141: 0x01a3,

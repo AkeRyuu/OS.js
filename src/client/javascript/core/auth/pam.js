@@ -27,11 +27,7 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import Authenticator from 'core/authenticator';
 
-const Authenticator = require('core/authenticator.js');
-
-class PAMAuthenticator extends Authenticator {
+export default class PAMAuthenticator extends Authenticator {
 }
-
-module.exports = PAMAuthenticator;

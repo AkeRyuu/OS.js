@@ -27,11 +27,10 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DOM = require('utils/dom.js');
-const GUI = require('utils/gui.js');
+import * as DOM from 'utils/dom';
+import * as GUI from 'utils/gui';
+import * as Assets from 'core/assets';
+import {_} from 'core/locales';
 
 /**
  * @namespace Elements
@@ -64,7 +63,7 @@ function getFocusElement(inst) {
 function parseDynamic(node, win, args) {
   args = args || {};
 
-  const translator = args._ || API._;
+  const translator = args._ || _;
 
   node.querySelectorAll('*[data-label]').forEach(function(el) {
     const label = translator(el.getAttribute('data-label'));
@@ -81,7 +80,7 @@ function parseDynamic(node, win, args) {
   node.querySelectorAll('gui-button').forEach(function(el) {
     const label = GUI.getValueLabel(el);
     if ( label ) {
-      el.appendChild(document.createTextNode(API._(label)));
+      el.appendChild(document.createTextNode(_(label)));
     }
   });
 
@@ -93,7 +92,7 @@ function parseDynamic(node, win, args) {
   node.querySelectorAll('*[data-src]').forEach(function(el) {
     const old = el.getAttribute('data-src') || '';
     if ( win._app && old.match(/^app:\/\//) ) {
-      const source = API.getApplicationResource(win._app, old.replace('app://', ''));
+      const source = Assets.getPackageResource(win._app, old.replace('app://', ''));
       el.setAttribute('data-src', source);
     }
   });
@@ -131,7 +130,7 @@ function createElementInstance(tagName, el, q, buildArgs) {
  * @constructor Element
  * @memberof OSjs.GUI
  */
-class UIElement {
+export default class UIElement {
 
   /**
    * @param {Node}      el      DOM Node
@@ -649,8 +648,3 @@ class UIElement {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = UIElement;

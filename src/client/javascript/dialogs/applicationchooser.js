@@ -27,12 +27,11 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const Utils = require('utils/misc.js');
-const DialogWindow = require('core/dialog.js');
-const PackageManager = require('core/package-manager.js');
+import DialogWindow from 'core/dialog';
+import PackageManager from 'core/package-manager';
+import * as Assets from 'core/assets';
+import * as Utils from 'utils/misc';
+import {_} from 'core/locales';
 
 /**
  * An 'Application Chooser' dialog
@@ -41,7 +40,7 @@ const PackageManager = require('core/package-manager.js');
  *
  * OSjs.API.createDialog('ApplicationChooser', {}, fn);
  */
-class ApplicationChooserDialog extends DialogWindow {
+export default class ApplicationChooserDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args              An object with arguments
@@ -54,7 +53,7 @@ class ApplicationChooserDialog extends DialogWindow {
     args = Object.assign({}, {}, args);
 
     super('ApplicationChooserDialog', {
-      title: args.title || API._('DIALOG_APPCHOOSER_TITLE'),
+      title: args.title || _('DIALOG_APPCHOOSER_TITLE'),
       width: 400,
       height: 400
     }, args, callback);
@@ -63,7 +62,7 @@ class ApplicationChooserDialog extends DialogWindow {
   init() {
     const root = super.init(...arguments);
 
-    const cols = [{label: API._('LBL_NAME')}];
+    const cols = [{label: _('LBL_NAME')}];
     const rows = [];
     const metadata = PackageManager.getPackages();
 
@@ -78,7 +77,7 @@ class ApplicationChooserDialog extends DialogWindow {
         rows.push({
           value: iter,
           columns: [
-            {label: label.join(' - '), icon: API.getIcon(iter.icon, null, name), value: JSON.stringify(iter)}
+            {label: label.join(' - '), icon: Assets.getIcon(iter.icon, null, name), value: JSON.stringify(iter)}
           ]
         });
       }
@@ -92,7 +91,7 @@ class ApplicationChooserDialog extends DialogWindow {
     let label = '<unknown mime>';
     if ( this.args.file ) {
       file = Utils.format('{0} ({1})', this.args.file.filename, this.args.file.mime);
-      label = API._('DIALOG_APPCHOOSER_SET_DEFAULT', this.args.file.mime);
+      label = _('DIALOG_APPCHOOSER_SET_DEFAULT', this.args.file.mime);
     }
 
     this._find('FileName').set('value', file);
@@ -113,8 +112,8 @@ class ApplicationChooserDialog extends DialogWindow {
       }
 
       if ( !result ) {
-        API.createDialog('Alert', {
-          message: API._('DIALOG_APPCHOOSER_NO_SELECTION')
+        DialogWindow.create('Alert', {
+          message: _('DIALOG_APPCHOOSER_NO_SELECTION')
         }, null, this);
 
         return;
@@ -130,8 +129,3 @@ class ApplicationChooserDialog extends DialogWindow {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = ApplicationChooserDialog;

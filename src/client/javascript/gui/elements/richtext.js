@@ -27,11 +27,10 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const DOM = require('utils/dom.js');
-const Events = require('utils/events.js');
-const GUIElement = require('gui/element.js');
+import * as DOM from 'utils/dom';
+import * as Events from 'utils/events';
+import * as Assets from 'core/assets';
+import GUIElement from 'gui/element';
 
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -81,9 +80,8 @@ function setDocumentData(el, text) {
 
   text = text || '';
 
-  const wm = require('core/windowmanager.js').instance;
-  const theme = (wm ? wm.getSetting('theme') : 'default') || 'default';
-  const themeSrc = OSjs.API.getThemeCSS(theme);
+  const theme = document.body.getAttribute('data-theme') || 'default';
+  const themeSrc = Assets.getThemeCSS(theme);
 
   let editable = el.getAttribute('data-editable');
   editable = editable === null || editable === 'true';
@@ -228,6 +226,6 @@ class GUIRichText extends GUIElement {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   GUIRichText: GUIRichText
 };

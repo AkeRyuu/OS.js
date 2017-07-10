@@ -27,11 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-
-'use strict';
-
-const UnicodeTable = require('broadway/unicode.js');
-const BroadwayConnection = require('broadway/connection.js');
+import UnicodeTable from 'broadway/unicode';
+import BroadwayConnection from 'broadway/connection';
 
 /**
  * This script is based on https://github.com/GNOME/gtk/tree/master/gdk/broadway
@@ -941,7 +938,7 @@ const Input = {
 // API
 /////////////////////////////////////////////////////////////////////////////
 
-const Broadway = {
+export default {
   /**
    * Connects to a Broadway server
    *
@@ -1104,10 +1101,4 @@ const Broadway = {
     }
   }
 };
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = Broadway;
 

@@ -27,22 +27,24 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 /**
  * @module core/window
  */
-
-const DOM = require('utils/dom.js');
-const API = require('core/api.js');
-const GUI = require('utils/gui.js');
-const VFS = require('vfs/fs.js');
-const Scheme = require('gui/scheme.js');
-const Events = require('utils/events.js');
-const Application = require('core/application.js');
-const Compability = require('utils/compability.js');
-const GUIElement = require('gui/element.js');
-const WindowManager = require('core/windowmanager.js');
+import FileMetadata from 'vfs/file';
+import Application from 'core/application';
+import WindowManager from 'core/windowmanager';
+import Element from 'gui/element';
+import Scheme from 'gui/scheme';
+import EventHandler from 'helpers/event-handler';
+import * as Main from 'core/main';
+import * as Assets from 'core/assets';
+import * as DOM from 'utils/dom';
+import * as GUI from 'utils/gui';
+import * as Events from 'utils/events';
+import * as Compability from 'utils/compability';
+import * as Keycodes from 'utils/keycodes';
+import {_} from 'core/locales';
 
 /**
  * The predefined events are as follows:
@@ -70,7 +72,7 @@ const WindowManager = require('core/windowmanager.js');
  */
 
 function _noEvent(ev) {
-  API.blurMenu();
+  GUI.blurMenu();
   ev.preventDefault();
   ev.stopPropagation();
   return false;
@@ -217,7 +219,7 @@ let _NAMES              = [];
  * @mixes EventHandler
  * @throws {Error} On invalid arguments
  */
-class Window {
+export default class Window {
 
   /**
    * @param   {String}                    name                     Window name (unique)
@@ -256,11 +258,11 @@ class Window {
   constructor(name, opts, appRef, schemeRef) {
 
     if ( _NAMES.indexOf(name) >= 0 ) {
-      throw new Error(API._('ERR_WIN_DUPLICATE_FMT', name));
+      throw new Error(_('ERR_WIN_DUPLICATE_FMT', name));
     }
 
     if ( appRef && !(appRef instanceof Application) ) {
-      throw new TypeError('appRef given was not instance of Core.Application');
+      throw new TypeError('appRef given was not instance of Application');
     }
 
     if ( schemeRef && !(schemeRef instanceof Scheme) ) {
@@ -268,7 +270,7 @@ class Window {
     }
 
     opts = Object.assign({}, {
-      icon: API.getIcon('apps/preferences-system-windows.png'),
+      icon: Assets.getIcon('apps/preferences-system-windows.png'),
       width: _DEFAULT_WIDTH,
       height: _DEFAULT_HEIGHT,
       title: name,
@@ -511,7 +513,7 @@ class Window {
 
     this._queryTimer = null;
 
-    this._evHandler = new OSjs.Helpers.EventHandler(name, [
+    this._evHandler = new EventHandler(name, [
       'focus', 'blur', 'destroy', 'maximize', 'minimize', 'restore',
       'move', 'moved', 'resize', 'resized',
       'keydown', 'keyup', 'keypress',
@@ -710,7 +712,7 @@ class Window {
         ev.stopPropagation();
       }
 
-      API.blurMenu();
+      GUI.blurMenu();
 
       return !!r;
     });
@@ -813,11 +815,11 @@ class Window {
     this._onChange('create');
     this._toggleLoading(false);
     this._toggleDisabled(false);
-    this._setIcon(API.getIcon(this._icon, null, this._app));
+    this._setIcon(Assets.getIcon(this._icon, null, this._app));
     this._updateMarkup();
 
     if ( this._sound ) {
-      API.playSound(this._sound, this._soundVolume);
+      Assets.playSound(this._sound, this._soundVolume);
     }
 
     this._initialized = true;
@@ -927,7 +929,7 @@ class Window {
     };
 
     const _animateClose = (fn) => {
-      if ( API.isShuttingDown() ) {
+      if ( Main.isShuttingDown() ) {
         fn();
       } else {
         if ( this._$element ) {
@@ -1046,7 +1048,7 @@ class Window {
    */
   _create(tagName, params, parentNode, applyArgs) {
     parentNode = parentNode || this._getRoot();
-    return GUIElement.createInto(tagName, params, parentNode, applyArgs, this);
+    return Element.createInto(tagName, params, parentNode, applyArgs, this);
   }
 
   /**
@@ -1067,12 +1069,12 @@ class Window {
 
     if ( all ) {
       return root.querySelectorAll(query).map((el) => {
-        return GUIElement.createFromNode(el, query);
+        return Element.createFromNode(el, query);
       });
     }
 
     const el = root.querySelector(query);
-    return GUIElement.createFromNode(el, query);
+    return Element.createFromNode(el, query);
   }
 
   /**
@@ -1802,7 +1804,7 @@ class Window {
   }
 
   /**
-   * Check next Tab (cycle GUIElement)
+   * Check next Tab (cycle Element)
    *
    * @param   {Event}     ev            DOM Event
    */
@@ -1810,7 +1812,7 @@ class Window {
     const nextElement = GUI.getNextElement(ev.shiftKey, document.activeElement, this._$root);
     if ( nextElement ) {
       if ( DOM.$hasClass(nextElement, 'gui-data-view') ) {
-        GUIElement.createFromNode(nextElement).focus();
+        Element.createFromNode(nextElement).focus();
       } else {
         try {
           nextElement.focus();
@@ -1847,7 +1849,7 @@ class Window {
       if ( type === 'filesDrop' ) {
         this._emit('drop:upload', [ev, item, args, el]);
       } else if ( type === 'itemDrop' && item.type === 'file' && item.data ) {
-        this._emit('drop:file', [ev, new VFS.File(item.data || {}), args, el]);
+        this._emit('drop:file', [ev, new FileMetadata(item.data || {}), args, el]);
       }
     }
 
@@ -1867,7 +1869,7 @@ class Window {
       return false;
     }
 
-    if ( type === 'keydown' && ev.keyCode === Events.Keys.TAB ) {
+    if ( type === 'keydown' && ev.keyCode === Keycodes.TAB ) {
       this._nextTabIndex(ev);
     }
 
@@ -1904,8 +1906,8 @@ class Window {
     const control = [
       [this._properties.allow_minimize, () => {
         return {
-          title: API._('WINDOW_MINIMIZE'),
-          icon: API.getIcon('actions/go-up.png'),
+          title: _('WINDOW_MINIMIZE'),
+          icon: Assets.getIcon('actions/go-up.png'),
           onClick: (name, iter) => {
             this._minimize();
           }
@@ -1913,8 +1915,8 @@ class Window {
       }],
       [this._properties.allow_maximize, () => {
         return {
-          title: API._('WINDOW_MAXIMIZE'),
-          icon: API.getIcon('actions/view-fullscreen.png'),
+          title: _('WINDOW_MAXIMIZE'),
+          icon: Assets.getIcon('actions/view-fullscreen.png'),
           onClick: (name, iter) => {
             this._maximize();
             this._focus();
@@ -1923,8 +1925,8 @@ class Window {
       }],
       [this._state.maximized, () => {
         return {
-          title: API._('WINDOW_RESTORE'),
-          icon: API.getIcon('actions/view-restore.png'),
+          title: _('WINDOW_RESTORE'),
+          icon: Assets.getIcon('actions/view-restore.png'),
           onClick: (name, iter) => {
             this._restore();
             this._focus();
@@ -1934,8 +1936,8 @@ class Window {
       [this._properties.allow_ontop, () => {
         if ( this._state.ontop ) {
           return {
-            title: API._('WINDOW_ONTOP_OFF'),
-            icon: API.getIcon('actions/window-new.png'),
+            title: _('WINDOW_ONTOP_OFF'),
+            icon: Assets.getIcon('actions/window-new.png'),
             onClick: (name, iter) => {
               this._state.ontop = false;
               if ( this._$element ) {
@@ -1947,8 +1949,8 @@ class Window {
         }
 
         return {
-          title: API._('WINDOW_ONTOP_ON'),
-          icon: API.getIcon('actions/window-new.png'),
+          title: _('WINDOW_ONTOP_ON'),
+          icon: Assets.getIcon('actions/window-new.png'),
           onClick: (name, iter) => {
             this._state.ontop = true;
             if ( this._$element ) {
@@ -1960,8 +1962,8 @@ class Window {
       }],
       [this._properties.allow_close, () => {
         return {
-          title: API._('WINDOW_CLOSE'),
-          icon: API.getIcon('actions/window-close.png'),
+          title: _('WINDOW_CLOSE'),
+          icon: Assets.getIcon('actions/window-close.png'),
           onClick: (name, iter) => {
             this._close();
           }
@@ -1976,7 +1978,7 @@ class Window {
       }
     });
 
-    API.createMenu(list, ev);
+    GUI.createMenu(list, ev);
   }
 
   /**
@@ -2179,8 +2181,3 @@ class Window {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = Window;

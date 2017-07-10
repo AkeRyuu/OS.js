@@ -27,7 +27,7 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import Promise from 'bluebird';
 
 // Globals
 
@@ -327,9 +327,9 @@ function initHandler(config, callback) {
   var conf = OSjs.API.getConfig('Connection');
   var ctype = conf.Type === 'standalone' ? 'http' : conf.Type;
 
-  const connection = new (require('core/connections/' + ctype + '.js'))();
-  const authenticator = new (require('core/auth/' + conf.Authenticator + '.js'))();
-  const storage = new (require('core/storage/' + conf.Storage + '.js'))();
+  const connection = new (require('core/connections/' + ctype + '.js')).default();
+  const authenticator = new (require('core/auth/' + conf.Authenticator + '.js')).default();
+  const storage = new (require('core/storage/' + conf.Storage + '.js')).default();
 
   OSjs.API.setLocale(OSjs.API.getConfig('Locale'));
 
@@ -407,9 +407,9 @@ function initPreload(config, callback) {
     });
   })(config.Preloads);
 
-  OSjs.Utils.preload(list, function preloadIter(total, failed) {
-    if ( failed.length ) {
-      console.warn('doInitialize()', 'some preloads failed to load:', failed);
+  OSjs.Utils.preloader(list).then((result) => {
+    if ( result.failed.length ) {
+      console.warn('doInitialize()', 'some preloads failed to load:', result.failed);
     }
 
     setTimeout(function() {
@@ -428,6 +428,7 @@ function initExtensions(config, callback) {
   }
 
   if ( OSjs.API.getConfig('Broadway.enabled') ) {
+    /*
     const Broadway = require('broadway/broadway.js');
     const BroadwayConnection = require('broadway/connection.js');
 
@@ -442,26 +443,24 @@ function initExtensions(config, callback) {
     OSjs.API.addHook('onBlurMenu', function() {
       Broadway.inject(null, 'blur');
     });
+    */
   }
 
   var exts = Object.keys(OSjs.Extensions);
   var manifest =  OSjs.Core.getMetadata();
 
   console.group('initExtensions()', exts);
-  OSjs.Utils.asyncs(exts, function(entry, idx, next) {
-    try {
-      var m = manifest[entry];
-      OSjs.Extensions[entry].init(m, function() {
+  Promise.each(exts, (entry) => {
+    return new Promise((next) => {
+      try {
+        var m = manifest[entry];
+        OSjs.Extensions[entry].init(m, () => next());
+      } catch ( e ) {
+        console.warn('Extension init failed', e.stack, e);
         next();
-      });
-    } catch ( e ) {
-      console.warn('Extension init failed', e.stack, e);
-      next();
-    }
-  }, function() {
-    console.groupEnd();
-    callback();
-  });
+      }
+    });
+  }).then(() => callback()).catch(callback);
 }
 
 /*
@@ -492,19 +491,16 @@ function initPackageManager(cfg, callback) {
     }
 
     var list = OSjs.API.getConfig('PreloadOnBoot', []);
-    OSjs.Utils.asyncs(list, function(iter, index, next) {
-      var pkg = pm.getPackage(iter);
-      if ( pkg && pkg.preload ) {
-        OSjs.Utils.preload(pkg.preload, next);
-      } else {
-        next();
-      }
-    }, function() {
-      setTimeout(function() {
-        callback(false, true);
-      }, 0);
-    });
-
+    Promise.each(list, (iter) => {
+      return new Promise((next) => {
+        var pkg = pm.getPackage(iter);
+        if ( pkg && pkg.preload ) {
+          OSjs.Utils.preload(pkg.preload, () => next());
+        } else {
+          next();
+        }
+      });
+    }).then(() => callback()).catch(callback);
   });
 }
 
@@ -625,6 +621,9 @@ function init(opts) {
   var splash = document.getElementById('LoadingScreen');
   var loading = OSjs.API.createSplash('OS.js', null, null, splash);
   var freeze = ['Bootstrap', 'API', 'Core', 'Dialogs', 'Extensions', 'GUI', 'Helpers', 'Locales', 'Utils', 'VFS'];
+
+  require('core/locales.js').init(config.LocaleOptions); // FIXME
+
   var queue = [
     initPreload,
     initHandler,
@@ -634,10 +633,10 @@ function init(opts) {
     initExtensions,
     initSearch,
     function initStoredMounts(cfg, cb) {
-      OSjs.Core.getMountManager().restore(cb);
+      OSjs.Core.getMountManager().restore(() => cb());
     },
     function initDialogs(cfg, cb) {
-      return OSjs.GUI.DialogScheme.init(cb);
+      return OSjs.GUI.DialogScheme.init(() => cb());
     }
   ];
 
@@ -698,28 +697,32 @@ function init(opts) {
         });
       });
     }
+
+    return true;
   }
 
   splash.style.display = 'block';
 
   initLayout();
 
-  OSjs.Utils.asyncs(queue, function asyncIter(entry, index, next) {
-    if ( index < 1 ) {
-      OSjs.API.triggerHook('onInitialize');
-    }
-
-    loading.update(index, queue.length);
-
-    entry(config, function asyncDone(err) {
-      if ( err ) {
-        _error(err);
-        return;
+  Promise.each(queue, (entry, index) => {
+    return new Promise((yes, no) => {
+      if ( index < 1 ) {
+        OSjs.API.triggerHook('onInitialize');
       }
 
-      next();
+      loading.update(index, queue.length);
+
+      entry(config, function asyncDone(err) {
+        if ( err ) {
+          no(err);
+        } else {
+          yes();
+        }
+      });
     });
-  }, _done);
+
+  }).then(_done).catch(_error);
 }
 
 module.exports = {
@@ -815,7 +818,7 @@ module.exports = {
     OSjs.Core.getStorage().destroy();
     OSjs.Core.getConnection().destroy();
 
-    OSjs.Utils._clearPreloadCache();
+    //OSjs.Utils._clearPreloadCache(); // FIXME!!!
 
     if ( restart ) {
       Object.keys(OSjs.Applications).forEach(function(k) {

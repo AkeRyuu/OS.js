@@ -27,10 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
 
 /**
  * An 'Font Selection' dialog
@@ -42,7 +41,7 @@ const DialogWindow = require('core/dialog.js');
  * @constructor Font
  * @memberof OSjs.Dialogs
  */
-class FontDialog extends DialogWindow {
+export default class FontDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args                                An object with arguments
@@ -60,11 +59,11 @@ class FontDialog extends DialogWindow {
    */
   constructor(args, callback) {
     args = Object.assign({}, {
-      fontName: API.getConfig('Fonts.default'),
+      fontName: getConfig('Fonts.default'),
       fontSize: 12,
       fontColor: '#000000',
       backgroundColor: '#ffffff',
-      fonts: API.getConfig('Fonts.list'),
+      fonts: getConfig('Fonts.list'),
       minSize: 6,
       maxSize: 30,
       text: 'The quick brown fox jumps over the lazy dog',
@@ -76,7 +75,7 @@ class FontDialog extends DialogWindow {
     }
 
     super('FontDialog', {
-      title: args.title || API._('DIALOG_FONT_TITLE'),
+      title: args.title || _('DIALOG_FONT_TITLE'),
       width: 400,
       height: 300
     }, args, callback);
@@ -139,10 +138,4 @@ class FontDialog extends DialogWindow {
   }
 
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = FontDialog;
 

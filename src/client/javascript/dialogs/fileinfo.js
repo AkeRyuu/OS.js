@@ -27,11 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const VFS = require('vfs/fs.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import * as VFS from 'vfs/fs';
+import {_} from 'core/locales';
 
 /**
  * An 'File Information' dialog
@@ -43,7 +41,7 @@ const DialogWindow = require('core/dialog.js');
  * @constructor FileInfo
  * @memberof OSjs.Dialogs
  */
-class FileInfoDialog extends DialogWindow {
+export default class FileInfoDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args              An object with arguments
@@ -55,7 +53,7 @@ class FileInfoDialog extends DialogWindow {
     args = Object.assign({}, {}, args);
 
     super('FileInfoDialog', {
-      title: args.title || API._('DIALOG_FILEINFO_TITLE'),
+      title: args.title || _('DIALOG_FILEINFO_TITLE'),
       width: 400,
       height: 400
     }, args, callback);
@@ -68,12 +66,12 @@ class FileInfoDialog extends DialogWindow {
   init() {
     const root = super.init(...arguments);
 
-    const txt = this._find('Info').set('value', API._('LBL_LOADING'));
+    const txt = this._find('Info').set('value', _('LBL_LOADING'));
     const file = this.args.file;
 
     function _onError(error) {
       if ( error ) {
-        txt.set('value', API._('DIALOG_FILEINFO_ERROR_LOOKUP_FMT', file.path));
+        txt.set('value', _('DIALOG_FILEINFO_ERROR_LOOKUP_FMT', file.path));
       }
     }
 
@@ -102,8 +100,3 @@ class FileInfoDialog extends DialogWindow {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = FileInfoDialog;

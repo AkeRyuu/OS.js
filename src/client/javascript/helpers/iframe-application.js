@@ -27,187 +27,10 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
-const Application = require('core/application.js');
-const Window = require('core/window.js');
-const Utils = require('utils/misc.js');
-
-let IFRAME_COUNT = 0;
-
-/////////////////////////////////////////////////////////////////////////////
-// Iframe Application Window Helper
-/////////////////////////////////////////////////////////////////////////////
-
-/**
- * IFrame Application Window constructor
- *
- * <pre><b>
- * This class is a basic implementation of OSjs.Core.Window
- * that uses Iframe as window content. It's usefull for creating
- * applications that is not using OS.js API.
- *
- * You can use this in combination with 'IFrameApplication'
- * </b></pre>
- *
- * @summary Helper for making IFrame Applications.
- *
- * @constructor
- * @memberof OSjs.Helpers
- * @see OSjs.Core.Window
- *
- * @link https://os-js.org/manual/package/iframe/
- */
-class IFrameApplicationWindow extends Window {
-
-  /**
-   * @param  {String}                 name          Window name
-   * @param  {Object}                 opts          Window options
-   * @param  {String}                 opts.src      The Iframe source
-   * @param  {String}                 opts.icon     The Icon relative/absolute path (./ for app dir)
-   * @param  {String}                 opts.title    The Window title
-   * @param  {OSjs.Core.Application}  app           The Application reference
-   */
-  constructor(name, opts, app) {
-    opts = Object.assign({}, {
-      src: 'about:blank',
-      focus: function() {},
-      blur: function() {},
-      icon: null,
-      title: 'IframeApplicationWindow',
-      width: 320,
-      height: 240,
-      allow_resize: false,
-      allow_restore: false,
-      allow_maximize: false
-    }, opts);
-
-    super('IFrameApplicationWindow', opts, app);
-
-    this._iwin = null;
-    this._frame = null;
-  }
-
-  destroy() {
-    this.postMessage('Window::destroy');
-    return super.destroy(...arguments);
-  }
-
-  init(wmRef, app) {
-    const root = super.init(...arguments);
-    root.style.overflow = 'visible';
-
-    const id = 'IframeApplicationWindow' + IFRAME_COUNT.toString();
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('border', 0);
-    iframe.id = id;
-    iframe.className = 'IframeApplicationFrame';
-    iframe.addEventListener('load', () => {
-      this._iwin = iframe.contentWindow;
-      this.postMessage('Window::init');
-    });
-
-    this.setLocation(this._opts.src, iframe);
-    root.appendChild(iframe);
-
-    this._frame = iframe;
-
-    try {
-      this._iwin = iframe.contentWindow;
-    } catch ( e ) {}
-
-    if ( this._iwin ) {
-      this._iwin.focus();
-    }
-
-    this._frame.focus();
-    this._opts.focus(this._frame, this._iwin);
-
-    IFRAME_COUNT++;
-
-    return root;
-  }
-
-  _blur() {
-    if ( super._blur(...arguments) ) {
-      if ( this._iwin ) {
-        this._iwin.blur();
-      }
-      if ( this._frame ) {
-        this._frame.blur();
-      }
-
-      this._opts.blur(this._frame, this._iwin);
-      return true;
-    }
-    return false;
-  }
-
-  _focus() {
-    if ( super._focus(...arguments) ) {
-      if ( this._iwin ) {
-        this._iwin.focus();
-      }
-      if ( this._frame ) {
-        this._frame.focus();
-      }
-      this._opts.focus(this._frame, this._iwin);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Post a message to IFrame Application
-   *
-   * @function postMessage
-   * @memberof OSjs.Helpers.IframeApplicationWindow#
-   *
-   * @param   {Mixed}       message     The message
-   */
-  postMessage(message) {
-    if ( this._iwin && this._app ) {
-      console.debug('IFrameApplicationWindow::postMessage()', message);
-      this._iwin.postMessage({
-        message: message,
-        pid: this._app.__pid,
-        wid: this._wid
-      }, window.location.href);
-    }
-  }
-
-  /**
-   * When Window receives a message from IFrame Application
-   *
-   * @function onPostMessage
-   * @memberof OSjs.Helpers.IframeApplicationWindow#
-   *
-   * @param   {Mixed}       message     The message
-   * @param   {Event}       ev          DOM Event
-   */
-  onPostMessage(message, ev) {
-    console.debug('IFrameApplicationWindow::onPostMessage()', message);
-  }
-
-  /**
-   * Set Iframe source
-   *
-   * @function setLocation
-   * @memberof OSjs.Helpers.IframeApplicationWindow#
-   *
-   * @param   {String}      src       Source
-   * @param   {Element}     iframe    Iframe element
-   */
-  setLocation(src, iframe) {
-    iframe = iframe || this._frame;
-
-    const oldbefore = window.onbeforeunload;
-    window.onbeforeunload = null;
-    iframe.src = src;
-    window.onbeforeunload = oldbefore;
-  }
-
-}
+import IFrameApplicationWindow from 'helpers/iframe-application-window';
+import Application from 'core/application';
+import * as Utils from 'utils/misc';
 
 /////////////////////////////////////////////////////////////////////////////
 // IFrame Application Helper
@@ -231,7 +54,7 @@ class IFrameApplicationWindow extends Window {
  * @memberof OSjs.Helpers
  * @see OSjs.Core.Application
  */
-class IFrameApplication extends Application {
+export default class IFrameApplication extends Application {
 
   /**
    * @param   {String}    name          Process name
@@ -300,9 +123,3 @@ class IFrameApplication extends Application {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports.IFrameApplication = IFrameApplication;
-module.exports.IFrameApplicationWindow = IFrameApplicationWindow;

@@ -27,15 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import {getConfig} from 'core/config';
+import Storage from 'core/storage';
 
-const API = require('core/api.js');
-const Storage = require('core/storage.js');
-
-class DemoStorage extends Storage {
+export default class DemoStorage extends Storage {
 
   init(callback) {
-    const curr = API.getConfig('Version');
+    const curr = getConfig('Version');
     const version = localStorage.getItem('__version__');
 
     if ( curr !== version ) {
@@ -64,8 +62,3 @@ class DemoStorage extends Storage {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = DemoStorage;

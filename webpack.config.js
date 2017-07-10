@@ -161,19 +161,21 @@ module.exports = new Promise((resolve, reject) => {
       console.log('Build options', JSON.stringify(options));
     }
 
+    //let CircularDependencyPlugin = require('circular-dependency-plugin');
+
     if ( options.assets !== false ) {
       webpack.plugins = webpack.plugins.concat([
+        /*new CircularDependencyPlugin({
+          exclude: /node_modules/,
+          failOnError: false
+        }),*/
         new HtmlWebpackPlugin({
           template: getTemplateFile('index.ejs'),
           osjs: {
             scripts: [
-              'settings.js',
-              'osjs.js',
-              'locales.js'
+              'settings.js'
             ],
             styles: [
-              'osjs.css',
-              'themes.css'
             ]
           }
         }),
@@ -194,6 +196,12 @@ module.exports = new Promise((resolve, reject) => {
     });
 
     resolve(osjs.utils.mergeObject(webpack, {
+      resolve: {
+        modules: [
+          path.join(__dirname, 'src/client/javascript'),
+          path.join(__dirname, 'node_modules')
+        ]
+      },
       entry: {
         locales: getLocaleFiles(cfg),
         osjs: getCoreFiles(cfg),

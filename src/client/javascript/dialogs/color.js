@@ -27,11 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const Utils = require('utils/misc.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import * as Utils from 'utils/misc';
+import {_} from 'core/locales';
 
 function getColor(rgb) {
   let hex = rgb;
@@ -66,7 +64,7 @@ function getColor(rgb) {
  * @constructor Color
  * @memberof OSjs.Dialogs
  */
-class ColorDialog extends DialogWindow {
+export default class ColorDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args              An object with arguments
@@ -80,7 +78,7 @@ class ColorDialog extends DialogWindow {
     const [rgb, hex] = getColor(args.color);
 
     super('ColorDialog', {
-      title: args.title || API._('DIALOG_COLOR_TITLE'),
+      title: args.title || _('DIALOG_COLOR_TITLE'),
       icon: 'apps/preferences-desktop-theme.png',
       width: 400,
       height: rgb.a !== null ? 300  : 220
@@ -93,10 +91,10 @@ class ColorDialog extends DialogWindow {
     const root = super.init(...arguments);
 
     const updateHex = (update) => {
-      this._find('LabelRed').set('value', API._('DIALOG_COLOR_R', this.color.r));
-      this._find('LabelGreen').set('value', API._('DIALOG_COLOR_G', this.color.g));
-      this._find('LabelBlue').set('value', API._('DIALOG_COLOR_B', this.color.b));
-      this._find('LabelAlpha').set('value', API._('DIALOG_COLOR_A', this.color.a));
+      this._find('LabelRed').set('value', _('DIALOG_COLOR_R', this.color.r));
+      this._find('LabelGreen').set('value', _('DIALOG_COLOR_G', this.color.g));
+      this._find('LabelBlue').set('value', _('DIALOG_COLOR_B', this.color.b));
+      this._find('LabelAlpha').set('value', _('DIALOG_COLOR_A', this.color.a));
 
       if ( update ) {
         this.color.hex = Utils.convertToHEX(this.color.r, this.color.g, this.color.b);
@@ -153,8 +151,3 @@ class ColorDialog extends DialogWindow {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = ColorDialog;

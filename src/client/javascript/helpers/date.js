@@ -29,7 +29,6 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-'use strict';
 
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -90,7 +89,7 @@ function _m(m, now) {
  * @constructor Date
  * @memberof OSjs.Helpers
  */
-class ExtendedDate {
+export default class ExtendedDate {
 
   constructor(date) {
     if ( date ) {
@@ -717,10 +716,4 @@ function formatDate(date, format, utc) {
   });
   return result.join('');
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = ExtendedDate;
 

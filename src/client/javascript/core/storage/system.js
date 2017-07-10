@@ -27,15 +27,7 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import Storage from 'core/storage';
 
-const Storage = require('core/storage.js');
-
-class SystemStorage extends Storage {
+export default class SystemStorage extends Storage {
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = SystemStorage;

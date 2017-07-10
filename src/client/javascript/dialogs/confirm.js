@@ -27,10 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import {_} from 'core/locales';
 
 /**
  * An 'Confirm' dialog
@@ -42,7 +40,7 @@ const DialogWindow = require('core/dialog.js');
  * @constructor Confirm
  * @memberof OSjs.Dialogs
  */
-class ConfirmDialog extends DialogWindow {
+export default class ConfirmDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args              An object with arguments
@@ -57,7 +55,7 @@ class ConfirmDialog extends DialogWindow {
     }, args);
 
     super('ConfirmDialog', {
-      title: args.title || API._('DIALOG_CONFIRM_TITLE'),
+      title: args.title || _('DIALOG_CONFIRM_TITLE'),
       icon: 'status/dialog-question.png',
       width: 400,
       height: 100
@@ -90,10 +88,4 @@ class ConfirmDialog extends DialogWindow {
     return root;
   }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = ConfirmDialog;
 

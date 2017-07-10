@@ -27,51 +27,45 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import {getBrowserPath} from 'core/config';
-import MountManager from 'core/mount-manager';
-import BaseTransport from 'vfs/transports/osjs';
 
 /**
- * @namespace Dist
- * @memberof OSjs.VFS.Transports
- */
-
-/////////////////////////////////////////////////////////////////////////////
-// API
-/////////////////////////////////////////////////////////////////////////////
-
-/*
- * OSjs 'dist' VFS Transport Module
+ * This is a object you can pass around in VFS when
+ * handling DataURL()s (strings). Normally you would
+ * use a File, Blob or ArrayBuffer, but this is an alternative.
  *
- * This is just a custom version of 'OSjs' module
+ * Useful for canvas data etc.
+ *
+ * @constructor
+ * @memberof OSjs.VFS
  */
-const Transport = {
-  url: function(item, callback) {
-    const root = getBrowserPath();
-    const module = MountManager.getModuleFromPath(item.path, false, true);
-    const url = item.path.replace(module.match, root).replace(/^\/+/, '/');
+export default class FileDataURL {
 
-    callback(false, url);
-  },
-
-  scandir: function() {
-    return BaseTransport.module.scandir.apply(this, arguments);
-  },
-
-  read: function() {
-    return BaseTransport.module.read.apply(this, arguments);
+  /**
+   * @param {String}    dataURL     Data URI
+   */
+  constructor(dataURL) {
+    /**
+     * File URI data (base64 encoded)
+     * @type {String}
+     */
+    this.dataURL = dataURL;
   }
-};
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-export default {
-  module: Transport,
-  defaults: function(opts) {
-    opts.readOnly = true;
-    opts.searchable = true;
+  /**
+   * Get base64 data
+   * @return {String}
+   */
+  toBase64() {
+    return this.data.split(',')[1];
   }
-};
 
+  /**
+   * Get raw data URI
+   * @override
+   * @return {String}
+   */
+  toString() {
+    return this.dataURL;
+  }
+
+}

@@ -27,10 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
 
 /**
  * An 'Error' dialog
@@ -42,7 +41,7 @@ const DialogWindow = require('core/dialog.js');
  * @constructor Error
  * @memberof OSjs.Dialogs
  */
-class ErrorDialog extends DialogWindow {
+export default class ErrorDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args              An object with arguments
@@ -75,7 +74,7 @@ class ErrorDialog extends DialogWindow {
     }
 
     super('ErrorDialog', {
-      title: args.title || API._('DIALOG_ERROR_TITLE'),
+      title: args.title || _('DIALOG_ERROR_TITLE'),
       icon: 'status/dialog-error.png',
       width: 400,
       height: error ? 400 : 200
@@ -105,16 +104,16 @@ class ErrorDialog extends DialogWindow {
         let title = '';
         let body = [];
 
-        if ( API.getConfig('BugReporting.options.issue') ) {
+        if ( getConfig('BugReporting.options.issue') ) {
           const obj = {};
           const keys = ['userAgent', 'platform', 'language', 'appVersion'];
           keys.forEach((k) => {
             obj[k] = navigator[k];
           });
 
-          title = API.getConfig('BugReporting.options.title');
+          title = getConfig('BugReporting.options.title');
           body = [
-            '**' + API.getConfig('BugReporting.options.message').replace('%VERSION%', API.getConfig('Version')) +  ':**',
+            '**' + getConfig('BugReporting.options.message').replace('%VERSION%', getConfig('Version')) +  ':**',
             '\n',
             '> ' + this.args.message,
             '\n',
@@ -136,7 +135,7 @@ class ErrorDialog extends DialogWindow {
           }
         }
 
-        const url = API.getConfig('BugReporting.url')
+        const url = getConfig('BugReporting.url')
           .replace('%TITLE%', encodeURIComponent(title))
           .replace('%BODY%', encodeURIComponent(body.join('\n')));
 
@@ -150,10 +149,4 @@ class ErrorDialog extends DialogWindow {
   }
 
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = ErrorDialog;
 

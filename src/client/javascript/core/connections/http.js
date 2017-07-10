@@ -27,13 +27,12 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import * as VFS from 'vfs/fs';
+import {getConfig} from 'core/config';
+import FileMetadata from 'vfs/file';
+import Connection from 'core/connection';
 
-const API = require('core/api.js');
-const VFS = require('vfs/fs.js');
-const Connection = require('core/connection.js');
-
-class HttpConnection extends Connection {
+export default class HttpConnection extends Connection {
 
   createRequest(method, args, onsuccess, onerror, options) {
     const res = super.createRequest(...arguments);
@@ -41,9 +40,9 @@ class HttpConnection extends Connection {
     if ( res === false ) {
       const url = (() => {
         if ( method.match(/^FS:/) ) {
-          return API.getConfig('Connection.FSURI') + '/' + method.replace(/^FS\:/, '');
+          return getConfig('Connection.FSURI') + '/' + method.replace(/^FS\:/, '');
         }
-        return API.getConfig('Connection.APIURI') + '/' + method;
+        return getConfig('Connection.APIURI') + '/' + method;
       })();
 
       return this._requestXHR(url, args, options, onsuccess, onerror);
@@ -57,11 +56,11 @@ class HttpConnection extends Connection {
       // Emit a VFS event when a change occures
       if ( ['write', 'mkdir', 'copy', 'move', 'unlink'].indexOf(method) !== -1 ) {
         const arg = method === 'move' ? {
-          source: args[0] instanceof VFS.File ? args[0] : null,
-          destination: args[1] instanceof VFS.File ? args[1] : null
+          source: args[0] instanceof FileMetadata ? args[0] : null,
+          destination: args[1] instanceof FileMetadata ? args[1] : null
         } : args[method === 'copy' ? 1 : 0];
 
-        OSjs.VFS.Helpers.triggerWatch(method, arg, appRef);
+        VFS.triggerWatch(method, arg, appRef);
       }
     }
     callback();
@@ -69,4 +68,3 @@ class HttpConnection extends Connection {
 
 }
 
-module.exports = HttpConnection;

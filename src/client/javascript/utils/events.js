@@ -27,9 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
-const DOM = require('utils/dom.js');
+import * as DOM from 'utils/dom';
+import * as Keycodes from 'utils/keycodes';
 
 /**
  * The callback for browser events bound by OS.js
@@ -43,63 +43,6 @@ const DOM = require('utils/dom.js');
 /////////////////////////////////////////////////////////////////////////////
 // MISC
 /////////////////////////////////////////////////////////////////////////////
-
-/**
- * A collection of keycode mappings
- *
- * @memberof OSjs.Utils
- * @var
- */
-module.exports.Keys = (function() {
-  const list = {
-    F1: 112,
-    F2: 113,
-    F3: 114,
-    F4: 115,
-    F6: 118,
-    F7: 119,
-    F8: 120,
-    F9: 121,
-    F10: 122,
-    F11: 123,
-    F12: 124,
-
-    TILDE: 220,
-    GRAVE: 192,
-
-    CMD: 17,
-    LSUPER: 91,
-    RSUPER: 92,
-
-    DELETE: 46,
-    INSERT: 45,
-    HOME: 36,
-    END: 35,
-    PGDOWN: 34,
-    PGUP: 33,
-    PAUSE: 19,
-    BREAK: 19,
-    CAPS_LOCK: 20,
-    SCROLL_LOCK: 186,
-
-    BACKSPACE: 8,
-    SPACE: 32,
-    TAB: 9,
-    ENTER: 13,
-    ESC: 27,
-    LEFT: 37,
-    RIGHT: 39,
-    UP: 38,
-    DOWN: 40
-  };
-
-  // Add all ASCII chacters to the map
-  for ( let n = 33; n <= 126; n++ ) {
-    list[String.fromCharCode(n)] = n;
-  }
-
-  return Object.freeze(list);
-})();
 
 /*
  * Gets the event name considering compability with
@@ -140,7 +83,7 @@ function getEventList(str) {
  * @return {(Event|Object)}   ev      DOM Event or an Object
  * @return Object
  */
-module.exports.mousePosition = function Utils_mousePosition(ev) {
+export function mousePosition(ev) {
   // If this is a custom event containing position
   if ( ev.detail && typeof ev.detail.x !== 'undefined' && typeof ev.detail.y !== 'undefined' ) {
     return {x: ev.detail.x, y: ev.detail.y};
@@ -153,7 +96,7 @@ module.exports.mousePosition = function Utils_mousePosition(ev) {
   }
 
   return {x: ev.clientX, y: ev.clientY};
-};
+}
 
 /**
  * Get the mouse button pressed
@@ -165,7 +108,7 @@ module.exports.mousePosition = function Utils_mousePosition(ev) {
  *
  * @return  {String}          The mouse button (left/middle/right)
  */
-module.exports.mouseButton = function Utils_mouseButton(ev) {
+export function mouseButton(ev) {
   if ( typeof ev.button !== 'undefined' ) {
     if ( ev.button === 0 ) {
       return 'left';
@@ -181,7 +124,7 @@ module.exports.mouseButton = function Utils_mouseButton(ev) {
     return 'left';
   }
   return 'right';
-};
+}
 
 /**
  * Checks if the event currently has the given key comination.
@@ -196,7 +139,7 @@ module.exports.mouseButton = function Utils_mouseButton(ev) {
  *
  * @return  {Boolean}
  */
-module.exports.keyCombination = (function() {
+export const keyCombination = (function() {
   const modifiers = {
     CTRL: (ev) => {
       return ev.ctrlKey;
@@ -214,8 +157,8 @@ module.exports.keyCombination = (function() {
 
   function getKeyName(keyCode) {
     let result = false;
-    Object.keys(module.exports.Keys).forEach((k) => {
-      if ( !result && (keyCode === module.exports.Keys[k]) ) {
+    Object.keys(Keycodes).forEach((k) => {
+      if ( !result && (keyCode === Keycodes[k]) ) {
         result = k;
       }
     });
@@ -239,8 +182,8 @@ module.exports.keyCombination = (function() {
       const fk = !!modifiers[f](ev);
       return checkMods[f] === fk;
     }) && checkKeys.every((f) => {
-      return getKeyName(ev.keyCode) === f;
-    });
+        return getKeyName(ev.keyCode) === f;
+      });
   };
 })();
 
@@ -285,7 +228,7 @@ module.exports.keyCombination = (function() {
  * @param   {CallbackEvent}   callback      Callback on event
  * @param   {Boolean}         [useCapture]  Use capture mode
  */
-module.exports.$bind = (function() {
+export const $bind = (function() {
   // Default timeouts
   const TOUCH_CONTEXTMENU = 1000;
   const TOUCH_CLICK_MIN = 30;
@@ -313,7 +256,7 @@ module.exports.$bind = (function() {
   function createWheelHandler(el, n, t, callback, useCapture) {
 
     function _wheel(ev) {
-      const pos = module.exports.mousePosition(ev);
+      const pos = mousePosition(ev);
       const direction = (ev.detail < 0 || ev.wheelDelta > 0) ? 1 : -1;
       pos.z = direction;
 
@@ -499,14 +442,14 @@ module.exports.$bind = (function() {
       type = getRealEventName(type);
 
       addEventHandler(el, nsType, type, callback, function mouseEventHandler(ev) {
-        if ( !OSjs || !OSjs.Utils ) { // Probably shut down
+        if ( !window.OSjs ) { // Probably shut down
           return null;
         }
 
         if ( noBind ) {
-          return callback(ev, module.exports.mousePosition(ev));
+          return callback(ev, mousePosition(ev));
         }
-        return callback.call(el, ev, module.exports.mousePosition(ev));
+        return callback.call(el, ev, mousePosition(ev));
       }, useCapture);
 
       if ( customEvents[type] ) {
@@ -576,7 +519,7 @@ module.exports.$bind = (function() {
  * @param   {Function}      [callback]    Callback on event
  * @param   {Boolean}       [useCapture]  Use capture mode
  */
-module.exports.$unbind = function Utils_$unbind(el, evName, callback, useCapture) {
+export function $unbind(el, evName, callback, useCapture) {
 
   function unbindAll() {
     if ( el._boundEvents ) {
@@ -619,5 +562,5 @@ module.exports.$unbind = function Utils_$unbind(el, evName, callback, useCapture
       unbindAll();
     }
   }
-};
+}
 

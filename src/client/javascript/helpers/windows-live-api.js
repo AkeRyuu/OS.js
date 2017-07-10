@@ -28,11 +28,11 @@
  * @licence Simplified BSD License
  */
 
-'use strict';
-
-const XHR = require('utils/xhr.js');
-const API = require('core/api.js');
-const MountManager = require('core/mount-manager.js');
+import MountManager from 'core/mount-manager';
+import * as API from 'core/api';
+import {preload} from 'utils/preloader';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
 
 /**
  * @namespace OSjs.Helpers.WindowsLiveAPI
@@ -104,12 +104,12 @@ class WindowsLiveAPI {
     if ( this.loaded ) {
       callback(false, true);
     } else {
-      XHR.preload(this.preloads, (total, failed) => {
-        if ( !failed.length ) {
+      preload(this.preloads).then((result) => {
+        if ( !result.failed.length ) {
           this.loaded = true;
         }
-        callback(failed.join('\n'));
-      });
+        callback(result.failed.join('\n'));
+      }).catch(() => callback());
     }
   }
 
@@ -149,7 +149,7 @@ class WindowsLiveAPI {
       }
 
       if ( !window.WL ) {
-        callback(API._('WLAPI_LOAD_FAILURE'));
+        callback(_('WLAPI_LOAD_FAILURE'));
         return;
       }
       WL = window.WL || {};
@@ -187,7 +187,7 @@ class WindowsLiveAPI {
           } else if ( result.status === 'success' ) {
             _login();
           } else {
-            callback(API._('WLAPI_INIT_FAILED_FMT', result.status.toString()));
+            callback(_('WLAPI_INIT_FAILED_FMT', result.status.toString()));
           }
         }, (result) => {
           console.error('WindowsLiveAPI::load()', 'init() error', result);
@@ -252,10 +252,10 @@ class WindowsLiveAPI {
       if ( result.status === 'connected' ) {
         callback(false, true);
       } else {
-        callback(API._('WLAPI_LOGIN_FAILED'));
+        callback(_('WLAPI_LOGIN_FAILED'));
       }
     }, (result) => {
-      callback(API._('WLAPI_LOGIN_FAILED_FMT', result.error_description));
+      callback(_('WLAPI_LOGIN_FAILED_FMT', result.error_description));
     });
   }
 
@@ -283,7 +283,7 @@ class WindowsLiveAPI {
     const ring = API.getServiceNotificationIcon();
     if ( ring ) {
       ring.add('Windows Live API', [{
-        title: API._('WLAPI_SIGN_OUT'),
+        title: _('WLAPI_SIGN_OUT'),
         onClick: () => {
           this.logout();
         }
@@ -313,40 +313,37 @@ class WindowsLiveAPI {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
-  instance: function() {
-    return SingletonInstance;
-  },
-  create: function(args, callback) {
-    args = args || {};
+export function intsance() {
+  return SingletonInstance;
+}
 
-    function _run() {
-      const scope = args.scope;
-      SingletonInstance.load(scope, (error) => {
-        callback(error ? error : false, SingletonInstance);
-      });
-    }
+export function create(args, callback) {
+  args = args || {};
 
-    if ( SingletonInstance ) {
-      _run();
-      return;
-    }
-
-    let clientId = null;
-    try {
-      clientId = API.getConfig('WindowsLiveAPI.ClientId');
-    } catch ( e ) {
-      console.warn('getWindowsLiveAPI()', e, e.stack);
-    }
-
-    if ( !clientId ) {
-      callback(API._('WLAPI_DISABLED'));
-      return;
-    }
-
-    SingletonInstance = new WindowsLiveAPI(clientId);
-    _run();
+  function _run() {
+    const scope = args.scope;
+    SingletonInstance.load(scope, (error) => {
+      callback(error ? error : false, SingletonInstance);
+    });
   }
 
-};
+  if ( SingletonInstance ) {
+    _run();
+    return;
+  }
 
+  let clientId = null;
+  try {
+    clientId = getConfig('WindowsLiveAPI.ClientId');
+  } catch ( e ) {
+    console.warn('getWindowsLiveAPI()', e, e.stack);
+  }
+
+  if ( !clientId ) {
+    callback(_('WLAPI_DISABLED'));
+    return;
+  }
+
+  SingletonInstance = new WindowsLiveAPI(clientId);
+  _run();
+}

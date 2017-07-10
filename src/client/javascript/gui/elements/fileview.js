@@ -27,18 +27,21 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const FS = require('utils/fs.js');
-const VFS = require('vfs/fs.js');
-const API = require('core/api.js');
-const DOM = require('utils/dom.js');
-const GUI = require('utils/gui.js');
-const Utils = require('utils/misc.js');
-const Events = require('utils/events.js');
-const GUIElement = require('gui/element.js');
-const GUIDataView = require('gui/dataview.js');
-const SettingsManager = require('core/settings-manager.js');
+import * as FS from 'utils/fs';
+import * as VFS from 'vfs/fs';
+import * as DOM from 'utils/dom';
+import * as GUI from 'utils/gui';
+import * as Utils from 'utils/misc';
+import * as Events from 'utils/events';
+import GUIElement from 'gui/element';
+import GUIDataView from 'gui/dataview';
+import SettingsManager from 'core/settings-manager';
+import FileMetadata from 'vfs/file';
+import DateExtended from 'helpers/date';
+import {_} from 'core/locales';
+import {getConfig, getDefaultPath} from 'core/config';
+import * as Assets from 'core/assets';
+import * as Main from 'core/main';
 
 /////////////////////////////////////////////////////////////////////////////
 // ABSTRACTION HELPERS
@@ -54,11 +57,11 @@ let _iconSizes = { // Defaults to 16x16
 
 function getFileIcon(iter, size) {
   if ( iter.icon && typeof iter.icon === 'object' ) {
-    return API.getIcon(iter.icon.filename, size, iter.icon.application);
+    return Assets.getIcon(iter.icon.filename, size, iter.icon.application);
   }
 
   const icon = 'status/dialog-question.png';
-  return API.getFileIcon(iter, size, icon);
+  return Assets.getFileIcon(iter, size, icon);
 }
 
 function getFileSize(iter) {
@@ -74,7 +77,7 @@ const removeExtension = (() => {
 
   return (str, opts) => {
     if ( !mimeConfig ) {
-      mimeConfig = API.getConfig('MIME.mapping');
+      mimeConfig = getConfig('MIME.mapping');
     }
 
     if ( opts.extensions === false ) {
@@ -99,7 +102,7 @@ function getDateFromStamp(stamp) {
     } catch ( e ) {}
 
     if ( date ) {
-      return OSjs.Helpers.Date.format(date);
+      return DateExtended.format(date);
     }
   }
   return stamp;
@@ -187,7 +190,7 @@ function getListViewColumns(cls, iter, opts) {
       columns.push({
         sortBy: key,
         sortDir: key === sortBy ? sortDir : null,
-        label: API._(map.label),
+        label: _(map.label),
         size: map.size || '',
         resizable: idx > 0,
         textalign: idx === 0 ? 'left' : 'right'
@@ -199,7 +202,7 @@ function getListViewColumns(cls, iter, opts) {
 }
 
 function scandir(dir, opts, cb, oncreate) {
-  const file = new VFS.File(dir);
+  const file = new FileMetadata(dir);
   file.type  = 'dir';
 
   const scanopts = {
@@ -469,15 +472,15 @@ class GUIFileView extends GUIElement {
       vfsOptions.set(null, opts, true);
     }
 
-    API.createMenu([{
-      title: API._('LBL_SHOW_HIDDENFILES'),
+    GUI.createMenu([{
+      title: _('LBL_SHOW_HIDDENFILES'),
       type: 'checkbox',
       checked: scandirOptions.showHiddenFiles === true,
       onClick: () => {
         setOption('showHiddenFiles', !scandirOptions.showHiddenFiles);
       }
     }, {
-      title: API._('LBL_SHOW_FILEEXTENSIONS'),
+      title: _('LBL_SHOW_FILEEXTENSIONS'),
       type: 'checkbox',
       checked: scandirOptions.showFileExtensions === true,
       onClick: () => {
@@ -493,7 +496,7 @@ class GUIFileView extends GUIElement {
     }
 
     const cb = args.done || function() {};
-    const dir = args.path || OSjs.API.getDefaultPath();
+    const dir = args.path || getDefaultPath();
     const child = childView;
     const el = this.$element;
 
@@ -501,7 +504,7 @@ class GUIFileView extends GUIElement {
     el._readdirTimeout = setTimeout(() => {
       readdir(this, dir, (error, result, summary) => {
         if ( error ) {
-          API.error(API._('ERR_VFSMODULE_XHR_ERROR'), API._('ERR_VFSMODULE_SCANDIR_FMT', dir), error);
+          Main.error(_('ERR_VFSMODULE_XHR_ERROR'), _('ERR_VFSMODULE_SCANDIR_FMT', dir), error);
         } else {
           child.clear();
           child.add(result);
@@ -583,7 +586,7 @@ class GUIFileView extends GUIElement {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   GUIFileView: GUIFileView
 };
 

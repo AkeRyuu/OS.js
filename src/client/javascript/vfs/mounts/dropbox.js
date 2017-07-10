@@ -28,12 +28,13 @@
  * @licence Simplified BSD License
  */
 /*eslint no-use-before-define: "off"*/
-'use strict';
-
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const VFS = require('vfs/fs.js');
-const MountManager = require('core/mount-manager.js');
+import Process from 'core/process';
+import MountManager from 'core/mount-manager';
+import * as FS from 'utils/fs';
+import * as API from 'core/api';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
+import FileMetadata from 'vfs/file';
 
 /**
  * @namespace Dropbox
@@ -49,7 +50,7 @@ let _cachedClient;
 let _isMounted = false;
 
 function _getConfig(cfg, isVFS) {
-  const config = OSjs.Core.getConfig();
+  const config = getConfig();
   try {
     return isVFS ? config.VFS.Dropbox[cfg] : config.DropboxAPI[cfg];
   } catch ( e ) {
@@ -69,7 +70,7 @@ function createRingNotification() {
   const ring = API.getServiceNotificationIcon();
   if ( ring ) {
     ring.add('Dropbox.js', [{
-      title: API._('DROPBOX_SIGN_OUT'),
+      title: _('DROPBOX_SIGN_OUT'),
       onClick: () => {
         signoutDropbox();
       }
@@ -104,7 +105,7 @@ DropboxVFS.prototype.init = function(callback) {
 
   let timeout = setTimeout(() => {
     timedOut = true;
-    callback(API._('ERR_OPERATION_TIMEOUT_FMT', '60s'));
+    callback(_('ERR_OPERATION_TIMEOUT_FMT', '60s'));
   }, 60 * 1000);
 
   this.client.authenticate((error, client) => {
@@ -124,7 +125,7 @@ DropboxVFS.prototype.scandir = function(item, callback) {
   function _finish(entries) {
     const result = entries.map((iter) => {
       console.info(iter);
-      return new VFS.File({
+      return new FileMetadata({
         filename: iter.name,
         path: MountManager.getModuleProperty('Dropbox', 'root').replace(/\/$/, '') + iter.path,
         size: iter.size,
@@ -134,8 +135,7 @@ DropboxVFS.prototype.scandir = function(item, callback) {
     });
     console.info('DropboxVFS::scandir()', item, '=>', result);
 
-    const list = FS.filterScandir(result, item._opts);
-    callback(false, list);
+    callback(false, result);
   }
 
   this.client.readdir(path, {}, (error, entries, stat, entry_stats) => {
@@ -240,9 +240,9 @@ DropboxVFS.prototype.url = function(item, callback) {
 DropboxVFS.prototype.upload = function(file, dest, callback) {
   console.info('DropboxVFS::upload()', file, dest);
 
-  const item = new VFS.File({
+  const item = new FileMetadata({
     filename: file.name,
-    path: FS.pathJoin((new VFS.File(dest)).path, file.name),
+    path: FS.pathJoin((new FileMetadata(dest)).path, file.name),
     mime: file.type,
     size: file.size
   });
@@ -251,15 +251,15 @@ DropboxVFS.prototype.upload = function(file, dest, callback) {
 };
 
 DropboxVFS.prototype.trash = function(item, callback) {
-  callback(API._('ERR_VFS_UNAVAILABLE'));
+  callback(_('ERR_VFS_UNAVAILABLE'));
 };
 
 DropboxVFS.prototype.untrash = function(item, callback) {
-  callback(API._('ERR_VFS_UNAVAILABLE'));
+  callback(_('ERR_VFS_UNAVAILABLE'));
 };
 
 DropboxVFS.prototype.emtpyTrash = function(item, callback) {
-  callback(API._('ERR_VFS_UNAVAILABLE'));
+  callback(_('ERR_VFS_UNAVAILABLE'));
 };
 
 DropboxVFS.freeSpace = function(root, callback) {
@@ -284,7 +284,7 @@ function getDropbox(callback) {
 
       createRingNotification();
 
-      API.message('vfs:mount', 'Dropbox', {source: null});
+      Process.message('vfs:mount', 'Dropbox', {source: null});
 
       callback(_cachedClient);
     });
@@ -304,7 +304,7 @@ function signoutDropbox(cb, options) {
     _isMounted = false;
     _cachedClient = null;
 
-    API.message('vfs:unmount', 'Dropbox', {source: null});
+    Process.message('vfs:unmount', 'Dropbox', {source: null});
 
     destroyRingNotification();
 
@@ -346,14 +346,14 @@ function makeRequest(name, args, callback, options) {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   module: DropboxVFS,
   request: makeRequest,
   unmount: (cb) => {
     // FIXME: Should we sign out here too ?
     cb = cb || function() {};
     _isMounted = false;
-    API.message('vfs:unmount', 'Dropbox', {source: null});
+    Process.message('vfs:unmount', 'Dropbox', {source: null});
     cb(false, true);
   },
   mounted: () => {

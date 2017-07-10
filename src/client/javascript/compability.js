@@ -34,17 +34,21 @@ module.exports = function() {
   const Connection = require('core/connection.js');
   const Storage = require('core/storage.js');
   const API = require('core/api.js');
+  const Assets = require('core/assets.js');
 
+  /*
   const BroadwayKeytable = require('broadway/unicode.js');
   const BroadwayConnection = require('broadway/connection.js');
   const BroadwayWindow = require('broadway/window.js');
   const Broadway = require('broadway/broadway.js');
+  */
 
   const ExtendedDate = require('helpers/date.js');
   const DefaultApplicationWindow = require('helpers/default-application-window.js');
   const DefaultApplication = require('helpers/default-application.js');
   const EventHandler = require('helpers/event-handler.js');
   const IFrameApplication = require('helpers/iframe-application.js');
+  const IFrameApplicationWindow = require('helpers/iframe-application-window.js');
   const GoogleAPI = require('helpers/google-api.js');
   const WindowsLiveAPI = require('helpers/windows-live-api.js');
   const SettingsFragment = require('helpers/settings-fragment.js');
@@ -56,6 +60,8 @@ module.exports = function() {
   const GUIHelpers = require('utils/gui.js');
 
   const VFS = require('vfs/fs.js');
+  const VFSFile = require('vfs/file.js');
+  const VFSFileData = require('vfs/filedataurl.js');
   const MountDropbox = require('vfs/mounts/dropbox.js');
   const MountGoogleDrive = require('vfs/mounts/googledrive.js');
   const MountLocalStorage = require('vfs/mounts/localstorage.js');
@@ -63,12 +69,18 @@ module.exports = function() {
 
   const FS = require('utils/fs.js');
   const DOM = require('utils/dom.js');
-  const XHR = require('utils/xhr.js');
+  const Preloader = require('utils/preloader.js');
   const Utils = require('utils/misc.js');
   const Events = require('utils/events.js');
   const Compability = require('utils/compability.js');
+  const Locales = require('core/locales.js');
+  const Config = require('core/config.js');
+  const Dialog = require('core/dialog.js');
+  const Main = require('core/main.js');
+  const Clipboard = require('utils/clipboard.js');
+  const Keycodes = require('utils/keycodes.js');
 
-  OSjs.Bootstrap = require('core/boot.js');
+  OSjs.Bootstrap = require('core/init.js');
 
   const assignInto = (lib, ns) => {
     return Object.keys(lib).forEach((k) => {
@@ -77,63 +89,83 @@ module.exports = function() {
   };
 
   assignInto(VFS, OSjs.VFS);
-  OSjs.VFS.FileDataURL = VFS.FileData;
+  OSjs.VFS.FileDataURL = VFSFileData.default;
+  OSjs.VFS.File = VFSFile.default;
   assignInto(FS, OSjs.VFS.Helpers);
 
-  OSjs.VFS.Transports.Applications = require('vfs/transports/applications.js');
-  OSjs.VFS.Transports.Dist = require('vfs/transports/dist.js');
-  OSjs.VFS.Transports.HTTP = require('vfs/transports/http.js');
-  OSjs.VFS.Transports.OSjs = require('vfs/transports/osjs.js');
-  OSjs.VFS.Transports.Web = require('vfs/transports/web.js');
-  OSjs.VFS.Transports.WebDAV = require('vfs/transports/webdav.js');
+  OSjs.VFS.Transports.Applications = require('vfs/transports/applications.js').default;
+  OSjs.VFS.Transports.Dist = require('vfs/transports/dist.js').default;
+  OSjs.VFS.Transports.HTTP = require('vfs/transports/http.js').default;
+  OSjs.VFS.Transports.OSjs = require('vfs/transports/osjs.js').default;
+  OSjs.VFS.Transports.Web = require('vfs/transports/web.js').default;
+  OSjs.VFS.Transports.WebDAV = require('vfs/transports/webdav.js').default;
 
   assignInto(FS, OSjs.Utils);
   assignInto(DOM, OSjs.Utils);
-  assignInto(XHR, OSjs.Utils);
   assignInto(Utils, OSjs.Utils);
   assignInto(Events, OSjs.Utils);
   assignInto(Compability, OSjs.Utils);
 
-  OSjs.Helpers.Date = ExtendedDate;
-  OSjs.Helpers.DefaultApplicationWindow = DefaultApplicationWindow;
-  OSjs.Helpers.DefaultApplication = DefaultApplication;
-  OSjs.Helpers.EventHandler = EventHandler;
-  OSjs.Helpers.IFrameApplication = IFrameApplication.IFrameApplication;
-  OSjs.Helpers.IFrameApplicationWindow = IFrameApplication.IFrameApplicationWindow;
-  OSjs.Helpers.SettingsFragment = SettingsFragment;
+  OSjs.Utils.Keys = Keycodes.default;
+  OSjs.Utils.preload = function() {
+    console.error('THIS FUNCTION WAS REMOVED');
+  };
+  OSjs.Utils.preloader = Preloader.default.preload;
+
+  OSjs.Helpers.Date = ExtendedDate.default;
+  OSjs.Helpers.DefaultApplicationWindow = DefaultApplicationWindow.default;
+  OSjs.Helpers.DefaultApplication = DefaultApplication.default;
+  OSjs.Helpers.EventHandler = EventHandler.default;
+  OSjs.Helpers.IFrameApplication = IFrameApplication.default;
+  OSjs.Helpers.IFrameApplicationWindow = IFrameApplicationWindow.default;
+  OSjs.Helpers.SettingsFragment = SettingsFragment.default;
   OSjs.Helpers.GoogleAPI = OSjs.Helpers.GoogleAPI || {};
   OSjs.Helpers.WindowsLiveAPI = OSjs.Helpers.WindowsLiveAPI || {};
   OSjs.Helpers.ZipArchiver = OSjs.Helpers.ZipArchiver || {};
 
   OSjs.API = API;
-  OSjs.API.killAll = Process.killAll;
-  OSjs.API.kill = Process.kill;
-  OSjs.API.message = Process.message;
-  OSjs.API.getProcess = Process.getProcess;
-  OSjs.API.getProcesses = Process.getProcesses;
+  OSjs.API.killAll = Process.default.killAll;
+  OSjs.API.kill = Process.default.kill;
+  OSjs.API.message = Process.default.message;
+  OSjs.API.getProcess = Process.default.getProcess;
+  OSjs.API.getProcesses = Process.default.getProcesses;
+  OSjs.API._ = Locales._;
+  OSjs.API.__ = Locales.__;
+  OSjs.API.setLocale = Locales.setLocale;
+  OSjs.API.getLocale = Locales.getLocale;
+  OSjs.API.getConfig = Config.getConfig;
+  OSjs.API.getDefaultPath = Config.getDefaultPath;
+  OSjs.API.isStandalone = Config.isStandalone;
+  OSjs.API.getBrowserPath = Config.getBrowserPath;
+  OSjs.API.createDialog = Dialog.create;
+  OSjs.API.createMenu = GUIHelpers.createMenu;
+  OSjs.API.blurMenu = GUIHelpers.blurMenu;
+  assignInto(Assets, OSjs.API);
+  assignInto(Main, OSjs.API);
+  assignInto(Clipboard, OSjs.API);
 
-  OSjs.Core.DialogWindow = Object.seal(require('core/dialog.js'));
-  OSjs.Core.Window = Object.seal(require('core/window.js'));
-  OSjs.Core.WindowManager = Object.seal(WindowManager);
-  OSjs.Core.Service = Object.seal(require('core/service.js'));
-  OSjs.Core.Process = Object.seal(Process);
-  OSjs.Core.Application = Object.seal(require('core/application.js'));
+  OSjs.Core.DialogWindow = Object.seal(require('core/dialog.js').default);
+  OSjs.Core.Window = Object.seal(require('core/window.js').default);
+  OSjs.Core.WindowManager = Object.seal(WindowManager.default);
+  OSjs.Core.Service = Object.seal(require('core/service.js').default);
+  OSjs.Core.Process = Object.seal(Process.default);
+  OSjs.Core.Application = Object.seal(require('core/application.js').default);
 
-  OSjs.Dialogs.Alert = Object.seal(require('dialogs/alert.js'));
-  OSjs.Dialogs.ApplicationChooser = Object.seal(require('dialogs/applicationchooser.js'));
-  OSjs.Dialogs.Color = Object.seal(require('dialogs/color.js'));
-  OSjs.Dialogs.Confirm = Object.seal(require('dialogs/confirm.js'));
-  OSjs.Dialogs.Error = Object.seal(require('dialogs/error.js'));
-  OSjs.Dialogs.File = Object.seal(require('dialogs/file.js'));
-  OSjs.Dialogs.FileInfo = Object.seal(require('dialogs/fileinfo.js'));
-  OSjs.Dialogs.FileProgress = Object.seal(require('dialogs/fileprogress.js'));
-  OSjs.Dialogs.FileUpload = Object.seal(require('dialogs/fileupload.js'));
-  OSjs.Dialogs.Font = Object.seal(require('dialogs/font.js'));
-  OSjs.Dialogs.Input = Object.seal(require('dialogs/input.js'));
+  OSjs.Dialogs.Alert = Object.seal(require('dialogs/alert.js').default);
+  OSjs.Dialogs.ApplicationChooser = Object.seal(require('dialogs/applicationchooser.js').default);
+  OSjs.Dialogs.Color = Object.seal(require('dialogs/color.js').default);
+  OSjs.Dialogs.Confirm = Object.seal(require('dialogs/confirm.js').default);
+  OSjs.Dialogs.Error = Object.seal(require('dialogs/error.js').default);
+  OSjs.Dialogs.File = Object.seal(require('dialogs/file.js').default);
+  OSjs.Dialogs.FileInfo = Object.seal(require('dialogs/fileinfo.js').default);
+  OSjs.Dialogs.FileProgress = Object.seal(require('dialogs/fileprogress.js').default);
+  OSjs.Dialogs.FileUpload = Object.seal(require('dialogs/fileupload.js').default);
+  OSjs.Dialogs.Font = Object.seal(require('dialogs/font.js').default);
+  OSjs.Dialogs.Input = Object.seal(require('dialogs/input.js').default);
 
-  OSjs.GUI.Element = Object.seal(UIElement);
-  OSjs.GUI.DataView = Object.seal(UIDataView);
-  OSjs.GUI.Scheme = Object.seal(UIScheme);
+  OSjs.GUI.Element = Object.seal(UIElement.default);
+  OSjs.GUI.DataView = Object.seal(UIDataView.default);
+  OSjs.GUI.Scheme = Object.seal(UIScheme.default);
   OSjs.GUI.Helpers = Object.seal(GUIHelpers);
 
   const languages = OSjs.Core.getConfig().Languages;
@@ -145,10 +177,90 @@ module.exports = function() {
    * @namespace Connection
    * @memberof OSjs.Broadway
    */
+  /*
   OSjs.Broadway.Keytable = BroadwayKeytable;
   OSjs.Broadway.Connection = BroadwayConnection;
   OSjs.Broadway.Window = BroadwayWindow;
   OSjs.Broadway.GTK = Broadway;
+  */
+
+  /**
+   * Global function for calling API (backend)
+   *
+   * You can call VFS functions by prefixing your method name with "FS:"
+   *
+   * @function call
+   * @memberof OSjs.API
+   * @see OSjs.Core.Connection#request
+   * @see OSjs.Utils.ajax
+   * @throws {Error} On invalid arguments
+   *
+   * @param   {String}    m                           Method name
+   * @param   {Object}    a                           Method arguments
+   * @param   {Function}  cb                          Callback on success => fn(err, res)
+   * @param   {Object}    [options]                   Options (all options except the ones listed below are sent to Connection)
+   * @param   {Boolean}   [options.indicator=true]    Show loading indicator
+   */
+  OSjs.API.call = function(m, a, cb, options) {
+    Connection.request(m, a, cb, options);
+  };
+
+  /**
+   * Get a resource from application
+   *
+   * @function getApplicationResource
+   * @memberof OSjs.API
+   *
+   * @param   {OSjs.Core.Process}   app     Application instance reference. You can also specify a name by String
+   * @param   {String}              name    Resource Name
+   * @param   {Boolean}             vfspath Return a valid VFS path
+   *
+   * @return  {String}            The absolute URL of resource
+   */
+  OSjs.API.getApplicationResource = function(app, name, vfspath) {
+    return Assets.getPackageResource(app, name, vfspath);
+  };
+
+  /**
+   * Perform cURL call
+   *
+   * The response is in form of: {httpCode, body}
+   *
+   * @function curl
+   * @memberof OSjs.API
+   *
+   * @param   {Object}    args      cURL Arguments (see docs)
+   * @param   {Function}  callback  Callback function => fn(error, response)
+   *
+   * @link https://os-js.org/manual/api/usage/curl/
+   */
+  OSjs.API.curl = function(args, callback) {
+    args = args || {};
+    callback = callback || {};
+
+    let opts = args.body;
+    if ( typeof opts === 'object' ) {
+      console.warn('DEPRECATION WARNING', 'The \'body\' wrapper is no longer needed');
+    } else {
+      opts = args;
+    }
+
+    return Connection.request('curl', opts, callback, args.options);
+  };
+
+  /**
+   * Checks the given permission (groups) against logged in user
+   *
+   * @function checkPermission
+   * @memberof OSjs.API
+   *
+   * @param   {Mixed}     group         Either a string or array of groups
+   *
+   * @return {Boolean}
+   */
+  module.exports.checkPermission = function(group) {
+    return Authenticator.default.instance().checkPermission(group);
+  };
 
   /**
    * Get the current SettingsManager  instance
@@ -158,7 +270,7 @@ module.exports = function() {
    * @return {OSjs.Core.SettingsManager}
    */
   OSjs.Core.getSettingsManager = function Core_getSettingsManager() {
-    return SettingsManager;
+    return SettingsManager.default;
   };
 
   /**
@@ -170,7 +282,7 @@ module.exports = function() {
    * @return {OSjs.Core.SearchEngine}
    */
   OSjs.Core.getSearchEngine = function Core_getSearchEngine() {
-    return SearchEngine;
+    return SearchEngine.default;
   };
 
   /**
@@ -182,7 +294,7 @@ module.exports = function() {
    * @return {OSjs.Core.PackageManager}
    */
   OSjs.Core.getPackageManager = function Core_getPackageManager() {
-    return PackageManager;
+    return PackageManager.default;
   };
 
   /**
@@ -193,7 +305,7 @@ module.exports = function() {
    * @return {OSjs.Core.MountManager}
    */
   OSjs.Core.getMountManager = function Core_getMountManager() {
-    return MountManager;
+    return MountManager.default;
   };
 
   /**
@@ -261,7 +373,7 @@ module.exports = function() {
    * @return {OSjs.Core.Connection}
    */
   OSjs.Core.getConnection = function Core_getConnection() {
-    return Connection.instance;
+    return Connection.default.instance;
   };
 
   /**
@@ -273,7 +385,7 @@ module.exports = function() {
    * @return {OSjs.Core.Storage}
    */
   OSjs.Core.getStorage = function Core_getStorage() {
-    return Storage.instance;
+    return Storage.default.instance;
   };
 
   /**
@@ -285,7 +397,7 @@ module.exports = function() {
    * @return {OSjs.Core.Authenticator}
    */
   OSjs.Core.getAuthenticator = function Core_getAuthenticator() {
-    return Authenticator.instance;
+    return Authenticator.default.instance;
   };
 
   /**
@@ -297,7 +409,7 @@ module.exports = function() {
    * @return {OSjs.Core.WindowManager}
    */
   OSjs.Core.getWindowManager  = function Core_getWindowManager() {
-    return WindowManager.instance;
+    return WindowManager.default.instance;
   };
 
   /**
@@ -311,7 +423,7 @@ module.exports = function() {
    * @return {OSjs.GUI.Scheme}
    */
   OSjs.GUI.createScheme = function(url) {
-    return new UIScheme(url);
+    return new UIScheme.default(url);
   };
 
   /**
@@ -343,41 +455,7 @@ module.exports = function() {
    * OSjs.VFS.file('home:///foo').read(<fn>);
    */
   OSjs.VFS.file = function createFileInstance(arg, mime) {
-    return new VFS.File(arg, mime);
-  };
-
-  /**
-   * Triggers a VFS watch event
-   *
-   * @function triggerWatch
-   * @memberof OSjs.VFS.Helpers
-   *
-   * @param   {String}              method      VFS method
-   * @param   {Object}              arg         VFS file
-   * @param   {OSjs.Core.Process}   [appRef]    Optional application reference
-   */
-  OSjs.VFS.Helpers.triggerWatch = function VFS_Helpers_triggerWatch(method, arg, appRef) {
-    VFS.broadcastMessage('vfs:' + method, arg, appRef);
-  };
-
-  /**
-   * Creates a new VFS.File from an upload
-   *
-   * @function createFileFromUpload
-   * @memberof OSjs.VFS.Helpers
-   *
-   * @param     {String}      destination         Destination path
-   * @param     {File}        f                   File
-   *
-   * @return {OSjs.VFS.File}
-   */
-  OSjs.VFS.Helpers.createFileFromUpload = function(destination, f) {
-    return new VFS.File({
-      filename: f.name,
-      path: (destination + '/' + f.name).replace(/\/\/\/\/+/, '///'),
-      mime: f.mime || 'application/octet-stream',
-      size: f.size
-    });
+    return new VFSFile.default(arg, mime);
   };
 
   /**
@@ -403,7 +481,7 @@ module.exports = function() {
       if ( btn !== 'ok' && btn !== 'complete' ) {
         cb(false, false);
       } else {
-        var file = VFS.Helpers.createFileFromUpload(destination, ufile);
+        var file = VFSFile.default.fromUpload(destination, ufile);
         cb(false, file);
       }
     }, ref);
@@ -569,6 +647,20 @@ module.exports = function() {
 
   })();
 
+  /**
+   * Alias of unlink
+   *
+   * @function delete
+   * @memberof OSjs.VFS
+   * @alias OSjs.VFS.unlink
+   */
+  (function() {
+    /*eslint dot-notation: "off"*/
+    OSjs.VFS['delete'] = function VFS_delete(item, callback) {
+      OSjs.VFS.unlink.apply(this, arguments);
+    };
+  })();
+
   /*
    * A hidden mountpoint for making HTTP requests via VFS
    */
@@ -606,10 +698,10 @@ module.exports = function() {
     root: 'dropbox:///',
     icon: 'places/dropbox.png',
     match: /^dropbox\:\/\//,
-    mount: MountDropbox.mount,
-    enabled: MountDropbox.enabled,
-    unmount: MountDropbox.unmount,
-    request: MountDropbox.request
+    mount: MountDropbox.default.mount,
+    enabled: MountDropbox.default.enabled,
+    unmount: MountDropbox.default.unmount,
+    request: MountDropbox.default.request
   });
 
   /*
@@ -626,9 +718,9 @@ module.exports = function() {
     icon: 'places/google-drive.png',
     match: /^google-drive\:\/\//,
     mount: MountGoogleDrive.mount,
-    enabled: MountGoogleDrive.enabled,
-    unmount: MountGoogleDrive.unmount,
-    request: MountGoogleDrive.request
+    enabled: MountGoogleDrive.default.enabled,
+    unmount: MountGoogleDrive.default.unmount,
+    request: MountGoogleDrive.default.request
   });
 
   /*
@@ -647,10 +739,10 @@ module.exports = function() {
     root: 'localstorage:///',
     icon: OSjs.API.getConfig('VFS.LocalStorage.Options.icon', 'apps/web-browser.png'),
     match: /^localstorage\:\/\//,
-    mount: MountLocalStorage.mount,
-    enabled: MountLocalStorage.enabled,
-    unmount: MountLocalStorage.unmount,
-    request: MountLocalStorage.request
+    mount: MountLocalStorage.default.mount,
+    enabled: MountLocalStorage.default.enabled,
+    unmount: MountLocalStorage.default.unmount,
+    request: MountLocalStorage.default.request
   });
 
   /*
@@ -667,23 +759,23 @@ module.exports = function() {
     icon: 'places/onedrive.png',
     match: /^onedrive\:\/\//,
     mount: MountOneDrive.mount,
-    enabled: MountOneDrive.enabled,
-    unmount: MountOneDrive.unmount,
-    request: MountOneDrive.request
+    enabled: MountOneDrive.default.enabled,
+    unmount: MountOneDrive.default.unmount,
+    request: MountOneDrive.default.request
   });
 
-  const GUIDataView = require('gui/dataview.js');
-  const GUIContainers = require('gui/elements/containers.js');
-  const GUIVisual = require('gui/elements/visual.js');
-  const GUITabs = require('gui/elements/tabs.js');
-  const GUIRichText = require('gui/elements/richtext.js');
-  const GUIMisc = require('gui/elements/misc.js');
-  const GUIInputs = require('gui/elements/inputs.js');
-  const GUITreeView = require('gui/elements/treeview.js');
-  const GUIListView = require('gui/elements/listview.js');
-  const GUIIconView = require('gui/elements/iconview.js');
-  const GUIFileView = require('gui/elements/fileview.js');
-  const GUIMenus = require('gui/elements/menus.js');
+  const GUIDataView = require('gui/dataview.js').default;
+  const GUIContainers = require('gui/elements/containers.js').default;
+  const GUIVisual = require('gui/elements/visual.js').default;
+  const GUITabs = require('gui/elements/tabs.js').default;
+  const GUIRichText = require('gui/elements/richtext.js').default;
+  const GUIMisc = require('gui/elements/misc.js').default;
+  const GUIInputs = require('gui/elements/inputs.js').default;
+  const GUITreeView = require('gui/elements/treeview.js').default;
+  const GUIListView = require('gui/elements/listview.js').default;
+  const GUIIconView = require('gui/elements/iconview.js').default;
+  const GUIFileView = require('gui/elements/fileview.js').default;
+  const GUIMenus = require('gui/elements/menus.js').default;
 
   OSjs.GUI.Element.register({
     tagName: 'gui-paned-view',

@@ -315,7 +315,6 @@ class ApplicationFileManagerWindow extends Window {
     var self = this;
     var content = '';
     var statusbar = this._find('Statusbar');
-    var doTranslate = doTranslate;
 
     var sum, label;
 

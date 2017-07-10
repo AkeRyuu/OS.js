@@ -27,11 +27,12 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const XHR = require('utils/xhr.js');
-const MountManager = require('core/mount-manager.js');
+import * as API from 'core/api';
+import MountManager from 'core/mount-manager';
+import {preload} from 'utils/preloader';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
+import jsonp from 'then-jsonp';
 
 /**
  * @namespace GoogleAPI
@@ -101,12 +102,12 @@ class GoogleAPI {
     if ( this.preloaded ) {
       callback(false, true);
     } else {
-      XHR.preload(this.preloads, (total, failed) => {
-        if ( !failed.length ) {
+      preload(this.preloads).then((result) => {
+        if ( result.failed.length ) {
           this.preloaded = true;
         }
-        callback(failed.join('\n'));
-      });
+        callback(result.failed.join('\n'));
+      }).catch(callback);
     }
   }
 
@@ -120,7 +121,7 @@ class GoogleAPI {
           cb(error);
         } else {
           if ( !this.authenticated ) {
-            cb(API._('GAPI_AUTH_FAILURE'));
+            cb(_('GAPI_AUTH_FAILURE'));
             return;
           }
           cb(false, result);
@@ -191,7 +192,7 @@ class GoogleAPI {
       }
 
       if ( !window.gapi || !gapi.load ) {
-        callback(API._('GAPI_LOAD_FAILURE'));
+        callback(_('GAPI_LOAD_FAILURE'));
         return;
       }
 
@@ -259,16 +260,7 @@ class GoogleAPI {
     }
 
     const url = 'https://accounts.google.com/o/oauth2/revoke?token=' + this.accessToken;
-    XHR.ajax({
-      url: url,
-      jsonp: true,
-      onsuccess: () => {
-        callback(true);
-      },
-      onerror: () => {
-        callback(false);
-      }
-    });
+    jsonp('GET', url).then(() => callback(true)).catch(() => callback(false));
   }
 
   /*
@@ -307,12 +299,12 @@ class GoogleAPI {
         ring.remove('Google API');
 
         ring.add('Google API', [{
-          title: API._('GAPI_SIGN_OUT'),
+          title: _('GAPI_SIGN_OUT'),
           onClick: () => {
             this.signOut();
           }
         }, {
-          title: API._('GAPI_REVOKE'),
+          title: _('GAPI_REVOKE'),
           onClick: () => {
             this.revoke(() => {
               this.signOut();
@@ -327,7 +319,7 @@ class GoogleAPI {
 
       if ( authResult.error ) {
         if ( authResult.error_subtype === 'origin_mismatch' || (authResult.error_subtype === 'access_denied' && !immediate) ) {
-          const msg = API._('GAPI_AUTH_FAILURE_FMT', authResult.error, authResult.error_subtype);
+          const msg = _('GAPI_AUTH_FAILURE_FMT', authResult.error, authResult.error_subtype);
           callback(msg);
           return;
         }
@@ -355,7 +347,7 @@ class GoogleAPI {
 
     gapi.load('auth:client', (result) => {
       if ( result && result.error ) {
-        const msg = API._('GAPI_AUTH_FAILURE_FMT', result.error, result.error_subtype);
+        const msg = _('GAPI_AUTH_FAILURE_FMT', result.error, result.error_subtype);
         callback(msg);
         return;
       }
@@ -371,38 +363,36 @@ class GoogleAPI {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
-  instance: function() {
-    return SingletonInstance;
-  },
-  create: function(args, callback) {
-    const load = args.load || [];
-    const scope = args.scope || [];
-    const client = args.client === true;
+export function instance() {
+  return SingletonInstance;
+}
 
-    function _run() {
-      SingletonInstance.load(load, scope, client, callback);
-    }
+export function create(args, callback) {
+  const load = args.load || [];
+  const scope = args.scope || [];
+  const client = args.client === true;
 
-    if ( SingletonInstance ) {
-      _run();
-      return;
-    }
-
-    let clientId = null;
-    try {
-      clientId = API.getConfig('GoogleAPI.ClientId');
-    } catch ( e ) {
-      console.warn('getGoogleAPI()', e, e.stack);
-    }
-
-    if ( !clientId ) {
-      callback(API._('GAPI_DISABLED'));
-      return;
-    }
-
-    SingletonInstance = new GoogleAPI(clientId);
-    _run();
+  function _run() {
+    SingletonInstance.load(load, scope, client, callback);
   }
 
-};
+  if ( SingletonInstance ) {
+    _run();
+    return;
+  }
+
+  let clientId = null;
+  try {
+    clientId = getConfig('GoogleAPI.ClientId');
+  } catch ( e ) {
+    console.warn('getGoogleAPI()', e, e.stack);
+  }
+
+  if ( !clientId ) {
+    callback(_('GAPI_DISABLED'));
+    return;
+  }
+
+  SingletonInstance = new GoogleAPI(clientId);
+  _run();
+}

@@ -27,10 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DialogWindow = require('core/dialog.js');
+import DialogWindow from 'core/dialog';
+import {_} from 'core/locales';
 
 /**
  * An 'Input' dialog
@@ -42,7 +40,7 @@ const DialogWindow = require('core/dialog.js');
  * @constructor Input
  * @memberof OSjs.Dialogs
  */
-class InputDialog extends DialogWindow {
+export default class InputDialog extends DialogWindow {
 
   /**
    * @param  {Object}          args                An object with arguments
@@ -56,7 +54,7 @@ class InputDialog extends DialogWindow {
     args = Object.assign({}, {}, args);
 
     super('InputDialog', {
-      title: args.title || API._('DIALOG_INPUT_TITLE'),
+      title: args.title || _('DIALOG_INPUT_TITLE'),
       icon: 'status/dialog-information.png',
       width: 400,
       height: 120
@@ -103,8 +101,3 @@ class InputDialog extends DialogWindow {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = InputDialog;

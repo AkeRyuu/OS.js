@@ -27,13 +27,14 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DOM = require('utils/dom.js');
-const Scheme = require('gui/scheme.js');
-const Window = require('core/window.js');
-const Events = require('utils/events.js');
+import {$empty, $addClass, $escape} from 'utils/dom';
+import Keycodes from 'utils/keycodes';
+import Window from 'core/window';
+import Process from 'core/process';
+import Application from 'core/application';
+import WindowManager from 'core/windowmanager';
+import Scheme from 'gui/scheme';
+import {_} from 'core/locales';
 
 /**
  * A callback for Dialogs.
@@ -69,7 +70,7 @@ const Events = require('utils/events.js');
  * @abstract
  * @extends core/window~Window
  */
-class DialogWindow extends Window {
+export default class DialogWindow extends Window {
 
   /**
    * @param {String}          className     Dialog Class Name
@@ -134,8 +135,8 @@ class DialogWindow extends Window {
         node.querySelectorAll('gui-label').forEach((el) => {
           if ( el.childNodes.length && el.childNodes[0].nodeType === 3 && el.childNodes[0].nodeValue ) {
             const label = el.childNodes[0].nodeValue;
-            DOM.$empty(el);
-            el.appendChild(document.createTextNode(API._(label)));
+            $empty(el);
+            el.appendChild(document.createTextNode(_(label)));
           }
         });
       });
@@ -162,7 +163,7 @@ class DialogWindow extends Window {
       });
     }
 
-    DOM.$addClass(root, 'DialogWindow');
+    $addClass(root, 'DialogWindow');
 
     return root;
   }
@@ -193,7 +194,7 @@ class DialogWindow extends Window {
   _onKeyEvent(ev) {
     super._onKeyEvent(...arguments);
 
-    if ( ev.keyCode === Events.Keys.ESC ) {
+    if ( ev.keyCode === Keycodes.ESC ) {
       this.onClose(ev, 'cancel');
     }
   }
@@ -206,7 +207,7 @@ class DialogWindow extends Window {
    * @return {DocumentFragment}
    */
   static parseMessage(msg) {
-    msg = DOM.$escape(msg || '').replace(/\*\*(.*)\*\*/g, '<span>$1</span>');
+    msg = $escape(msg || '').replace(/\*\*(.*)\*\*/g, '<span>$1</span>');
 
     let tmp = document.createElement('div');
     tmp.innerHTML = msg;
@@ -219,10 +220,81 @@ class DialogWindow extends Window {
 
     return frag;
   }
+
+  /**
+   * Create a new dialog
+   *
+   * You can also pass a function as `className` to return an instance of your own class
+   *
+   * @function createDialog
+   * @memberof OSjs.API
+   *
+   * @param   {String}                                 className             Dialog Namespace Class Name
+   * @param   {Object}                                 args                  Arguments you want to send to dialog
+   * @param   {CallbackDialog}                         callback              Callback on dialog action (close/ok etc) => fn(ev, button, result)
+   * @param   {Mixed}                                  [options]             A window or app (to make it a child window) or a set of options:
+   * @param   {OSjs.Core.Window|OSjs.Core.Application} [options.parent]      Same as above argument (without options context)
+   * @param   {Boolean}                                [options.modal=false] If you provide a parent you can toggle "modal" mode.
+   *
+   * @return  {OSjs.Core.Window}
+   */
+  static create(className, args, callback, options) {
+
+    callback = callback || function() {};
+    options = options || {};
+
+    let parentObj = options;
+    let parentIsWindow = (parentObj instanceof Window);
+    let parentIsProcess = (parentObj instanceof Process);
+    if ( parentObj && !(parentIsWindow && parentIsProcess) ) {
+      parentObj = options.parent;
+      parentIsWindow = (parentObj instanceof Window);
+      parentIsProcess = (parentObj instanceof Process);
+    }
+
+    function cb() {
+      if ( parentObj ) {
+        if ( parentIsWindow && parentObj._destroyed ) {
+          console.warn('API::createDialog()', 'INGORED EVENT: Window was destroyed');
+          return;
+        }
+        if ( parentIsProcess && parentObj.__destroyed ) {
+          console.warn('API::createDialog()', 'INGORED EVENT: Process was destroyed');
+          return;
+        }
+      }
+
+      if ( options.modal && parentIsWindow ) {
+        parentObj._toggleDisabled(false);
+      }
+
+      callback.apply(null, arguments);
+    }
+
+    const win = typeof className === 'string' ? new OSjs.Dialogs[className](args, cb) : className(args, cb);
+
+    if ( !parentObj ) {
+      const wm = WindowManager.instance;
+      wm.addWindow(win, true);
+    } else if ( parentObj instanceof Window ) {
+      win._on('destroy', () => {
+        if ( parentObj ) {
+          parentObj._focus();
+        }
+      });
+      parentObj._addChild(win, true);
+    } else if ( parentObj instanceof Application ) {
+      parentObj._addWindow(win);
+    }
+
+    if ( options.modal && parentIsWindow ) {
+      parentObj._toggleDisabled(true);
+    }
+
+    setTimeout(() => {
+      win._focus();
+    }, 10);
+
+    return win;
+  }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = DialogWindow;

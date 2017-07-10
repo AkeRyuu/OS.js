@@ -28,13 +28,15 @@
  * @licence Simplified BSD License
  */
 /*eslint no-use-before-define: "off"*/
-'use strict';
+import axios from 'axios';
 
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const XHR = require('utils/xhr.js');
-const VFS = require('vfs/fs.js');
-const MountManager = require('core/mount-manager.js');
+import Process from 'core/process';
+import MountManager from 'core/mount-manager';
+import * as FS from 'utils/fs';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
+import FileMetadata from 'vfs/file';
+import FileDataURL from 'vfs/filedataurl';
 
 /**
  * @namespace GoogleDrive
@@ -95,7 +97,7 @@ function createBoundary(file, data, callback) {
 
   const reqContentType = 'multipart/mixed; boundary=\'' + boundary + '\'';
 
-  if ( data instanceof VFS.FileData ) {
+  if ( data instanceof FileDataURL ) {
     callback(false, {
       contentType: reqContentType,
       body: createBody(data.toBase64())
@@ -114,11 +116,11 @@ function createBoundary(file, data, callback) {
  * Scans entire file tree for given path
  */
 function getFileFromPath(dir, type, callback) {
-  if ( dir instanceof VFS.File ) {
+  if ( dir instanceof FileMetadata ) {
     dir = dir.path;
   }
 
-  const tmpItem = new VFS.File({
+  const tmpItem = new FileMetadata({
     filename: FS.filename(dir),
     type: 'dir',
     path: FS.dirname(dir)
@@ -192,7 +194,7 @@ function createDirectoryList(dir, list, item, options) {
       fileType = 'trash';
     }
 
-    return new VFS.File({
+    return new FileMetadata({
       filename: iter.title,
       path: path,
       id: iter.id,
@@ -210,7 +212,7 @@ function createDirectoryList(dir, list, item, options) {
       result.push(createItem(iter, i));
     });
   }
-  return result ? FS.filterScandir(result, options) : [];
+  return result ? result : [];
 }
 
 /*
@@ -383,7 +385,7 @@ function getAllDirectoryFiles(item, callback) {
     const request = gapi.client.drive.about.get();
     request.execute((resp) => {
       if ( !resp || !resp.rootFolderId ) {
-        callback(API._('ERR_VFSMODULE_ROOT_ID'));
+        callback(_('ERR_VFSMODULE_ROOT_ID'));
         return;
       }
       _rootFolderId = resp.rootFolderId;
@@ -468,20 +470,19 @@ GoogleDriveStorage.read = function(item, callback, options) {
 
       if ( file && file.id ) {
         let accessToken = gapi.auth.getToken().access_token;
-        XHR.ajax({
+
+        axios({
           url: file.downloadUrl,
           method: 'GET',
           responseType: 'arraybuffer',
-          requestHeaders: {'Authorization': 'Bearer ' + accessToken},
-          onsuccess: (response) => {
-            callback(false, response);
-          },
-          onerror: (error) => {
-            callback(API._('ERR_VFSMODULE_XHR_ERROR') + ' - ' + error);
-          }
+          headers: {'Authorization': 'Bearer ' + accessToken}
+        }).then((response) => {
+          callback(false, response.data);
+        }).catch((error) => {
+          callback(_('ERR_VFSMODULE_XHR_ERROR') + ' - ' + error.message);
         });
       } else {
-        callback(API._('ERR_VFSMODULE_NOSUCH'));
+        callback(_('ERR_VFSMODULE_NOSUCH'));
       }
     });
   }
@@ -495,7 +496,7 @@ GoogleDriveStorage.read = function(item, callback, options) {
         return;
       }
       if ( !response ) {
-        callback(API._('ERR_VFSMODULE_NOSUCH'));
+        callback(_('ERR_VFSMODULE_NOSUCH'));
         return;
       }
 
@@ -543,7 +544,7 @@ GoogleDriveStorage.write = function(file, data, callback) {
             callback(false, true);
           }
         } else {
-          callback(API._('ERR_VFSMODULE_NOSUCH'));
+          callback(_('ERR_VFSMODULE_NOSUCH'));
         }
       });
     });
@@ -583,7 +584,7 @@ GoogleDriveStorage.copy = function(src, dest, callback) {
       return;
     }
 
-    const msg = resp && resp.message ? resp.message : API._('ERR_APP_UNKNOWN_ERROR');
+    const msg = resp && resp.message ? resp.message : _('ERR_APP_UNKNOWN_ERROR');
     callback(msg);
   });
 };
@@ -602,7 +603,7 @@ GoogleDriveStorage.unlink = function(src, callback) {
       if ( resp && (typeof resp.result === 'object') ) {
         callback(false, true);
       } else {
-        const msg = resp && resp.message ? resp.message : API._('ERR_APP_UNKNOWN_ERROR');
+        const msg = resp && resp.message ? resp.message : _('ERR_APP_UNKNOWN_ERROR');
         callback(msg);
       }
     });
@@ -615,7 +616,7 @@ GoogleDriveStorage.unlink = function(src, callback) {
         return;
       }
       if ( !response ) {
-        callback(API._('ERR_VFSMODULE_NOSUCH'));
+        callback(_('ERR_VFSMODULE_NOSUCH'));
         return;
       }
 
@@ -642,7 +643,7 @@ GoogleDriveStorage.move = function(src, dest, callback) {
       _treeCache = null; // Make sure we refetch any cached stuff
       callback(false, true);
     } else {
-      const msg = resp && resp.message ? resp.message : API._('ERR_APP_UNKNOWN_ERROR');
+      const msg = resp && resp.message ? resp.message : _('ERR_APP_UNKNOWN_ERROR');
       callback(msg);
     }
   });
@@ -652,7 +653,7 @@ GoogleDriveStorage.move = function(src, dest, callback) {
 GoogleDriveStorage.exists = function(item, callback) {
   console.info('GoogleDrive::exists()', item);
 
-  const req = new VFS.File(FS.dirname(item.path));
+  const req = new FileMetadata(FS.dirname(item.path));
 
   this.scandir(req, (error, result) => {
     if ( error ) {
@@ -664,7 +665,7 @@ GoogleDriveStorage.exists = function(item, callback) {
     if ( result ) {
       result.forEach((iter) => {
         if ( iter.path === item.path ) {
-          found = new VFS.File(item.path, iter.mimeType);
+          found = new FileMetadata(item.path, iter.mimeType);
           found.id = iter.id;
           found.title = iter.title;
           return false;
@@ -692,7 +693,7 @@ GoogleDriveStorage.fileinfo = function(item, callback) {
       });
       callback(false, info);
     } else {
-      callback(API._('ERR_VFSMODULE_NOSUCH'));
+      callback(_('ERR_VFSMODULE_NOSUCH'));
     }
   });
 };
@@ -712,7 +713,7 @@ GoogleDriveStorage.url = function(item, callback) {
     if ( resp && resp.webContentLink ) {
       callback(false, resp.webContentLink);
     } else {
-      const msg = resp && resp.message ? resp.message : API._('ERR_APP_UNKNOWN_ERROR');
+      const msg = resp && resp.message ? resp.message : _('ERR_APP_UNKNOWN_ERROR');
       callback(msg);
     }
   });
@@ -739,7 +740,7 @@ GoogleDriveStorage.mkdir = function(dir, callback) {
         _treeCache = null; // Make sure we refetch any cached stuff
         callback(false, true);
       } else {
-        const msg = resp && resp.message ? resp.message : API._('ERR_APP_UNKNOWN_ERROR');
+        const msg = resp && resp.message ? resp.message : _('ERR_APP_UNKNOWN_ERROR');
         callback(msg);
       }
     });
@@ -749,8 +750,8 @@ GoogleDriveStorage.mkdir = function(dir, callback) {
     getParentPathId(dir, (error, id) => {
       console.debug('GoogleDrive::mkdir()->getParentPathId()', id, 'of', dir);
       if ( error || !id ) {
-        error = error || API._('ERR_VFSMODULE_PARENT');
-        callback(API._('ERR_VFSMODULE_PARENT_FMT', error));
+        error = error || _('ERR_VFSMODULE_PARENT');
+        callback(_('ERR_VFSMODULE_PARENT_FMT', error));
         return;
       }
       doMkdir([{id: id}]);
@@ -765,9 +766,9 @@ GoogleDriveStorage.mkdir = function(dir, callback) {
 GoogleDriveStorage.upload = function(file, dest, callback) {
   console.info('GoogleDrive::upload()', file, dest);
 
-  const item = new VFS.File({
+  const item = new FileMetadata({
     filename: file.name,
-    path: FS.pathJoin((new VFS.File(dest)).path, file.name),
+    path: FS.pathJoin((new FileMetadata(dest)).path, file.name),
     mime: file.type,
     size: file.size
   });
@@ -787,7 +788,7 @@ GoogleDriveStorage.trash = function(file, callback) {
       return;
     }
 
-    const msg = resp && resp.message ? resp.message : API._('ERR_APP_UNKNOWN_ERROR');
+    const msg = resp && resp.message ? resp.message : _('ERR_APP_UNKNOWN_ERROR');
     callback(msg);
   });
 };
@@ -804,7 +805,7 @@ GoogleDriveStorage.untrash = function(file, callback) {
       return;
     }
 
-    const msg = resp && resp.message ? resp.message : API._('ERR_APP_UNKNOWN_ERROR');
+    const msg = resp && resp.message ? resp.message : _('ERR_APP_UNKNOWN_ERROR');
     callback(msg);
   });
 };
@@ -814,7 +815,7 @@ GoogleDriveStorage.emptyTrash = function(callback) {
   request.execute((resp) => {
     console.info('GoogleDrive::emptyTrash()', '=>', resp);
     if ( resp && resp.message ) {
-      const msg = resp && resp.message ? resp.message : API._('ERR_APP_UNKNOWN_ERROR');
+      const msg = resp && resp.message ? resp.message : _('ERR_APP_UNKNOWN_ERROR');
       callback(msg);
       return;
     }
@@ -862,7 +863,7 @@ function getGoogleDrive(callback, onerror) {
       gapi.client.load('drive', 'v2', () => {
         _isMounted = true;
 
-        API.message('vfs:mount', 'GoogleDrive', {source: null});
+        Process.message('vfs:mount', 'GoogleDrive', {source: null});
 
         callback(GoogleDriveStorage);
       });
@@ -897,13 +898,13 @@ function makeRequest(name, args, callback, options) {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   module: GoogleDriveStorage,
   unmount: (cb) => {
     // FIXME: Should we sign out here too ?
     cb = cb || function() {};
     _isMounted = false;
-    API.message('vfs:unmount', 'GoogleDrive', {source: null});
+    Process.message('vfs:unmount', 'GoogleDrive', {source: null});
     cb(false, true);
   },
   mounted: () => {
@@ -911,7 +912,7 @@ module.exports = {
   },
   enabled: () => {
     try {
-      if ( API.getConfig('VFS.GoogleDrive.Enabled') ) {
+      if ( getConfig('VFS.GoogleDrive.Enabled') ) {
         return true;
       }
     } catch ( e ) {

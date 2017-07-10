@@ -27,7 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 /////////////////////////////////////////////////////////////////////////////
 // COOKIES
@@ -42,14 +41,14 @@
  * @param {String} [k] What key to get
  * @return {String|Object}  Depending on 'k' parameter
  */
-module.exports.getCookie = function Utils_getCookie(k) {
+export function getCookie(k) {
   const map = {};
   document.cookie.split(/;\s+?/g).forEach((i) => {
     const idx = i.indexOf('=');
     map[i.substr(i, idx)] = i.substr(idx + 1);
   });
   return k ? map[k] : map;
-};
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // STRING
@@ -67,7 +66,7 @@ module.exports.getCookie = function Utils_getCookie(k) {
  *
  * @return  {String}                    The formatted string
  */
-module.exports.format = function Utils_format(format) {
+export function format(format) {
   const args = Array.prototype.slice.call(arguments, 1);
   const sprintfRegex = /\{(\d+)\}/g;
 
@@ -76,7 +75,7 @@ module.exports.format = function Utils_format(format) {
   }
 
   return format.replace(sprintfRegex, sprintf);
-};
+}
 
 /**
  * Remove whitespaces and newlines from HTML document
@@ -88,12 +87,12 @@ module.exports.format = function Utils_format(format) {
  *
  * @return  {String}
  */
-module.exports.cleanHTML = function Utils_cleanHTML(html) {
+export function cleanHTML(html) {
   return html.replace(/\n/g, '')
     .replace(/[\t ]+</g, '<')
     .replace(/\>[\t ]+</g, '><')
     .replace(/\>[\t ]+$/g, '>');
-};
+}
 
 /**
  * Parses url into a dictionary (supports modification)
@@ -106,7 +105,7 @@ module.exports.cleanHTML = function Utils_cleanHTML(html) {
  *
  * @return    {Object}                  Object with protocol, host, path
  */
-module.exports.parseurl = function Utils_parseurl(url, modify) {
+export function parseurl(url, modify) {
   modify = modify || {};
 
   if ( !url.match(/^(\w+\:)\/\//) ) {
@@ -144,7 +143,7 @@ module.exports.parseurl = function Utils_parseurl(url, modify) {
     path: splitted.path,
     url: _parts()
   };
-};
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // OBJECT HELPERS
@@ -161,7 +160,7 @@ module.exports.parseurl = function Utils_parseurl(url, modify) {
  * @param  {Boolean}  undef     Check with 'undefined'
  * @return {Object}
  */
-module.exports.argumentDefaults = function Utils_argumentDefaults(args, defaults, undef) {
+export function argumentDefaults(args, defaults, undef) {
   args = args || {};
   Object.keys(defaults).forEach((key) => {
     if ( typeof defaults[key] === 'boolean' || typeof defaults[key] === 'number' ) {
@@ -173,7 +172,7 @@ module.exports.argumentDefaults = function Utils_argumentDefaults(args, defaults
     }
   });
   return args;
-};
+}
 
 /**
  * Deep-merge to objects
@@ -188,7 +187,7 @@ module.exports.argumentDefaults = function Utils_argumentDefaults(args, defaults
  *
  * @return  {Object}                The merged object
  */
-module.exports.mergeObject = function Utils_mergeObject(obj1, obj2, opts) {
+export function mergeObject(obj1, obj2, opts) {
   opts = opts || {};
 
   for ( let p in obj2 ) {
@@ -199,7 +198,7 @@ module.exports.mergeObject = function Utils_mergeObject(obj1, obj2, opts) {
         }
 
         if ( obj2[p].constructor === Object ) {
-          obj1[p] = module.exports.mergeObject(obj1[p], obj2[p]);
+          obj1[p] = mergeObject(obj1[p], obj2[p]);
         } else {
           obj1[p] = obj2[p];
         }
@@ -209,7 +208,7 @@ module.exports.mergeObject = function Utils_mergeObject(obj1, obj2, opts) {
     }
   }
   return obj1;
-};
+}
 
 /**
  * Clone a object
@@ -222,7 +221,7 @@ module.exports.mergeObject = function Utils_mergeObject(obj1, obj2, opts) {
  *
  * @return  {Object}            An identical object
  */
-module.exports.cloneObject = function Utils_cloneObject(o, alternative) {
+export function cloneObject(o, alternative) {
   function _clone(i) {
     if ( typeof i !== 'object' || i === null ) {
       return i;
@@ -247,7 +246,7 @@ module.exports.cloneObject = function Utils_cloneObject(o, alternative) {
     }
     return value;
   }));
-};
+}
 
 /**
  * Extends the given object
@@ -271,13 +270,13 @@ module.exports.cloneObject = function Utils_cloneObject(o, alternative) {
  * @param {Object}    obj          The destination
  * @param {Object}    methods      The source
  */
-module.exports.extend = function Utils_extend(obj, methods) {
+export function extend(obj, methods) {
   if ( obj && methods ) {
     Object.keys(methods).forEach((k) => {
       obj[k] = methods[k];
     });
   }
-};
+}
 
 /**
  * Extends the given object by prototype chain
@@ -300,7 +299,7 @@ module.exports.extend = function Utils_extend(obj, methods) {
  * @param {Object}    [extend]  Extend the class with these methods
  * @return {Object}
  */
-module.exports.inherit = function Utils_inherit(to, from, extend) {
+export function inherit(to, from, extend) {
   from = from || function() {
     /* eslint no-invalid-this: "off" */
     to.apply(this, arguments);
@@ -310,11 +309,11 @@ module.exports.inherit = function Utils_inherit(to, from, extend) {
   from.constructor = to;
 
   if ( extend ) {
-    module.exports.extend(from.prototype, extend);
+    extend(from.prototype, extend);
   }
 
   return from;
-};
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // COLORS
@@ -330,14 +329,14 @@ module.exports.inherit = function Utils_inherit(to, from, extend) {
  *
  * @return  {Object}              RGB in form of r, g, b
  */
-module.exports.convertToRGB = function Utils_convertToRGB(hex) {
+export function convertToRGB(hex) {
   const rgb = parseInt(hex.replace('#', ''), 16);
   const val = {};
   val.r = (rgb & (255 << 16)) >> 16;
   val.g = (rgb & (255 << 8)) >> 8;
   val.b = (rgb & 255);
   return val;
-};
+}
 
 /**
  * Convert RGB to HEX
@@ -351,7 +350,7 @@ module.exports.convertToRGB = function Utils_convertToRGB(hex) {
  *
  * @return  {String}              Hex string (with #)
  */
-module.exports.convertToHEX = function Utils_convertToHEX(r, g, b) {
+export function convertToHEX(r, g, b) {
   if ( typeof r === 'object' ) {
     g = r.g;
     b = r.b;
@@ -375,7 +374,7 @@ module.exports.convertToHEX = function Utils_convertToHEX(r, g, b) {
   });
 
   return '#' + hex.join('').toUpperCase();
-};
+}
 
 /**
  * Ivert HEX color
@@ -389,13 +388,13 @@ module.exports.convertToHEX = function Utils_convertToHEX(r, g, b) {
  * @return  {String}              Inverted hex (With #)
  *
  */
-module.exports.invertHEX = function Utils_invertHEX(hex) {
+export function invertHEX(hex) {
   let color = parseInt(hex.replace('#', ''), 16);
   color = 0xFFFFFF ^ color;
   color = color.toString(16);
   color = ('000000' + color).slice(-6);
   return '#' + color;
-};
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // ASYNC
@@ -411,7 +410,7 @@ module.exports.invertHEX = function Utils_invertHEX(hex) {
  * @param   {Function}    onentry   Callback on step => fn(entry, index, fnNext)
  * @param   {Function}    ondone    Callback on done => fn()
  */
-module.exports.asyncs = function Utils_asyncs(queue, onentry, ondone) {
+export function asyncs(queue, onentry, ondone) {
   onentry = onentry || function(e, i, n) {
     return n();
   };
@@ -443,7 +442,7 @@ module.exports.asyncs = function Utils_asyncs(queue, onentry, ondone) {
       next(i + 1);
     }
   })(0);
-};
+}
 
 /**
  * Run an async queue in parallel
@@ -457,7 +456,7 @@ module.exports.asyncs = function Utils_asyncs(queue, onentry, ondone) {
  * @param   {Function}    onentry       Callback on step => fn(entry, index, fnNext)
  * @param   {Function}    ondone        Callback on done => fn()
  */
-module.exports.asyncp = function Utils_asyncp(queue, opts, onentry, ondone) {
+export function asyncp(queue, opts, onentry, ondone) {
   opts = opts || {};
 
   let running = 0;
@@ -501,5 +500,5 @@ module.exports.asyncp = function Utils_asyncp(queue, opts, onentry, ondone) {
       spawn(qleft.shift(), check);
     }
   })();
-};
+}
 

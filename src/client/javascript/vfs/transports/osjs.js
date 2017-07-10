@@ -27,12 +27,11 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const VFS = require('vfs/fs.js');
-const Connection = require('core/connection.js');
+import * as FS from 'utils/fs';
+import {_} from 'core/locales';
+import {getConfig} from 'core/config';
+import FileMetadata from 'vfs/file';
+import Connection from 'core/connection';
 
 /**
  * @namespace OSjs
@@ -56,7 +55,7 @@ const Connection = require('core/connection.js');
  */
 function makePath(item, options) {
   if ( typeof item === 'string' ) {
-    item = new VFS.File(item);
+    item = new FileMetadata(item);
   }
   return Connection.instance.getVFSPath(item, options);
 }
@@ -72,9 +71,9 @@ function makePath(item, options) {
  * @memberof OSjs.VFS.Transports.OSjs
  */
 function internalRequest(name, args, callback) {
-  API.call('FS:' + name, args, (err, res) => {
+  Connection.request('FS:' + name, args, (err, res) => {
     if ( !err && typeof res === 'undefined' ) {
-      err = API._('ERR_VFS_FATAL');
+      err = _('ERR_VFS_FATAL');
     }
     callback(err, res);
   });
@@ -95,16 +94,16 @@ function internalRequest(name, args, callback) {
 function internalUpload(file, dest, callback, options, vfsfile) {
   options = options || {};
 
-  if ( dest instanceof VFS.File ) {
+  if ( dest instanceof FileMetadata ) {
     dest = dest.path;
   }
 
   if ( typeof file.size !== 'undefined' ) {
-    const maxSize = API.getConfig('VFS.MaxUploadSize');
+    const maxSize = getConfig('VFS.MaxUploadSize');
     if ( maxSize > 0 ) {
       const bytes = file.size;
       if ( bytes > maxSize ) {
-        const msg = API._('DIALOG_UPLOAD_TOO_BIG_FMT', FS.humanFileSize(maxSize));
+        const msg = _('DIALOG_UPLOAD_TOO_BIG_FMT', FS.humanFileSize(maxSize));
         callback('error', null, msg);
         return;
       }
@@ -131,7 +130,7 @@ function internalUpload(file, dest, callback, options, vfsfile) {
 
   FS.addFormFile(fd, 'upload', file, options.meta);
 
-  Connection.instance.request('FS:upload', fd, callback, null, options);
+  Connection.request('FS:upload', fd, callback, null, options);
 }
 
 /**
@@ -157,12 +156,12 @@ function internalFetch(url, mime, callback, options) {
   console.debug('VFS::Transports::OSjs::fetch()', url, mime);
 
   if ( arguments.length < 1 ) {
-    throw new Error(API._('ERR_VFS_NUM_ARGS'));
+    throw new Error(_('ERR_VFS_NUM_ARGS'));
   }
 
   options = options || {};
 
-  API.curl({
+  Connection.request('curl', {
     url: url,
     binary: true,
     mime: mime
@@ -173,7 +172,7 @@ function internalFetch(url, mime, callback, options) {
     }
 
     if ( !response.body ) {
-      callback(API._('ERR_VFS_REMOTEREAD_EMPTY'));
+      callback(_('ERR_VFS_REMOTEREAD_EMPTY'));
       return;
     }
 
@@ -217,9 +216,8 @@ const Transport = {
     internalRequest('scandir', args, (error, result) => {
       const list = [];
       if ( result ) {
-        result = FS.filterScandir(result, options);
         result.forEach((iter) => {
-          list.push(new VFS.File(iter));
+          list.push(new FileMetadata(iter));
         });
       }
       callback(error, list);
@@ -253,7 +251,7 @@ const Transport = {
       return;
     }
 
-    const parentItem = new VFS.File(FS.dirname(item.path), item.mime);
+    const parentItem = new FileMetadata(FS.dirname(item.path), item.mime);
     internalUpload(data, parentItem, () => {
       callback(null, true);
     }, options, item);
@@ -292,7 +290,7 @@ const Transport = {
   },
 
   url: function(item, callback, options) {
-    callback(false, module.exports.path(item, options));
+    callback(false, makePath(item, options));
   },
 
   freeSpace: function(root, callback) {
@@ -304,7 +302,7 @@ const Transport = {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   request: internalRequest,
   upload: internalUpload,
   fetch: internalFetch,

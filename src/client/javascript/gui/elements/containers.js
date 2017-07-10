@@ -27,11 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const GUI = require('utils/gui.js');
-const Events = require('utils/events.js');
-const GUIElement = require('gui/element.js');
+import * as GUI from 'utils/gui';
+import * as Events from 'utils/events';
+import GUIElement from 'gui/element';
 
 function toggleState(el, expanded) {
   if ( typeof expanded === 'undefined' ) {
@@ -345,7 +343,7 @@ class GUIExpander extends GUIElement {
     const lbltxt = el.getAttribute('data-label') || '';
     const label = document.createElement('gui-expander-label');
 
-    Event.$bind(label, 'click', (ev) => {
+    Events.$bind(label, 'click', (ev) => {
       el.dispatchEvent(new CustomEvent('_change', {detail: {expanded: toggleState(el)}}));
     }, false);
 
@@ -368,7 +366,7 @@ class GUIExpander extends GUIElement {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   GUIPanedView: GUIPanedView,
   GUIPanedViewContainer: GUIPanedViewContainer,
   GUIButtonBar: GUIButtonBar,

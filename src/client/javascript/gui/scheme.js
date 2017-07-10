@@ -27,14 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
+import axios from 'axios';
 
-const FS = require('utils/fs.js');
-const API = require('core/api.js');
-const XHR = require('utils/xhr.js');
-const DOM = require('utils/dom.js');
-const Utils = require('utils/misc.js');
-const GUIElement = require('gui/element.js');
+import * as FS from 'utils/fs';
+import * as DOM from 'utils/dom';
+import * as Utils from 'utils/misc';
+import GUIElement from 'gui/element';
+import {getConfig, getBrowserPath} from 'core/config';
 
 /////////////////////////////////////////////////////////////////////////////
 // INTERNAL HELPERS
@@ -138,17 +137,16 @@ function resolveExternalFragments(root, html, cb) {
       return;
     }
 
-    XHR.ajax({
+    axios({
       url: FS.pathJoin(root, uri),
-      onsuccess: function(h) {
-        let tmp = document.createElement('div');
-        tmp.innerHTML = cleanScheme(h);
-        addChildren(tmp, iter.element, iter.element);
-        tmp = next();
-      },
-      onerror: function() {
-        next();
-      }
+      method: 'GET'
+    }).then((response) => {
+      let tmp = document.createElement('div');
+      tmp.innerHTML = cleanScheme(response.data);
+      addChildren(tmp, iter.element, iter.element);
+      tmp = next();
+    }).catch((err) => {
+      next();
     });
   }, function asyncDone() {
     cb(doc.innerHTML);
@@ -170,7 +168,7 @@ function resolveExternalFragments(root, html, cb) {
  * @constructor Scheme
  * @memberof OSjs.GUI
  */
-class UIScheme {
+export default class UIScheme {
 
   /**
    * @param {String}    url     Scheme URL
@@ -237,7 +235,7 @@ class UIScheme {
 
     this.scheme = doc.cloneNode(true);
 
-    if ( API.getConfig('DebugScheme') ) {
+    if ( getConfig('DebugScheme') ) {
       console.group('Scheme::_load() validation', src);
       this.scheme.querySelectorAll('*').forEach((node) => {
         const tagName = node.tagName.toLowerCase();
@@ -300,30 +298,29 @@ class UIScheme {
 
     let src = this.url;
     if ( src.substr(0, 1) !== '/' && !src.match(/^(https?|ftp)/) ) {
-      src = API.getBrowserPath(src);
+      src = getBrowserPath(src);
     }
 
     const root = FS.dirname(src);
-    XHR.ajax({
+
+    axios({
       url: src,
-      onsuccess: (html) => {
-        html = cleanScheme(html);
+      method: 'GET'
+    }).then((response) => {
+      const html = cleanScheme(response.data);
+      resolveExternalFragments(root, html, (result) => {
+        // This is normally used for the preloader for caching
+        cbxhr(false, result);
 
-        resolveExternalFragments(root, html, (result) => {
-          // This is normally used for the preloader for caching
-          cbxhr(false, result);
+        // Then we run some manipulations
+        this._load(result, src);
 
-          // Then we run some manipulations
-          this._load(result, src);
-
-          // And finally, finish
-          cb(false, this.scheme);
-        });
-      },
-      onerror: () => {
-        cb('Failed to fetch scheme');
-        cbxhr(true);
-      }
+        // And finally, finish
+        cb(false, this.scheme);
+      });
+    }).catch((err) => {
+      cb('Failed to fetch scheme: ' + err.message);
+      cbxhr(true);
     });
   }
 
@@ -473,10 +470,4 @@ class UIScheme {
   }
 
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-module.exports = UIScheme;
 

@@ -27,10 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const Events = require('utils/events.js');
-const GUIElement = require('gui/element.js');
+import * as Events from 'utils/events';
+import GUIElement from 'gui/element';
 
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -199,7 +197,7 @@ class GUICanvas extends GUIElement {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   GUIAudio: GUIAudio,
   GUIVideo: GUIVideo,
   GUIImage: GUIImage,

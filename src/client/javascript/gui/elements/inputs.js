@@ -27,13 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-const API = require('core/api.js');
-const DOM = require('utils/dom.js');
-const GUI = require('utils/gui.js');
-const Events = require('utils/events.js');
-const GUIElement = require('gui/element.js');
+import * as DOM from 'utils/dom';
+import * as GUI from 'utils/gui';
+import * as Clipboard from 'utils/clipboard';
+import * as Events from 'utils/events';
+import * as Keycodes from 'utils/keycodes';
+import GUIElement from 'gui/element';
+import {_} from 'core/locales';
 
 let _buttonCount = 0;
 
@@ -89,13 +89,13 @@ function createInputOfType(el, type) {
   function _bindEvents() {
     if ( type === 'text' || type === 'password' || type === 'textarea' ) {
       Events.$bind(input, 'keydown', (ev) => {
-        if ( ev.keyCode === Events.Keys.ENTER ) {
+        if ( ev.keyCode === Keycodes.ENTER ) {
           input.dispatchEvent(new CustomEvent('_enter', {detail: input.value}));
-        } else if ( ev.keyCode === Events.Keys.C && ev.ctrlKey ) {
-          API.setClipboard(input.value);
+        } else if ( ev.keyCode === Keycodes.C && ev.ctrlKey ) {
+          Clipboard.setClipboard(input.value);
         }
 
-        if ( type === 'textarea' && ev.keyCode === Event.Keys.TAB ) {
+        if ( type === 'textarea' && ev.keyCode === Keycodes.TAB ) {
           ev.preventDefault();
           input.value += '\t';
         }
@@ -654,7 +654,7 @@ class GUIButton extends GUIElement {
 
     function setImage() {
       if ( icon && icon !== 'null' ) {
-        const tip = API._(el.getAttribute('data-tooltip') || '');
+        const tip = _(el.getAttribute('data-tooltip') || '');
         const img = document.createElement('img');
         img.src = icon;
         img.alt = tip;
@@ -883,7 +883,7 @@ class GUIInputModal extends GUIElement {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-module.exports = {
+export default {
   GUILabel: GUILabel,
   GUITextarea: GUITextarea,
   GUIText: GUIText,
