@@ -113,10 +113,6 @@ function createTab(el, tabs, label, prog) {
  *   event     select                    When tab has changed => fn(ev)
  *   event     activate                  Alias of 'select'
  * </code></pre>
- *
- * @constructor Tabs
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUITabs extends GUIElement {
   on(evName, callback, params) {

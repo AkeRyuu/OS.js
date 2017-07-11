@@ -34,6 +34,7 @@ import Process from 'core/process';
 import Application from 'core/application';
 import WindowManager from 'core/windowmanager';
 import Scheme from 'gui/scheme';
+import DialogScheme from 'gui/dialogscheme';
 import {_} from 'core/locales';
 
 /**
@@ -68,7 +69,6 @@ import {_} from 'core/locales';
  * @summary Class used for basis as a Dialog.
  *
  * @abstract
- * @extends core/window~Window
  */
 export default class DialogWindow extends Window {
 
@@ -104,7 +104,7 @@ export default class DialogWindow extends Window {
       this.scheme = args.scheme;
       delete args.scheme;
     } else {
-      this.scheme = OSjs.GUI.DialogScheme.get(); // FIXME
+      this.scheme = DialogScheme.get();
     }
 
     this.args = args;
@@ -225,9 +225,6 @@ export default class DialogWindow extends Window {
    * Create a new dialog
    *
    * You can also pass a function as `className` to return an instance of your own class
-   *
-   * @function createDialog
-   * @memberof OSjs.API
    *
    * @param   {String}                                 className             Dialog Namespace Class Name
    * @param   {Object}                                 args                  Arguments you want to send to dialog

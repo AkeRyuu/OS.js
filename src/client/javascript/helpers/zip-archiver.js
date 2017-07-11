@@ -35,11 +35,6 @@ import * as Utils from 'utils/misc';
 import {preload} from 'utils/preloader';
 import {_} from 'core/locales';
 
-/**
- * @namespace ZipArchiver
- * @memberof OSjs.Helpers
- */
-
 function getEntries(file, callback) {
   zip.createReader(new zip.BlobReader(file), function(zipReader) {
     zipReader.getEntries(function(entries) {
@@ -159,10 +154,6 @@ let SingletonInstance = null;
  *
  * @example
  * OSjs.Helpers.ZipArchiver.createInstance({}, (err, instance) => {});
- *
- * @constructor Class
- * @memberof OSjs.Helpers.ZipArchiver
- * @see OSjs.Helpers.ZipArchiver.createInsatance
  */
 class ZipArchiver {
 
@@ -205,9 +196,6 @@ class ZipArchiver {
   /**
    * Lists contents of a ZIP file
    *
-   * @function list
-   * @memberof OSjs.Helpers.ZipArchiver.Class#
-   *
    * @param   {OSjs.VFS.File}     file          File to extract
    * @param   {Function}          cb            Callback function => fn(error, entries)
    */
@@ -229,9 +217,6 @@ class ZipArchiver {
 
   /**
    * Create a new blank ZIP file
-   *
-   * @function create
-   * @memberof OSjs.Helpers.ZipArchiver.Class#
    *
    * @param   {OSjs.VFS.File}               file          File to extract
    * @param   {Function}                    cb            Callback function => fn(error)
@@ -264,9 +249,6 @@ class ZipArchiver {
 
   /**
    * Add a entry to the ZIP file
-   *
-   * @function add
-   * @memberof OSjs.Helpers.ZipArchiver.Class#
    * @TODO Adding directory does not actually add files inside dirs yet
    *
    * @param   {OSjs.VFS.File}     file                Archive File
@@ -389,9 +371,6 @@ class ZipArchiver {
   /**
    * Removes an entry from ZIP file
    *
-   * @function remove
-   * @memberof OSjs.Helpers.ZipArchiver.Class#
-   *
    * @param   {OSjs.VFS.File}     file          Archive File
    * @param   {String}            path          Path
    * @param   {Function}          cb            Callback function => fn(err, result)
@@ -440,9 +419,6 @@ class ZipArchiver {
 
   /**
    * Extract a File to destination
-   *
-   * @function extract
-   * @memberof OSjs.Helpers.ZipArchiver.Class#
    *
    * @param   {OSjs.VFS.File}         file                 File to extract
    * @param   {String}                destination          Destination path

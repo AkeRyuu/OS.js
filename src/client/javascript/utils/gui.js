@@ -27,23 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import * as Main from 'core/main';
 import * as DOM from 'utils/dom';
 import * as Events from 'utils/events';
 import * as Compability from 'utils/compability';
 import * as Assets from 'core/assets';
 import GUIElement from 'gui/element';
 import WindowManager from 'core/windowmanager';
-
-/**
- * @namespace GUI
- * @memberof OSjs
- */
-
-/**
- * @namespace Helpers
- * @memberof OSjs.GUI
- */
+import {triggerHook} from 'helpers/hooks';
 
 let lastMenu;
 
@@ -53,9 +43,6 @@ let lastMenu;
 
 /**
  * Gets window id from upper parent element
- *
- * @function getWindowId
- * @memberof OSjs.GUI.Helpers
  *
  * @param   {Node}      el      Child element (can be anything)
  *
@@ -75,9 +62,6 @@ export function getWindowId(el) {
 /**
  * Gets "label" from a node
  *
- * @function getLabel
- * @memberof OSjs.GUI.Helpers
- *
  * @param   {Node}      el      The element
  *
  * @return  {String}
@@ -89,9 +73,6 @@ export function getLabel(el) {
 
 /**
  * Gets "label" from a node (Where it can be innerHTML and parameter)
- *
- * @function getValueLabel
- * @memberof OSjs.GUI.Helpers
  *
  * @param   {Node}      el              The element
  * @param   {Boolean}   [attr=false]    Get from attribute istead of node text
@@ -112,9 +93,6 @@ export function getValueLabel(el, attr) {
 /**
  * Gets "value" from a node
  *
- * @function getViewNodeValue
- * @memberof OSjs.GUI.Helpers
- *
  * @param   {Node}      el       The element
  *
  * @return  {String}
@@ -133,9 +111,6 @@ export function getViewNodeValue(el) {
 
 /**
  * Internal for getting
- *
- * @function getIcon
- * @memberof OSjs.GUI.Helpers
  *
  * @param   {Node}                el      Element
  * @param   {OSjs.Core.Window}    [win]   Window Reference
@@ -174,9 +149,6 @@ export function getIcon(el, win) {
 /**
  * Wrapper for getting custom dom element property value
  *
- * @function getProperty
- * @memberof OSjs.GUI.Helpers
- *
  * @param   {Node}     el          Element
  * @param   {String}   param       Parameter name
  * @param   {String}   [tagName]   What tagname is in use? Automatic
@@ -207,9 +179,6 @@ export function getProperty(el, param, tagName) {
 
 /**
  * Wrapper for setting custom dom element property value
- *
- * @function setProperty
- * @memberof OSjs.GUI.Helpers
  *
  * @param   {Node}            el            Element
  * @param   {String}          param         Parameter name
@@ -308,9 +277,6 @@ export function setProperty(el, param, value, tagName) {
 /**
  * Creates a label for given input element
  *
- * @function createInputLabel
- * @memberof OSjs.GUI.Helpers
- *
  * @param   {Node}            el        Element root
  * @param   {String}          type      Input element type
  * @param   {Node}            input     The input element
@@ -339,9 +305,6 @@ export function createInputLabel(el, type, input, label) {
 
 /**
  * Create a new custom DOM element
- *
- * @function createElement
- * @memberof OSjs.GUI.Helpers
  *
  * @param   {String}      tagName           Tag Name
  * @param   {Object}      params            Dict with data-* properties
@@ -400,9 +363,6 @@ export function createElement(tagName, params, ignoreParams) {
 /**
  * Sets the flexbox CSS style properties for given container
  *
- * @function setFlexbox
- * @memberof OSjs.GUI.Helpers
- *
  * @param   {Node}            el              The container
  * @param   {Number}          grow            Grow factor
  * @param   {Number}          shrink          Shrink factor
@@ -453,9 +413,6 @@ export function setFlexbox(el, grow, shrink, basis, checkel) {
 
 /**
  * Wrapper for creating a draggable container
- *
- * @function createDrag
- * @memberof OSjs.GUI.Helpers
  *
  * @param   {Node}              el          The container
  * @param   {Function}          onDown      On down action callback
@@ -512,9 +469,6 @@ export function createDrag(el, onDown, onMove, onUp) {
  * Method for getting the next (or previous) element in sequence
  *
  * If you don't supply a current element, the first one will be taken!
- *
- * @function getNextElement
- * @memberof OSjs.GUI.Helpers
  *
  * @param   {Boolean}     prev        Get previous element instead of next
  * @param   {Node}        current     The current element
@@ -619,9 +573,6 @@ export function getNextElement(prev, current, root) {
 /**
  * Create a draggable DOM element
  *
- * @function createDraggable
- * @memberof OSjs.GUI.Helpers
- *
  * @param  {Node}          el                               DOMElement
  * @param  {Object}        args                             JSON of draggable params
  * @param  {Object}        args.data                        The data (JSON by default)
@@ -705,9 +656,6 @@ export function createDraggable(el, args) {
 
 /**
  * Create a droppable DOM element
- *
- * @function createDroppable
- * @memberof OSjs.GUI.Helpers
  *
  * @param   {Node}            el                              DOMElement
  * @param   {Object}          args                            JSON of droppable params
@@ -896,8 +844,6 @@ export function _menuClamp(r) {
  * Blur the currently open menu (aka hiding)
  *
  * @param {Event} [ev] Browser event
- * @function blurMenu
- * @memberof OSjs.GUI.Helpers
  */
 export function blurMenu(ev) {
   if ( lastMenu ) {
@@ -905,7 +851,7 @@ export function blurMenu(ev) {
   }
   lastMenu = null;
 
-  Main.triggerHook('onBlurMenu');
+  triggerHook('onBlurMenu');
 }
 
 /**
@@ -924,9 +870,6 @@ export function blurMenu(ev) {
  * @param   {Array}                items             Array of items
  * @param   {(Event|Object)}       ev                DOM Event or dict with x/y
  * @param   {Mixed}                [customInstance]  Show a custom created menu
- *
- * @function createMenu
- * @memberof OSjs.GUI.Helpers
  */
 export function createMenu(items, ev, customInstance) {
   items = items || [];

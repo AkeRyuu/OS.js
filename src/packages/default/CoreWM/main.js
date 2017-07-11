@@ -180,7 +180,7 @@
         var docElm = document.documentElement;
         var notif = self.getNotificationIcon('_FullscreenNotification');
         if ( notif ) {
-          API.toggleFullscreen(notif.opts._isFullscreen ? document : docElm, !notif.opts._isFullscreen);
+          self.toggleFullscreen(notif.opts._isFullscreen ? document : docElm, !notif.opts._isFullscreen);
         }
       }
 

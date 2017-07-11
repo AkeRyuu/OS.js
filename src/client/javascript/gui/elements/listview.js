@@ -217,10 +217,6 @@ function createRow(cls, e) {
  *      ]
  *   }
  * ])
- *
- * @constructor ListView
- * @extends OSjs.GUI.DataView
- * @memberof OSjs.GUI.Elements
  */
 class GUIListView extends GUIDataView {
   values() {

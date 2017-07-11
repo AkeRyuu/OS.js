@@ -37,9 +37,6 @@ import * as Utils from 'utils/misc';
 /**
  * Gets the path from a location
  *
- * @function getPathFromVirtual
- * @memberof OSjs.Utils
- *
  * @param   {String}    str         Path name
  *
  * @return  {String}
@@ -52,9 +49,6 @@ export function getPathFromVirtual(str) {
 
 /**
  * Gets the protocol from a location
- *
- * @function getPathProtocol
- * @memberof OSjs.Utils
  *
  * @param   {String}    orig        Path name
  *
@@ -70,9 +64,6 @@ export function getPathProtocol(orig) {
 /**
  * Get file extension of filename/path
  *
- * @function filext
- * @memberof OSjs.Utils
- *
  * @param   {String}    d       filename/path
  *
  * @return  {String}            The file extension
@@ -87,9 +78,6 @@ export function filext(d) {
  *
  * If you use this on a directory path, you will
  * get the parent
- *
- * @function dirname
- * @memberof OSjs.Utils
  *
  * @param   {String}    f       filename/path
  *
@@ -132,9 +120,6 @@ export function dirname(f) {
 /**
  * Get filename from path
  *
- * @function filename
- * @memberof OSjs.Utils
- *
  * @param   {String}    p     Path
  *
  * @return  {String}          The filename
@@ -147,9 +132,6 @@ export function filename(p) {
  * Get human-readable size from integer
  *
  * Example return: '128 MB'
- *
- * @function humanFileSize
- * @memberof OSjs.Utils
  * @link http://stackoverflow.com/users/65387/mark
  *
  * @param   {Number}  bytes     Size in bytes
@@ -176,9 +158,6 @@ export function humanFileSize(bytes, si) {
 /**
  * Escape filename (removes invalid characters)
  *
- * @function escapeFilename
- * @memberof OSjs.Utils
- *
  * @param   {String}    n     Filename
  *
  * @return  {String}          Escaped filename
@@ -189,9 +168,6 @@ export function escapeFilename(n) {
 
 /**
  * Replace file extension of filename
- *
- * @function replaceFileExtension
- * @memberof OSjs.Utils
  *
  * @param   {String}    filename      The filename
  * @param   {String}    rep           New file extension (without dot)
@@ -208,9 +184,6 @@ export function replaceFileExtension(filename, rep) {
 /**
  * Replace the filename of a path
  *
- * @function replaceFilename
- * @memberof OSjs.Utils
- *
  * @param   {String}    orig      The full path to file
  * @param   {String}    newname   Replace with this filename
  *
@@ -225,9 +198,6 @@ export function replaceFilename(orig, newname) {
 
 /**
  * Joins arguments to a path (path.join)
- *
- * @function pathJoin
- * @memberof OSjs.Utils
  *
  * @param   {...String}   s   Input
  * @return  {String}
@@ -267,9 +237,6 @@ export function pathJoin() {
  *
  * This is used for example in text boxes to highlight the filename
  *
- * @function getFilenameRange
- * @memberof OSjs.Utils
- *
  * @param   {String}    val     The path
  *
  * @return  {Object}            Range in form of min/max
@@ -299,9 +266,6 @@ export function getFilenameRange(val) {
 /**
  * (Encode) Convert URL-safe String to Base64
  *
- * @function btoaUrlsafe
- * @memberof OSjs.Utils
- *
  * @param   {String}      str     String
  *
  * @return  {String}              Base64 String
@@ -315,9 +279,6 @@ export function btoaUrlsafe(str) {
 
 /**
  * (Decode) Convert Base64 to URL-safe String
- *
- * @function atobUrlsafe
- * @memberof OSjs.Utils
  *
  * @param   {String}      str     Base64 String
  *
@@ -333,9 +294,6 @@ export function atobUrlsafe(str) {
 
 /**
  * (Encode) Convert String to Base64 with UTF-8
- *
- * @function btoaUtf
- * @memberof OSjs.Utils
  *
  * @param   {String}      str     String
  *
@@ -354,9 +312,6 @@ export function btoaUtf(str) { // Encode
 
 /**
  * (Decode) Convert Base64 with UTF-8 to String
- *
- * @function atobUtf
- * @memberof OSjs.Utils
  *
  * @param   {String}      str     Base64 String
  *
@@ -378,9 +333,6 @@ export function atobUtf(str) { // Decode
 /**
  * Check if this MIME type is inside list
  * This matches by regex
- *
- * @function checkAcceptMime
- * @memberof OSjs.Utils
  *
  * @param   {String}      mime      The mime string
  * @param   {Array}       list      Array of regex matches
@@ -406,9 +358,6 @@ export function checkAcceptMime(mime, list) {
 
 /**
  * Filters a scandir() request
- *
- * @function filterScandir
- * @memberof OSjs.VFS.Helpers
  *
  * @param {Array}     list                      List of results from scandir()
  * @param {Object}    options                   Filter options
@@ -537,9 +486,6 @@ function _abToSomething(m, arrayBuffer, mime, callback) {
 /**
  * This is a helper to add a File to FormData
  *
- * @function addFormFile
- * @memberof OSjs.VFS.Helpers
- *
  * @param   {FormData}                        fd      FormData instance
  * @param   {String}                          key     FormData entry name
  * @param   {(window.File|window.Blob)}       data    File Data (see supported types)
@@ -569,9 +515,6 @@ export function addFormFile(fd, key, data, file) {
 /**
  * Convert DataSourceURL to ArrayBuffer
  *
- * @function dataSourceToAb
- * @memberof OSjs.VFS.Helpers
- *
  * @param   {String}        data        The datasource string
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
@@ -592,9 +535,6 @@ export function dataSourceToAb(data, mime, callback) {
 /**
  * Convert PlainText to ArrayBuffer
  *
- * @function textToAb
- * @memberof OSjs.VFS.Helpers
- *
  * @param   {String}        data        The plaintext string
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
@@ -605,9 +545,6 @@ export function textToAb(data, mime, callback) {
 
 /**
  * Convert ArrayBuffer to DataSourceURL
- *
- * @function abToDataSource
- * @memberof OSjs.VFS.Helpers
  *
  * @param   {ArrayBuffer}   arrayBuffer The ArrayBuffer
  * @param   {String}        mime        The mime type
@@ -620,9 +557,6 @@ export function abToDataSource(arrayBuffer, mime, callback) {
 /**
  * Convert ArrayBuffer to PlainText
  *
- * @function abToText
- * @memberof OSjs.VFS.Helpers
- *
  * @param   {ArrayBuffer}   arrayBuffer The ArrayBuffer
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
@@ -634,9 +568,6 @@ export function abToText(arrayBuffer, mime, callback) {
 /**
  * Convert ArrayBuffer to BinaryString
  *
- * @function abToBinaryString
- * @memberof OSjs.VFS.Helpers
- *
  * @param   {ArrayBuffer}   arrayBuffer The ArrayBuffer
  * @param   {String}        mime        The mime type
  * @param   {Function}      callback    Callback function => fn(error, result)
@@ -647,9 +578,6 @@ export function abToBinaryString(arrayBuffer, mime, callback) {
 
 /**
  * Convert ArrayBuffer to Blob
- *
- * @function abToBlob
- * @memberof OSjs.VFS.Helpers
  *
  * @param   {ArrayBuffer}   arrayBuffer The ArrayBuffer
  * @param   {String}        mime        The mime type
@@ -669,9 +597,6 @@ export function abToBlob(arrayBuffer, mime, callback) {
 
 /**
  * Convert Blob to ArrayBuffer
- *
- * @function blobToAb
- * @memberof OSjs.VFS.Helpers
  *
  * @param   {Blob}          data        The blob
  * @param   {Function}      callback    Callback function => fn(error, result)

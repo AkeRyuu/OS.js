@@ -101,9 +101,6 @@ export function mousePosition(ev) {
 /**
  * Get the mouse button pressed
  *
- * @function mouseButton
- * @memberof OSjs.Utils
- *
  * @param   {Event}     ev    The DOM Event
  *
  * @return  {String}          The mouse button (left/middle/right)
@@ -130,9 +127,6 @@ export function mouseButton(ev) {
  * Checks if the event currently has the given key comination.
  *
  * Example: 'CTRL+SHIFT+A'
- *
- * @function keyCombination
- * @memberof OSjs.Utils
  *
  * @param   {Event}     ev            The DOM Event
  * @param   {String}    checkFor      The string of keystrokes to check
@@ -219,9 +213,6 @@ export const keyCombination = (function() {
  * $bind(el, 'click, mousedown, mouseup', function(ev, pos, touch) {
  *  // You can bind multiple events in one go
  * });
- *
- * @function $bind
- * @memberof OSjs.Utils
  *
  * @param   {Node}            el            DOM Element to attach event to
  * @param   {String}          ev            DOM Event Name
@@ -510,9 +501,7 @@ export const $bind = (function() {
  * @example
  * $unbind(el); // Unbinds all events
  *
- * @function $unbind
- * @memberof OSjs.Utils
- * @see OSjs.Utils.$bind
+ * @see $bind
  *
  * @param   {Node}          el            DOM Element to attach event to
  * @param   {String}        [evName]      DOM Event Name

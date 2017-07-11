@@ -31,11 +31,14 @@
 /**
  * @module core/authenticator
  */
+import Promise from 'bluebird';
 import {_, setLocale} from 'core/locales';
 import {getConfig, getUserLocale} from 'core/config';
 import Connection from 'core/connection';
 import SettingsManager from 'core/settings-manager';
 import PackageManager from 'core/package-manager';
+
+let _instance;
 
 /**
  * Authenticator Base Class
@@ -45,12 +48,12 @@ import PackageManager from 'core/package-manager';
 export default class Authenticator {
 
   static get instance() {
-    return window.___osjs__authenticator_instance;
+    return _instance;
   }
 
   constructor() {
     /* eslint consistent-this: "warn" */
-    window.___osjs__authenticator_instance = this;
+    _instance = this;
 
     /**
      * User data
@@ -78,18 +81,25 @@ export default class Authenticator {
 
   /**
    * Initializes the Authenticator
-   *
-   * @param   {CallbackHandler}      callback        Callback function
+   * return {Promise}
    */
-  init(callback) {
-    this.onCreateUI(callback);
+  init() {
+    return new Promise((resolve, reject) => {
+      this.onCreateUI((err, res) => {
+        if ( err ) {
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
+    });
   }
 
   /**
    * Destroys the Authenticator
    */
   destroy() {
-    window.___osjs__authenticator_instance = null;
+    _instance = null;
   }
 
   /**

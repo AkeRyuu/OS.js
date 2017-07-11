@@ -28,10 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @namespace HTTP
- * @memberof OSjs.VFS.Transports
- */
 import BaseTransport from 'vfs/transports/osjs';
 
 /////////////////////////////////////////////////////////////////////////////

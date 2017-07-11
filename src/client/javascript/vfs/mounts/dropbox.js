@@ -30,16 +30,11 @@
 /*eslint no-use-before-define: "off"*/
 import Process from 'core/process';
 import MountManager from 'core/mount-manager';
+import ServiceNotificationIcon from 'helpers/service-notification-icon';
 import * as FS from 'utils/fs';
-import * as API from 'core/api';
 import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 import FileMetadata from 'vfs/file';
-
-/**
- * @namespace Dropbox
- * @memberof OSjs.VFS.Modules
- */
 
 // https://github.com/bcherry/dropbox-js
 // https://github.com/apily/dropbox/blob/master/index.js
@@ -57,25 +52,6 @@ function _getConfig(cfg, isVFS) {
     console.warn('OSjs.VFS.Modules.Dropbox::enabled()', e, e.stack);
   }
   return null;
-}
-
-function destroyRingNotification() {
-  const ring = API.getServiceNotificationIcon();
-  if ( ring ) {
-    ring.remove('Dropbox.js');
-  }
-}
-
-function createRingNotification() {
-  const ring = API.getServiceNotificationIcon();
-  if ( ring ) {
-    ring.add('Dropbox.js', [{
-      title: _('DROPBOX_SIGN_OUT'),
-      onClick: () => {
-        signoutDropbox();
-      }
-    }]);
-  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -282,7 +258,12 @@ function getDropbox(callback) {
 
       _isMounted = true;
 
-      createRingNotification();
+      ServiceNotificationIcon.add('Dropbox.js', [{
+        title: _('DROPBOX_SIGN_OUT'),
+        onClick: () => {
+          signoutDropbox();
+        }
+      }]);
 
       Process.message('vfs:mount', 'Dropbox', {source: null});
 
@@ -306,7 +287,7 @@ function signoutDropbox(cb, options) {
 
     Process.message('vfs:unmount', 'Dropbox', {source: null});
 
-    destroyRingNotification();
+    ServiceNotificationIcon.remove('Dropbox.js');
 
     cb();
   }

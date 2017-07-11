@@ -172,10 +172,6 @@ function initEntry(cls, sel) {
  *      value: "something or JSON or whatever",
  *      entries: [] // Recurse :)
  *   })
- *
- * @constructor TreeView
- * @extends OSjs.GUI.DataView
- * @memberof OSjs.GUI.Elements
  */
 class GUITreeView extends GUIDataView {
 

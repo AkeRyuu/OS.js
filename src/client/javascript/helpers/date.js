@@ -85,9 +85,6 @@ function _m(m, now) {
  * @summary Class for date manipulation and formatting.
  *
  * @param {(Date|Ojs.Helpers.Date)} [date] Create new instance from this date
- *
- * @constructor Date
- * @memberof OSjs.Helpers
  */
 export default class ExtendedDate {
 
@@ -138,9 +135,6 @@ export default class ExtendedDate {
   /**
    * Get the 'Date' Object
    *
-   * @function get
-   * @memberof OSjs.Helpers.Date#
-   *
    * @return  {OSjs.Helpers.Date}
    */
   get() {
@@ -149,9 +143,6 @@ export default class ExtendedDate {
 
   /**
    * Format date
-   *
-   * @function format
-   * @memberof OSjs.Helpers.Date#
    *
    * @param   {String}      fmt     Format (ex: "Y/m/d")
    *
@@ -196,8 +187,6 @@ export default class ExtendedDate {
   /**
    * Get First day in month
    *
-   * @function getFirstDayInMonth
-   * @memberof OSjs.Helpers.Date#
    * @see OSjs.Helpers.Date#format
    *
    * @param   {String}    [fmt]     Date format
@@ -211,8 +200,6 @@ export default class ExtendedDate {
   /**
    * Get Last day in month
    *
-   * @function getLastDayInMonth
-   * @memberof OSjs.Helpers.Date#
    * @see OSjs.Helpers.Date#format
    *
    * @param   {String}    [fmt]     Date format
@@ -226,9 +213,6 @@ export default class ExtendedDate {
   /**
    * Get numbers of day in month
    *
-   * @function getDaysInMonth
-   * @memberof OSjs.Helpers.Date#
-   *
    * @return  {Number}     Number of days
    */
   getDaysInMonth() {
@@ -238,9 +222,6 @@ export default class ExtendedDate {
   /**
    * Get week number
    *
-   * @function getWeekNumber
-   * @memberof OSjs.Helpers.Date#
-   *
    * @return  {Number}     Week
    */
   getWeekNumber() {
@@ -249,9 +230,6 @@ export default class ExtendedDate {
 
   /**
    * Check if given range is within Month
-   *
-   * @function isWithinMonth
-   * @memberof OSjs.Helpers.Date#
    *
    * @param   {(Date|OSjs.Helpers.Date)}    from      From date (can be Date)
    * @param   {(Date|OSjs.Helpers.Date)}    to        To date (can be Date)
@@ -264,9 +242,6 @@ export default class ExtendedDate {
 
   /**
    * Check if given range is within Year
-   *
-   * @function isWithinYear
-   * @memberof OSjs.Helpers.Date#
    *
    * @return  {Boolean}
    */

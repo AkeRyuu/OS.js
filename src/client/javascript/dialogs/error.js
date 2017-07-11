@@ -37,9 +37,6 @@ import {getConfig} from 'core/config';
  * @example
  *
  * OSjs.API.createDialog('Error', {}, fn);
- *
- * @constructor Error
- * @memberof OSjs.Dialogs
  */
 export default class ErrorDialog extends DialogWindow {
 

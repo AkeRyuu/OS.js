@@ -139,10 +139,6 @@ function setDocumentData(el, text) {
  *   getter    value   String        The value/contents
  *   setter    value   String        The value/contents
  * </code></pre>
- *
- * @constructor RichText
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIRichText extends GUIElement {
   on(evName, callback, params) {

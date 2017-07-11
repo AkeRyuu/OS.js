@@ -37,11 +37,6 @@ import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 import FileMetadata from 'vfs/file';
 
-/**
- * @namespace OneDrive
- * @memberof OSjs.VFS.Modules
- */
-
 // https://social.msdn.microsoft.com/forums/onedrive/en-US/5e259b9c-8e9e-40d7-95c7-722ef5bb6d38/upload-file-to-skydrive-using-javascript
 // http://msdn.microsoft.com/en-us/library/hh826531.aspx
 // http://msdn.microsoft.com/en-us/library/dn659726.aspx

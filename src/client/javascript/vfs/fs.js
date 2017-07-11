@@ -51,26 +51,6 @@ import {_} from 'core/locales';
 let watches = [];
 
 /**
- * @namespace VFS
- * @memberof OSjs
- */
-
-/**
- * @namespace Helpers
- * @memberof OSjs.VFS
- */
-
-/**
- * @namespace Transports
- * @memberof OSjs.VFS
- */
-
-/**
- * @namespace Modules
- * @memberof OSjs.VFS
- */
-
-/**
  * A supported file data type
  * @typedef {(window.File|window.Blob|OSjs.VFS.File|OSjs.VFS.FileDataURL)} File
  */
@@ -453,9 +433,6 @@ export function broadcastMessage(msg, item, appRef) {
 /**
  * Find file(s)
  *
- * @function find
- * @memberof OSjs.VFS
- *
  * @param  {OSjs.VFS.File}   item              Root path
  * @param  {Object}          args              Search query
  * @param  {CallbackVFS}     callback          Callback function
@@ -489,9 +466,6 @@ export function find(item, args, callback, options) {
  * Scandir
  *
  * @summary Scans a directory for files and directories.
- *
- * @function scandir
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}   item                             File Metadata
  * @param   {CallbackVFS}     callback                         Callback function
@@ -562,9 +536,6 @@ export function scandir(item, callback, options) {
  * Write File
  *
  * @summary Writes data to a file
- *
- * @function write
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}             item          File Metadata (you can also provide a string)
  * @param   {File}                      data          File Data (see supported types)
@@ -645,9 +616,6 @@ export function write(item, data, callback, options, appRef) {
  * Read File
  *
  * @summary Reads data from a file
- *
- * @function read
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}   item                File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback            Callback function
@@ -733,9 +701,6 @@ export function read(item, callback, options) {
  * Copy File
  *
  * @summary Copies a file to a destination
- *
- * @function copy
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
  * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
@@ -840,9 +805,6 @@ export function copy(src, dest, callback, options, appRef) {
  *
  * @summary Moves a file to a destination
  *
- * @function move
- * @memberof OSjs.VFS
- *
  * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
  * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
  * @param   {CallbackVFS}               callback              Callback function
@@ -919,10 +881,7 @@ export function move(src, dest, callback, options, appRef) {
 
 /**
  * Alias of move
- *
- * @function rename
- * @memberof OSjs.VFS
- * @alias OSjs.VFS.move
+ * @alias move
  *
  * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
  * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
@@ -941,9 +900,6 @@ export function rename(src, dest, callback) {
  * This function currently have no options.
  *
  * @summary Deletes a file
- *
- * @function unlink
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}             item                  File Metadata (you can also provide a string)
  * @param   {CallbackVFS}               callback              Callback function
@@ -994,9 +950,6 @@ export function unlink(item, callback, options, appRef) {
  *
  * @summary Creates a directory
  *
- * @function mkdir
- * @memberof OSjs.VFS
- *
  * @param   {OSjs.VFS.File}             item                  File Metadata (you can also provide a string)
  * @param   {CallbackVFS}               callback              Callback function
  * @param   {Object}                    [options]             Set of options
@@ -1040,9 +993,6 @@ export function mkdir(item, callback, options, appRef) {
  *
  * @summary Check if a target exists
  *
- * @function exists
- * @memberof OSjs.VFS
- *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
  */
@@ -1069,9 +1019,6 @@ export function exists(item, callback) {
  *
  * @summary Gets information about a file
  *
- * @function fileinfo
- * @memberof OSjs.VFS
- *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
  */
@@ -1097,9 +1044,6 @@ export function fileinfo(item, callback) {
  * Get file URL
  *
  * @summary Gets absolute HTTP URL to a file
- *
- * @function url
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
@@ -1131,9 +1075,6 @@ export function url(item, callback, options) {
  * Upload file(s)
  *
  * @summary Uploads a file to the target from browser
- *
- * @function upload
- * @memberof OSjs.VFS
  *
  * @param   {Object}                    args                      Function arguments (see below)
  * @param   {String}                    args.destination          Full path to destination
@@ -1196,10 +1137,11 @@ export function upload(args, callback, options, appRef) {
 
         OSjs.VFS.Transports.OSjs.upload(f, realDest, function(err, result, ev) {
           if ( err ) {
+            console.warn(err);
             if ( err === 'canceled' ) {
               callback(_('ERR_VFS_UPLOAD_CANCELLED'), null, ev);
             } else {
-              const errstr = ev ? ev.toString() : 'Unknown reason';
+              const errstr = err ? err.toString() : 'Unknown reason';
               const msg = _('ERR_VFS_UPLOAD_FAIL_FMT', errstr);
               callback(msg, null, ev);
             }
@@ -1223,9 +1165,6 @@ export function upload(args, callback, options, appRef) {
  * Download a file
  *
  * @summary Downloads a file to the computer
- *
- * @function download
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}   args      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
@@ -1310,9 +1249,6 @@ export const download = (function download() {
  *
  * @summary Trashes a file
  *
- * @function trash
- * @memberof OSjs.VFS
- *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
  */
@@ -1339,9 +1275,6 @@ export function trash(item, callback) {
  * Restore file from trash
  *
  * @summary Removes a file from trash
- *
- * @function untrash
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
@@ -1370,9 +1303,6 @@ export function untrash(item, callback) {
  *
  * @summary Empties the trash
  *
- * @function emptyTrash
- * @memberof OSjs.VFS
- *
  * @param   {CallbackVFS}     callback  Callback function
  */
 export function emptyTrash(callback) {
@@ -1393,9 +1323,6 @@ export function emptyTrash(callback) {
  * Result is -1 when unavailable
  *
  * @summary Gets free space on target
- *
- * @function freeSpace
- * @memberof OSjs.VFS
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
@@ -1426,9 +1353,6 @@ export function freeSpace(item, callback) {
  * client-side APIs.
  * @summary Watches a file or directory for changes.
  *
- * @function watch
- * @memberof OSjs.VFS
- *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
  *
@@ -1458,9 +1382,6 @@ export function watch(item, callback) {
 
 /**
  * Remove a watch
- *
- * @function unwatch
- * @memberof OSjs.VFS
  *
  * @param {Number}      idx     Watch index (from watch() method)
  */

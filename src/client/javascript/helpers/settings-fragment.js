@@ -43,10 +43,6 @@ import {mergeObject} from 'utils/misc';
  *
  * @summary This is the class returned from SettingsManager getters.
  * @throws {Error} If an invalid object was given
- *
- * @constructor
- * @memberof OSjs.Helpers
- * @see OSjs.Core.SettingsManager
  */
 export default class SettingsFragment {
 
@@ -56,10 +52,6 @@ export default class SettingsFragment {
    * @param   {SettingsManager} sm          SettigsManager instance
    */
   constructor(obj, poolName, sm) {
-    if ( !sm || !sm.changed ) {
-      console.error('NO SM FOR', poolName, sm)
-
-    }
     this._sm = sm;
     this._pool = poolName;
 
@@ -75,9 +67,6 @@ export default class SettingsFragment {
   /**
    * Gets setting(s) by key
    *
-   * @function get
-   * @memberof OSjs.Helpers.SettingsFragment#
-   *
    * @param   {String}        [key]              Name of key
    * @param   {Mixed}         [defaultValue]     Default value if result is undefined
    *
@@ -92,9 +81,6 @@ export default class SettingsFragment {
    * Sets setting(s) by key/value
    *
    * If you set `key` to `null` you will write to the tree root.
-   *
-   * @function set
-   * @memberof OSjs.Helpers.SettingsFragment#
    *
    * @param   {Mixed}      key                   The key
    * @param   {Mixed}      value                 The value
@@ -129,9 +115,6 @@ export default class SettingsFragment {
 
   /**
    * Saves the pool
-   *
-   * @function save
-   * @memberof OSjs.Helpers.SettingsFragment#
    * @see OSjs.Core.SettingsManager#save
    *
    * @param   {Function}      [callback]        Callback function
@@ -159,9 +142,6 @@ export default class SettingsFragment {
   /**
    * Merges given tree with current one
    *
-   * @function mergeDefaults
-   * @memberof OSjs.Helpers.SettingsFragment#
-   *
    * @param     {Object}        defaults        The tree
    *
    * @return  {OSjs.Helpers.SettingsFragment}  Itself `this`
@@ -173,9 +153,6 @@ export default class SettingsFragment {
 
   /**
    * Creates a new SettingsFragment instance from given key
-   *
-   * @function instance
-   * @memberof OSjs.Helpers.SettingsFragment#
    * @throws {Error} If the given key does not exist
    *
    * @param     {String}        key     Key name

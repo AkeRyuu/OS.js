@@ -27,17 +27,12 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import * as API from 'core/api';
 import MountManager from 'core/mount-manager';
+import ServiceNotificationIcon from 'helpers/service-notification-icon';
 import {preload} from 'utils/preloader';
 import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 import jsonp from 'then-jsonp';
-
-/**
- * @namespace GoogleAPI
- * @memberof OSjs.Helpers
- */
 
 const gapi = window.gapi = window.gapi || {};
 
@@ -59,10 +54,6 @@ let SingletonInstance = null;
  * </b></pre>
  *
  * @summary Helper for communicating with Google API.
- *
- * @constructor Class
- * @memberof OSjs.Helpers.GoogleAPI
- * @see OSjs.Helpers.GoogleAPI.createInsatance
  *
  * @link https://developers.google.com/api-client-library/javascript/start/start-js
  * @link https://developers.google.com/api-client-library/javascript/
@@ -213,9 +204,6 @@ class GoogleAPI {
   /**
    * Sign out of GoogleAPI
    *
-   * @function signOut
-   * @memberof OSjs.Helpers.GoogleAPI.Class#
-   *
    * @param   {Function}    cb      Callback => fn(error, result)
    */
   signOut(cb) {
@@ -232,10 +220,7 @@ class GoogleAPI {
 
       this.authenticated = false;
 
-      const ring = API.getServiceNotificationIcon();
-      if ( ring ) {
-        ring.remove('Google API');
-      }
+      ServiceNotificationIcon.remove('Google API');
     }
 
     MountManager.remove('GoogleDrive');
@@ -245,9 +230,6 @@ class GoogleAPI {
 
   /**
    * Revoke Google permissions for this app
-   *
-   * @function revoke
-   * @memberof OSjs.Helpers.GoogleAPI.Class#
    *
    * @param   {Function}    callback      Callback => fn(error, result)
    */
@@ -294,24 +276,21 @@ class GoogleAPI {
     };
 
     const createRingNotification = () => {
-      const ring = API.getServiceNotificationIcon();
-      if ( ring ) {
-        ring.remove('Google API');
+      ServiceNotificationIcon.remove('Google API');
 
-        ring.add('Google API', [{
-          title: _('GAPI_SIGN_OUT'),
-          onClick: () => {
+      ServiceNotificationIcon.add('Google API', [{
+        title: _('GAPI_SIGN_OUT'),
+        onClick: () => {
+          this.signOut();
+        }
+      }, {
+        title: _('GAPI_REVOKE'),
+        onClick: () => {
+          this.revoke(() => {
             this.signOut();
-          }
-        }, {
-          title: _('GAPI_REVOKE'),
-          onClick: () => {
-            this.revoke(() => {
-              this.signOut();
-            });
-          }
-        }]);
-      }
+          });
+        }
+      }]);
     };
 
     const handleAuthResult = (authResult, immediate) => {

@@ -32,6 +32,7 @@
  */
 
 import axios from 'axios';
+import Promise from 'bluebird';
 import EventHandler from 'helpers/event-handler';
 import {getConfig} from 'core/config';
 
@@ -63,18 +64,19 @@ function appendRequestOptions(data, options) {
   return data;
 }
 
+let _instance;
+
 /**
  * Default Connection Implementation
  *
  * @summary Wrappers for communicating over HTTP, WS and NW
  *
- * @constructor Connection
  * @mixes utils/event-handler~EventHandler
  */
 export default class Connection {
 
   static get instance() {
-    return window.___osjs__connection_instance;
+    return _instance;
   }
 
   /**
@@ -82,8 +84,8 @@ export default class Connection {
    */
   constructor() {
     /* eslint consistent-this: "warn" */
-    if ( !window.___osjs__connection_instance ) {
-      window.___osjs__connection_instance = this;
+    if ( !_instance ) {
+      _instance = this;
     }
 
     /**
@@ -101,16 +103,14 @@ export default class Connection {
 
   /**
    * Initializes the instance
-   *
-   * @param {Function}  callback    Callback function
    */
-  init(callback) {
+  init() {
     if ( typeof navigator.onLine !== 'undefined' ) {
       window.addEventListener('offline', this.offlineFn);
       window.addEventListener('online', this.onlineFn);
     }
 
-    callback();
+    return Promise.resolve();
   }
 
   /**
@@ -124,7 +124,7 @@ export default class Connection {
       this._evHandler = this._evHandler.destroy();
     }
 
-    window.___osjs__connection_instance = null;
+    _instance = null;
   }
 
   /**
@@ -250,173 +250,73 @@ export default class Connection {
   /**
    * Default method to perform a call to the backend (API)
    *
-   * Please note that this function is internal, and if you want to make
-   * a actual API call, use "API.call()" instead.
+   * Please use the static request() method externally.
    *
    * @param {String}    method      API method name
    * @param {Object}    args        API method arguments
-   * @param {Function}  cbSuccess   On success
-   * @param {Function}  cbError     On error
    * @param {Object}    [options]   Options passed on to the connection request method (ex: XHR.ajax)
    *
    * @return {Boolean}
-   *
-   * @see OSjs.Core.API.call
    */
-  createRequest(method, args, cbSuccess, cbError, options) {
+  createRequest(method, args, options) {
     args = args || {};
-    cbSuccess = cbSuccess || function() {};
-    cbError = cbError || function() {};
+    options = options || {};
 
     if ( this.offline ) {
-      cbError('You are currently off-line and cannot perform this operation!');
-      return false;
-    } else if ( (getConfig('Connection.Type') === 'standalone') ) {
-      cbError('You are currently running locally and cannot perform this operation!');
-      return false;
+      return Promise.reject(new Error('You are currently off-line and cannot perform this operation!'));
+    } else if ( getConfig('Connection.Type') === 'standalone' ) {
+      return Promise.reject('You are currently running locally and cannot perform this operation!');
     }
 
-    if ( method.match(/^FS:/) ) {
-      return this.requestVFS(method.replace(/^FS:/, ''), args, options, cbSuccess, cbError);
-    }
+    const {raw, requestOptions} = this.createRequestOptions(method, args);
 
-    return this.requestAPI(method, args, options, cbSuccess, cbError);
-  }
-
-  /**
-   * Wrapper for server API XHR calls
-   *
-   * @param   {String}    method    API Method name
-   * @param   {Object}    args      API Method arguments
-   * @param   {Object}    options   Call options
-   * @param   {Function}  cbSuccess Callback on success
-   * @param   {Function}  cbError   Callback on error
-   *
-   * @return {Boolean}
-   *
-   * @see OSjs.Core.Connection.request
-   */
-  requestAPI(method, args, options, cbSuccess, cbError) {
-    return false;
-  }
-
-  /**
-   * Wrapper for server VFS XHR calls
-   *
-   * @param   {String}    method    API Method name
-   * @param   {Object}    args      API Method arguments
-   * @param   {Object}    options   Call options
-   * @param   {Function}  cbSuccess Callback on success
-   * @param   {Function}  cbError   Callback on error
-   *
-   * @return {Boolean}
-   *
-   * @see OSjs.Core.Connection.request
-   */
-  requestVFS(method, args, options, cbSuccess, cbError) {
-    if ( method === 'get' ) {
-      return this._requestGET(args, options, cbSuccess, cbError);
-    } else if ( method === 'upload' ) {
-      return this._requestPOST(args, options, cbSuccess, cbError);
-    }
-
-    return false;
-  }
-
-  /**
-   * Makes a HTTP POST call
-   *
-   * @param   {Object}    form      Call data
-   * @param   {Object}    options   Call options
-   * @param   {Function}  onsuccess Callback on success
-   * @param   {Function}  onerror   Callback on error
-   *
-   * @return {Boolean}
-   */
-  _requestPOST(form, options, onsuccess, onerror) {
-    onerror = onerror || function() {
-      console.warn('Connection::_requestPOST()', 'error', arguments);
-    };
-
-    const requestOptions = appendRequestOptions({
-      url: OSjs.VFS.Transports.OSjs.path(),
-      method: 'POST',
-      data: form
-    }, options);
-
-    axios(requestOptions).then((result) => {
-      onsuccess(result.data);
-    }).catch((error) => {
-      onerror(error.message || error, null, error);
+    return new Promise((resolve, reject) => {
+      axios(appendRequestOptions(requestOptions, options)).then((result) => {
+        // FIXME
+        if ( result.status === 404 || result.status === 500 ) {
+          return reject({error: result.statusText || result.status, result: null});
+        }
+        return resolve(raw ? result.data : {error: false, result: result.data});
+      }).catch((error) => {
+        reject(new Error(error.message || error));
+      });
     });
-
-    return true;
   }
 
   /**
-   * Makes a HTTP GET call
+   * Creates default request options
    *
-   * @param   {Object}    args      Call data
-   * @param   {Object}    options   Call options
-   * @param   {Function}  onsuccess Callback on success
-   * @param   {Function}  onerror   Callback on error
+   * @param {String}    method      API method name
+   * @param {Object}    args        API method arguments
    *
-   * @return {Boolean}
+   * @return {Object}
    */
-  _requestGET(args, options, onsuccess, onerror) {
-    onerror = (onerror || function() {
-      console.warn('Connection::_requestGET()', 'error', arguments);
-    }).bind(this);
+  createRequestOptions(method, args) {
+    const transport = OSjs.VFS.Transports.OSjs;
+    const realMethod = method.replace(/^FS:/, '');
 
-    const requestOptions = appendRequestOptions({
-      responseType: 'arraybuffer',
-      url: args.url || OSjs.VFS.Transports.OSjs.path(args.path),
-      method: args.method || 'GET'
-    }, options);
-
-    axios(requestOptions).then((result) => {
-      if ( result.status === 404 || result.status === 500 ) {
-        onsuccess({error: result.statusText || result.status, result: null});
-        return;
-      }
-      onsuccess({error: false, result: result.data});
-    }).catch((error) => {
-      onerror(error.message || error, null, error);
-    });
-
-    return true;
-  }
-
-  /**
-   * Makes a HTTP XHR call
-   *
-   * @param   {String}    url       Call URL
-   * @param   {Object}    args      Call data
-   * @param   {Object}    options   Call options
-   * @param   {Function}  onsuccess Callback on success
-   * @param   {Function}  onerror   Callback on error
-   *
-   * @return {Boolean}
-   */
-  _requestXHR(url, args, options, onsuccess, onerror) {
-    onerror = onerror || function() {
-      console.warn('Connection::_requestXHR()', 'error', arguments);
-    };
-
-    const requestOptions = appendRequestOptions({
+    let raw = true;
+    let requestOptions = {
       responseType: 'json',
-      url: url,
+      url: getConfig('Connection.APIURI') + '/' + realMethod,
       method: 'POST',
       data: args
-    }, options);
+    };
 
-    axios(requestOptions).then((result) => {
-      onsuccess(result.data);
-    }).catch((error) => {
-      onerror(error.message || error, null, error);
-    });
+    if ( method.match(/^FS:/) ) {
+      if ( realMethod === 'get' ) {
+        requestOptions.responseType = 'arraybuffer';
+        requestOptions.url = args.url || transport.path(args.path);
+        requestOptions.method = args.method || 'GET';
+        raw = false;
+      } else if ( realMethod === 'upload' ) {
+        requestOptions.url = transport.path();
+      } else {
+        requestOptions.url = getConfig('Connection.FSURI') + '/' + realMethod;
+      }
+    }
 
-    return true;
+    return {raw, requestOptions};
   }
 
   /**
@@ -449,11 +349,12 @@ export default class Connection {
     return this._evHandler.off(k, idx);
   }
 
+  /*
+   * This is a wrapper for making a request
+   */
   static request(m, a, cb, options) {
     a = a || {};
     options = options || {};
-
-    //const lname = 'APICall_' + _CALL_INDEX;
 
     if ( typeof cb !== 'function' ) {
       throw new TypeError('call() expects a function as callback');
@@ -464,25 +365,20 @@ export default class Connection {
     }
 
     /* FIXME FIXME FIXME
+    const lname = 'APICall_' + _CALL_INDEX;
     if ( options.indicator !== false ) {
       Main.createLoading(lname, {className: 'BusyNotification', tooltip: 'API Call'});
     }
+    _CALL_INDEX++;
     */
 
     if ( typeof options.indicator !== 'undefined' ) {
       delete options.indicator;
     }
 
-    //_CALL_INDEX++;
-
-    return this.instance.createRequest(m, a, function API_call_success(response) {
-      //Main.destroyLoading(lname);
-      response = response || {};
+    this.instance.createRequest(m, a, options).then((response) => {
       cb(response.error || false, response.result);
-    }, function API_call_error(err) {
-      //Main.destroyLoading(lname);
-      cb(err);
-    }, options);
-
+      return true;
+    }).catch(cb);
   }
 }

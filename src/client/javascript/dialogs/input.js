@@ -36,9 +36,6 @@ import {_} from 'core/locales';
  * @example
  *
  * OSjs.API.createDialog('Input', {}, fn);
- *
- * @constructor Input
- * @memberof OSjs.Dialogs
  */
 export default class InputDialog extends DialogWindow {
 

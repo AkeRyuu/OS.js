@@ -71,7 +71,6 @@ import Scheme from 'gui/scheme';
  * @link https://os-js.org/manual/package/application/
  *
  * @abstract
- * @extends core/process~Process
  */
 export default class Application extends Process {
 
@@ -238,9 +237,6 @@ export default class Application extends Process {
    * Default method for loading a Scheme file
    *
    * @TODO DEPRECATED This is kept for backward compability
-   *
-   * @function _loadScheme
-   * @memberof OSjs.Core.Application#
    *
    * @param   {String}        str     Scheme filename
    * @param   {Function}      cb      Callback => fn(scheme)

@@ -37,7 +37,6 @@ import WindowManager from 'core/windowmanager';
 import Element from 'gui/element';
 import Scheme from 'gui/scheme';
 import EventHandler from 'helpers/event-handler';
-import * as Main from 'core/main';
 import * as Assets from 'core/assets';
 import * as DOM from 'utils/dom';
 import * as GUI from 'utils/gui';
@@ -45,6 +44,7 @@ import * as Events from 'utils/events';
 import * as Compability from 'utils/compability';
 import * as Keycodes from 'utils/keycodes';
 import {_} from 'core/locales';
+import {running} from 'core/init';
 
 /**
  * The predefined events are as follows:
@@ -929,7 +929,7 @@ export default class Window {
     };
 
     const _animateClose = (fn) => {
-      if ( Main.isShuttingDown() ) {
+      if ( !running() ) {
         fn();
       } else {
         if ( this._$element ) {

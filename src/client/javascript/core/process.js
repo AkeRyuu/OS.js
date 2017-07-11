@@ -193,10 +193,11 @@ export default class Process {
     opts = opts || {};
 
     let sourceId = opts.source;
-    if ( typeof sourceId === 'object' ) {
+    if ( sourceId && (typeof sourceId === 'object') ) {
       if ( sourceId instanceof Process ) {
         sourceId = sourceId.__pid;
-      } else if ( sourceId.constructor.name === 'Window' ) {
+      //} else if ( sourceId instanceof Window ) { // FIXME Causes circular upon import
+      } else if ( sourceId._app ) {
         sourceId = sourceId._app ? sourceId._app.__pid : -1;
       }
     }
@@ -466,9 +467,6 @@ export default class Process {
 
   /**
    * Get all processes
-   *
-   * @function getProcesses
-   * @memberof OSjs.API
    *
    * @return  {OSjs.Core.Process[]}
    */

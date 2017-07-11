@@ -28,428 +28,275 @@
  * @licence Simplified BSD License
  */
 import Promise from 'bluebird';
+import * as Main from 'core/main';
+import * as Locales from 'core/locales';
+import SplashScreen from 'core/splash';
+import MountManager from 'core/mount-manager';
+import SettingsManager from 'core/settings-manager';
+import PackageManager from 'core/package-manager';
+import SearchEngine from 'core/search-engine';
+import Authenticator from 'core/authenticator';
+import WindowManager from 'core/windowmanager';
+import Dialog from 'core/dialog';
+import Storage from 'core/storage';
+import Process from 'core/process';
+import Connection from 'core/connection';
+import {addHook, triggerHook} from 'helpers/hooks';
+import {getConfig, setConfig} from 'core/config';
+import {playSound} from 'core/assets';
+import * as GUI from 'utils/gui';
+import Preloader from 'utils/preloader';
+import Broadway from 'broadway/broadway';
+import BroadwayConnection from 'broadway/connection';
+import DialogScheme from 'gui/dialogscheme';
+import ServiceNotificationIcon from 'helpers/service-notification-icon';
+import compability from 'compability';
 
-// Globals
+let hasBooted = false;
+let hasShutDown = false;
 
-var inited = false;
-var loaded = false;
-var signingOut = false;
-var instanceOptions = {};
-
-/////////////////////////////////////////////////////////////////////////////
-// GLOBAL EVENTS
-/////////////////////////////////////////////////////////////////////////////
-
-function checkForbiddenKeyCombo(ev) {
-  return false;
-  /* FIXME: This is not supported in browsers :( (in app mode it should be)
-  var forbiddenCtrl = ['n', 't', 'w'];
-  if ( ev.ctrlKey ) {
-    return forbiddenCtrl.some(function(i) {
-      return String.fromCharCode(ev.keyCode).toLowerCase() === i;
-    });
-  }
-  return false;
-  */
-}
-
-var events = {
-  body_contextmenu: function(ev) {
-    ev.stopPropagation();
-
-    var wm = OSjs.Core.getWindowManager();
-    if ( wm ) {
-      wm.onContextMenu(ev);
-    }
-
-    if ( !OSjs.Utils.$isFormElement(ev) ) {
-      ev.preventDefault();
-      return false;
-    }
-
-    return true;
-  },
-
-  body_click: function(ev) {
-    var t = ev.target;
-    var allowed = ['GUI-MENU-BAR-ENTRY', 'GUI-MENU-ENTRY'];
-    if ( !t || allowed.indexOf(t.tagName) === -1  ) {
-      OSjs.API.blurMenu();
-    }
-
-    var wm = OSjs.Core.getWindowManager();
-    if ( t === document.body ) {
-      var win = wm ? wm.getCurrentWindow() : null;
-      if ( win ) {
-        win._blur();
-      }
-    }
-
-    if ( wm ) {
-      wm.onGlobalClick(ev);
-    }
-  },
-
-  message: function(ev) {
-    if ( ev && ev.data && typeof ev.data.message !== 'undefined' && typeof ev.data.pid === 'number' ) {
-      console.debug('window::message()', ev.data);
-      var proc = OSjs.API.getProcess(ev.data.pid);
-      if ( proc ) {
-        if ( typeof proc.onPostMessage === 'function' ) {
-          proc.onPostMessage(ev.data.message, ev);
-        }
-
-        if ( typeof proc._getWindow === 'function' ) {
-          var win = proc._getWindow(ev.data.wid, 'wid');
-          if ( win ) {
-            win.onPostMessage(ev.data.message, ev);
-          }
-        }
-      }
-    }
-  },
-
-  fullscreen: function(ev) {
-    try {
-      var notif = OSjs.Core.getWindowManager().getNotificationIcon('_FullscreenNotification');
-      if ( notif ) {
-        if ( !document.fullScreen && !document.mozFullScreen && !document.webkitIsFullScreen && !document.msFullscreenElement ) {
-          notif.opts._isFullscreen = false;
-          notif.setImage(OSjs.API.getIcon('actions/view-fullscreen.png', '16x16'));
-        } else {
-          notif.opts._isFullscreen = true;
-          notif.setImage(OSjs.API.getIcon('actions/view-restore.png', '16x16'));
-        }
-      }
-    } catch ( e ) {
-      console.warn(e.stack, e);
-    }
-  },
-
-  keydown: function(ev) {
-    var wm  = OSjs.Core.getWindowManager();
-    var win = wm ? wm.getCurrentWindow() : null;
-    var accept = [122, 123];
-
-    function checkPrevent() {
-      var d = ev.srcElement || ev.target;
-      var doPrevent = d.tagName === 'BODY' ? true : false;
-
-      // What browser default keys we prevent in certain situations
-      if ( (ev.keyCode === OSjs.Utils.Keys.BACKSPACE) && !OSjs.Utils.$isFormElement(ev) ) { // Backspace
-        doPrevent = true;
-      } else if ( (ev.keyCode === OSjs.Utils.Keys.TAB) && OSjs.Utils.$isFormElement(ev) ) { // Tab
-        doPrevent = true;
-      } else {
-        if ( accept.indexOf(ev.keyCode) !== -1 ) {
-          doPrevent = false;
-        } else if ( checkForbiddenKeyCombo(ev) ) {
-          doPrevent = true;
-        }
-      }
-
-      // Only prevent default event if current window is not set up to capture them by force
-      if ( doPrevent && (!win || !win._properties.key_capture) ) {
-        return true;
-      }
-
-      return false;
-    }
-
-    var reacted = (function() {
-      var combination = null;
-      if ( wm ) {
-        combination = wm.onKeyDown(ev, win);
-        if ( win && !combination ) {
-          win._onKeyEvent(ev, 'keydown');
-        }
-      }
-      return combination;
-    })();
-
-    if ( checkPrevent() || reacted ) {
-      ev.preventDefault();
-    }
-
-    return true;
-  },
-
-  keypress: function(ev) {
-    var wm = OSjs.Core.getWindowManager();
-
-    if ( checkForbiddenKeyCombo(ev) ) {
-      ev.preventDefault();
-    }
-
-    if ( wm ) {
-      var win = wm.getCurrentWindow();
-      if ( win ) {
-        return win._onKeyEvent(ev, 'keypress');
-      }
-    }
-    return true;
-  },
-  keyup: function(ev) {
-    var wm = OSjs.Core.getWindowManager();
-    if ( wm ) {
-      wm.onKeyUp(ev, wm.getCurrentWindow());
-
-      var win = wm.getCurrentWindow();
-      if ( win ) {
-        return win._onKeyEvent(ev, 'keyup');
-      }
-    }
-    return true;
-  },
-
-  beforeunload: function(ev) {
-    if ( !signingOut ) {
-      try {
-        if ( OSjs.API.getConfig('ShowQuitWarning') ) {
-          return OSjs.API._('MSG_SESSION_WARNING');
-        }
-      } catch ( e ) {}
-    }
-
-    return null;
-  },
-
-  resize: (function() {
-    var _timeout;
-
-    function _resize(ev, wasInited) {
-      var wm = OSjs.Core.getWindowManager();
-      if ( !wm ) {
-        return;
-      }
-
-      wm.resize(ev, wm.getWindowSpace(), wasInited);
-    }
-
-    return function(ev, wasInited) {
-      _timeout = clearTimeout(_timeout);
-      _timeout = setTimeout(function() {
-        _resize(ev, wasInited);
-      }, 100);
-    };
-  })(),
-
-  scroll: function(ev) {
-    if ( ev.target === document || ev.target === document.body ) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      return false;
-    }
-
-    document.body.scrollTop = 0;
-    document.body.scrollLeft = 0;
-    return true;
-  },
-
-  hashchange: function(ev) {
-    var hash = window.location.hash.substr(1);
-    var spl = hash.split(/^([\w\.\-_]+)\:(.*)/);
-
-    function getArgs(q) {
-      var args = {};
-      q.split('&').forEach(function(a) {
-        var b = a.split('=');
-        var k = decodeURIComponent(b[0]);
-        args[k] = decodeURIComponent(b[1] || '');
-      });
-      return args;
-    }
-
-    if ( spl.length === 4 ) {
-      var root = spl[1];
-      var args = getArgs(spl[2]);
-
-      if ( root ) {
-        OSjs.API.getProcess(root).forEach(function(p) {
-          p._onMessage('hashchange', {
-            hash: hash,
-            args: args
-          }, {source: null});
-        });
-      }
-    }
-  },
-
-  orientationchange: function(ev) {
-    var orientation = 'landscape';
-
-    if ( window.screen && window.screen.orientation ) {
-      if ( window.screen.orientation.type.indexOf('portrait') !== -1 ) {
-        orientation = 'portrait';
-      }
-    }
-
-    var wm = OSjs.Core.getWindowManager();
-    if ( wm ) {
-      wm.onOrientationChange(ev, orientation);
-    }
-
-    document.body.setAttribute('data-orientation', orientation);
-  }
-};
-
-/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // INITIALIZERS
-/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-/*
- * Initialized some layout stuff
+/**
+ * Initialize: Preloading
+ * @param {Object} config Configuration
+ * @return {Promise}
  */
-function initLayout() {
-  console.debug('initLayout()');
+const initPreloading = (config) => new Promise((resolve, reject) => {
+  const flatten = (list) => list.reduce((a, b) =>
+    a.concat(Array.isArray(b) ? flatten(b) : b), []);
 
-  if ( OSjs.API.getConfig('Watermark.enabled') ) {
-    var ver = OSjs.API.getConfig('Version', 'unknown version');
-    var html = OSjs.API.getConfig('Watermark.lines') || [];
+  Preloader.preload(flatten(config.Preloads)).then((result) => {
+    return resolve();
+  }).catch(reject);
+});
 
-    var el = document.createElement('div');
-    el.id = 'DebugNotice';
-    el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = html.join('<br />').replace(/%VERSION%/, ver);
-
-    document.body.appendChild(el);
-  }
-
-  document.getElementById('LoadingScreen').style.display = 'none';
-}
-
-/*
- * Initializes handlers
+/**
+ * Initialize: Handlers
+ * @param {Object} config Configuration
+ * @return {Promise}
  */
-function initHandler(config, callback) {
-  console.debug('initHandler()');
+const initHandlers = (config) => new Promise((resolve, reject) => {
+  const options = config.Connection;
 
-  var conf = OSjs.API.getConfig('Connection');
-  var ctype = conf.Type === 'standalone' ? 'http' : conf.Type;
+  const connectionType = options.Type === 'standalone'
+    ? 'http'
+    : options.Type;
 
-  const connection = new (require('core/connections/' + ctype + '.js')).default();
-  const authenticator = new (require('core/auth/' + conf.Authenticator + '.js')).default();
-  const storage = new (require('core/storage/' + conf.Storage + '.js')).default();
-
-  OSjs.API.setLocale(OSjs.API.getConfig('Locale'));
-
-  connection.init(function(err) {
-    console.groupEnd();
-
-    if ( err ) {
-      callback(err);
-    } else {
-      storage.init(function() {
-        authenticator.init(function(err) {
-          if ( !err ) {
-            inited = true;
-          }
-          callback(err);
-        });
-      });
-    }
-  });
-}
-
-/*
- * Initializes events
- */
-function initEvents() {
-  console.debug('initEvents()');
-
-  document.body.addEventListener('contextmenu', events.body_contextmenu, false);
-  document.body.addEventListener('click', events.body_click, false);
-  document.addEventListener('keydown', events.keydown, true);
-  document.addEventListener('keypress', events.keypress, true);
-  document.addEventListener('keyup', events.keyup, true);
-  window.addEventListener('orientationchange', events.orientationchange, false);
-  window.addEventListener('hashchange', events.hashchange, false);
-  window.addEventListener('resize', events.resize, false);
-  window.addEventListener('scroll', events.scroll, false);
-  window.addEventListener('fullscreenchange', events.fullscreen, false);
-  window.addEventListener('mozfullscreenchange', events.fullscreen, false);
-  window.addEventListener('webkitfullscreenchange', events.fullscreen, false);
-  window.addEventListener('msfullscreenchange', events.fullscreen, false);
-  window.addEventListener('message', events.message, false);
-  window.onbeforeunload = events.beforeunload;
-
-  events.orientationchange();
-
-  window.onerror = function __onerror(message, url, linenumber, column, exception) {
-    if ( typeof exception === 'string' ) {
-      exception = null;
-    }
-    console.warn('window::onerror()', arguments);
-    OSjs.API.error(OSjs.API._('ERR_JAVASCRIPT_EXCEPTION'),
-                   OSjs.API._('ERR_JAVACSRIPT_EXCEPTION_DESC'),
-                   OSjs.API._('BUGREPORT_MSG'),
-                   exception || {name: 'window::onerror()', fileName: url, lineNumber: linenumber + ':' + column, message: message},
-                   true );
-
-    return false;
-  };
-}
-
-/*
- * Preloads configured files
- */
-function initPreload(config, callback) {
-  console.debug('initPreload()');
-  var list = [];
-
-  (function flatten(a) {
-    a.forEach(function(i) {
-      if ( i instanceof Array ) {
-        flatten(i);
-      } else {
-        list.push(i);
-      }
-    });
-  })(config.Preloads);
-
-  OSjs.Utils.preloader(list).then((result) => {
-    if ( result.failed.length ) {
-      console.warn('doInitialize()', 'some preloads failed to load:', result.failed);
-    }
-
-    setTimeout(function() {
-      callback();
-    }, 0);
-  });
-}
-
-/*
- * Loads all extensions
- */
-function initExtensions(config, callback) {
-  if ( instanceOptions.mocha ) {
-    callback();
+  let Authenticator, Connection, Storage;
+  try {
+    Authenticator = require('core/auth/' + options.Authenticator + '.js').default;
+    Connection = require('core/connections/' + connectionType + '.js').default;
+    Storage = require('core/storage/' + options.Storage + '.js').default;
+  } catch ( e ) {
+    reject(e);
     return;
   }
 
-  if ( OSjs.API.getConfig('Broadway.enabled') ) {
-    /*
-    const Broadway = require('broadway/broadway.js');
-    const BroadwayConnection = require('broadway/connection.js');
+  const connection = new Connection();
+  const authenticator = new Authenticator();
+  const storage = new Storage();
 
-    OSjs.API.addHook('onSessionLoaded', function() {
+  Promise.each([connection, storage, authenticator], (iter) => {
+    return iter.init();
+  }).then(resolve).catch(reject);
+});
+
+/**
+ * Initialize: VFS
+ * @param {Object} config Configuration
+ * @return {Promise}
+ */
+const initVFS = (config) => new Promise((resolve, reject) => {
+
+  const ondone = () => {
+    const MountDropbox = require('vfs/mounts/dropbox.js');
+    const MountGoogleDrive = require('vfs/mounts/googledrive.js');
+    const MountLocalStorage = require('vfs/mounts/localstorage.js');
+    const MountOneDrive = require('vfs/mounts/onedrive.js');
+
+    /*
+     * A hidden mountpoint for making HTTP requests via VFS
+     */
+    MountManager._add({
+      readOnly: true,
+      name: 'HTTP',
+      transport: 'HTTP',
+      description: 'HTTP',
+      visible: false,
+      searchable: false,
+      unmount: function(cb) {
+        cb(false, false);
+      },
+      mounted: function() {
+        return true;
+      },
+      enabled: function() {
+        return true;
+      },
+      root: 'http:///',
+      icon: 'places/google-drive.png',
+      match: /^https?\:\/\//
+    });
+
+    /*
+     * This is the Dropbox VFS Abstraction for OS.js
+     */
+    MountManager._add({
+      readOnly: false,
+      name: 'Dropbox',
+      transport: 'Dropbox',
+      description: 'Dropbox',
+      visible: true,
+      searchable: false,
+      root: 'dropbox:///',
+      icon: 'places/dropbox.png',
+      match: /^dropbox\:\/\//,
+      mount: MountDropbox.default.mount,
+      mounted: MountDropbox.default.mounted,
+      enabled: MountDropbox.default.enabled,
+      unmount: MountDropbox.default.unmount,
+      request: MountDropbox.default.request
+    });
+
+    /*
+     * This is the Google Drive VFS Abstraction for OS.js
+     */
+    MountManager._add({
+      readOnly: false,
+      name: 'GoogleDrive',
+      transport: 'GoogleDrive',
+      description: 'Google Drive',
+      visible: true,
+      searchable: false,
+      root: 'google-drive:///',
+      icon: 'places/google-drive.png',
+      match: /^google-drive\:\/\//,
+      mount: MountGoogleDrive.default.mount,
+      mounted: MountGoogleDrive.default.mounted,
+      enabled: MountGoogleDrive.default.enabled,
+      unmount: MountGoogleDrive.default.unmount,
+      request: MountGoogleDrive.default.request
+    });
+
+    /*
+     * Browser LocalStorage VFS Module
+     *
+     * This is *experimental* at best. It involves making a real-ish filesystemwhich
+     * I don't have much experience in :P This is why it is disabled by default!
+     */
+    MountManager._add({
+      readOnly: false,
+      name: 'LocalStorage',
+      transport: 'LocalStorage',
+      description: getConfig('VFS.LocalStorage.Options.description', 'LocalStorage'),
+      visible: true,
+      searchable: false,
+      root: 'localstorage:///',
+      icon: getConfig('VFS.LocalStorage.Options.icon', 'apps/web-browser.png'),
+      match: /^localstorage\:\/\//,
+      mount: MountLocalStorage.default.mount,
+      mounted: MountLocalStorage.default.mounted,
+      enabled: MountLocalStorage.default.enabled,
+      unmount: MountLocalStorage.default.unmount,
+      request: MountLocalStorage.default.request
+    });
+
+    /*
+     * This is the Microsoft OneDrive VFS Abstraction for OS.js
+     */
+    MountManager._add({
+      readOnly: false,
+      name: 'OneDrive',
+      transport: 'OneDrive',
+      description: 'OneDrive',
+      visible: true,
+      searchable: false,
+      root: 'onedrive:///',
+      icon: 'places/onedrive.png',
+      match: /^onedrive\:\/\//,
+      mount: MountOneDrive.default.mount,
+      mounted: MountOneDrive.default.mounted,
+      enabled: MountOneDrive.default.enabled,
+      unmount: MountOneDrive.default.unmount,
+      request: MountOneDrive.default.request
+    });
+  };
+
+  MountManager.init().then((res) => {
+
+    // FIXME: Catch errors
+    return MountManager.restore().then(() => {
+      ondone();
+
+      return resolve(res);
+    }).catch(() => resolve());
+  }).catch(reject);
+});
+
+/**
+ * Initialize: Settings Manager
+ * @param {Object} config Configuration
+ * @return {Promise}
+ */
+const initSettingsManager = (config) => new Promise((resolve, reject) => {
+  const pools = config.SettingsManager || {};
+
+  Object.keys(pools).forEach(function(poolName) {
+    console.debug('initSettingsManager()', 'initializes pool', poolName, pools[poolName]);
+    SettingsManager.instance(poolName, pools[poolName] || {});
+  });
+
+  resolve();
+});
+
+/**
+ * Initialize: Package Manager
+ * @param {Object} config Configuration
+ * @return {Promise}
+ */
+const initPackageManager = (config) => new Promise((resolve, reject) => {
+  const list = config.PreloadOnBoot || [];
+
+  PackageManager.init().then(() => {
+    return Promise.each(list, (iter) => {
+      return new Promise((next) => {
+        var pkg = PackageManager.getPackage(iter);
+        if ( pkg && pkg.preload ) {
+          Preloader.preload(pkg.preload).then(next).catch(() => next());
+        } else {
+          next();
+        }
+      });
+    }).then(resolve).catch(reject);
+  }).catch(reject);
+});
+
+/**
+ * Initialize: Extensions
+ * @param {Object} config Configuration
+ * @return {Promise}
+ */
+const initExtensions = (config) => new Promise((resolve, reject) => {
+  if ( config.Broadway.enabled ) {
+    addHook('onSessionLoaded', function() {
       BroadwayConnection.init();
     });
 
-    OSjs.API.addHook('onLogout', function() {
+    addHook('onLogout', function() {
       BroadwayConnection.disconnect();
     });
 
-    OSjs.API.addHook('onBlurMenu', function() {
+    addHook('onBlurMenu', function() {
       Broadway.inject(null, 'blur');
     });
-    */
   }
 
-  var exts = Object.keys(OSjs.Extensions);
-  var manifest =  OSjs.Core.getMetadata();
+  const exts = Object.keys(OSjs.Extensions);
+  const manifest = PackageManager.getPackages();
 
-  console.group('initExtensions()', exts);
   Promise.each(exts, (entry) => {
     return new Promise((next) => {
       try {
@@ -460,91 +307,280 @@ function initExtensions(config, callback) {
         next();
       }
     });
-  }).then(() => callback()).catch(callback);
-}
+  }).then(resolve).catch(reject);
+});
 
-/*
- * Initializes the SettingsManager pools
- * from configuration file(s)
+/**
+ * Initialize: Search Engine
+ * @param {Object} config Configuration
+ * @return {Promise}
  */
-function initSettingsManager(cfg, callback) {
-  console.debug('initSettingsManager()');
-  var pools = cfg.SettingsManager || {};
-  var manager = OSjs.Core.getSettingsManager();
+const initSearchEngine = (config) => new Promise((resolve, reject) => {
+  SearchEngine.init().then(resolve).catch(reject);
+});
 
-  Object.keys(pools).forEach(function(poolName) {
-    console.debug('initSettingsManager()', 'initializes pool', poolName, pools[poolName]);
-    manager.instance(poolName, pools[poolName] || {});
-  });
-
-  callback();
-}
-
-/*
- * Initializes the PackageManager
+/**
+ * Initialize: GUI
+ * @param {Object} config Configuration
+ * @return {Promise}
  */
-function initPackageManager(cfg, callback) {
-  OSjs.Core.getPackageManager().load(function(result, error, pm) {
-    if ( error ) {
-      callback(error, result);
-      return;
-    }
+const initGUI = (config) => new Promise((resolve, reject) => {
+  // FIXME
+  const GUIDataView = require('gui/dataview.js').default;
+  const GUIContainers = require('gui/elements/containers.js').default;
+  const GUIVisual = require('gui/elements/visual.js').default;
+  const GUITabs = require('gui/elements/tabs.js').default;
+  const GUIRichText = require('gui/elements/richtext.js').default;
+  const GUIMisc = require('gui/elements/misc.js').default;
+  const GUIInputs = require('gui/elements/inputs.js').default;
+  const GUITreeView = require('gui/elements/treeview.js').default;
+  const GUIListView = require('gui/elements/listview.js').default;
+  const GUIIconView = require('gui/elements/iconview.js').default;
+  const GUIFileView = require('gui/elements/fileview.js').default;
+  const GUIMenus = require('gui/elements/menus.js').default;
 
-    var list = OSjs.API.getConfig('PreloadOnBoot', []);
-    Promise.each(list, (iter) => {
-      return new Promise((next) => {
-        var pkg = pm.getPackage(iter);
-        if ( pkg && pkg.preload ) {
-          OSjs.Utils.preload(pkg.preload, () => next());
-        } else {
-          next();
-        }
-      });
-    }).then(() => callback()).catch(callback);
-  });
-}
+  OSjs.GUI.Element.register({
+    tagName: 'gui-paned-view',
+    type: 'container',
+    allowedChildren: ['gui-paned-view-container']
+  }, GUIContainers.GUIPanedView);
 
-/*
- * Initalizes the VFS
+  OSjs.GUI.Element.register({
+    tagName: 'gui-paned-view-container',
+    type: 'container',
+    allowedParents: ['gui-paned-view']
+  }, GUIContainers.GUIPanedViewContainer);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-button-bar',
+    type: 'container'
+  }, GUIContainers.GUIButtonBar);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-toolbar',
+    type: 'container'
+  }, GUIContainers.GUIToolBar);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-grid',
+    type: 'container',
+    allowedChildren: ['gui-grid-row']
+  }, GUIContainers.GUIGrid);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-grid-row',
+    type: 'container',
+    allowedChildren: ['gui-grid-entry'],
+    allowedParents: ['gui-grid-row']
+  }, GUIContainers.GUIGridRow);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-grid-entry',
+    type: 'container',
+    allowedParents: ['gui-grid-row']
+  }, GUIContainers.GUIGridEntry);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-vbox',
+    type: 'container',
+    allowedChildren: ['gui-vbox-container']
+  }, GUIContainers.GUIVBox);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-vbox-container',
+    type: 'container',
+    allowedParents: ['gui-vbox']
+  }, GUIContainers.GUIVBoxContainer);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-hbox',
+    type: 'container',
+    allowedChildren: ['gui-hbox-container']
+  }, GUIContainers.GUIHBox);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-hbox-container',
+    type: 'container',
+    allowedParents: ['gui-hbox']
+  }, GUIContainers.GUIHBoxContainer);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-expander',
+    type: 'container'
+  }, GUIContainers.GUIExpander);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-audio'
+  }, GUIVisual.GUIAudio);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-video'
+  }, GUIVisual.GUIVideo);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-image'
+  }, GUIVisual.GUIImage);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-canvas'
+  }, GUIVisual.GUICanvas);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-tabs'
+  }, GUITabs.GUITabs);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-richtext'
+  }, GUIRichText.GUIRichText);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-color-box'
+  }, GUIMisc.GUIColorBox);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-color-swatch'
+  }, GUIMisc.GUIColorSwatch);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-iframe'
+  }, GUIMisc.GUIIframe);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-progress-bar'
+  }, GUIMisc.GUIProgressBar);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-statusbar'
+  }, GUIMisc.GUIStatusBar);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-label'
+  }, GUIInputs.GUILabel);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-textarea',
+    type: 'input'
+  }, GUIInputs.GUITextarea);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-text',
+    type: 'input'
+  }, GUIInputs.GUIText);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-password',
+    type: 'input'
+  }, GUIInputs.GUIPassword);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-file-upload',
+    type: 'input'
+  }, GUIInputs.GUIFileUpload);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-radio',
+    type: 'input'
+  }, GUIInputs.GUIRadio);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-checkbox',
+    type: 'input'
+  }, GUIInputs.GUICheckbox);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-switch',
+    type: 'input'
+  }, GUIInputs.GUISwitch);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-button',
+    type: 'input'
+  }, GUIInputs.GUIButton);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-select',
+    type: 'input'
+  }, GUIInputs.GUISelect);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-select-list',
+    type: 'input'
+  }, GUIInputs.GUISelectList);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-slider',
+    type: 'input'
+  }, GUIInputs.GUISlider);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-input-modal',
+    type: 'input'
+  }, GUIInputs.GUIInputModal);
+
+  OSjs.GUI.Element.register({
+    parent: GUIDataView,
+    tagName: 'gui-tree-view'
+  }, GUITreeView.GUITreeView);
+
+  OSjs.GUI.Element.register({
+    parent: GUIDataView,
+    tagName: 'gui-list-view'
+  }, GUIListView.GUIListView);
+
+  OSjs.GUI.Element.register({
+    parent: GUIDataView,
+    tagName: 'gui-icon-view'
+  }, GUIIconView.GUIIconView);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-file-view'
+  }, GUIFileView.GUIFileView);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-menu-bar'
+  }, GUIMenus.GUIMenuBar);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-menu'
+  }, GUIMenus.GUIMenu);
+
+  OSjs.GUI.Element.register({
+    tagName: 'gui-menu-entry'
+  }, GUIMenus.GUIMenuEntry);
+
+  DialogScheme.init().then(resolve).catch(reject);
+});
+
+/**
+ * Initialize: Window Manager
+ * @param {Object} config Configuration
+ * @return {Promise}
  */
-function initVFS(config, callback) {
-  console.debug('initVFS()');
+const initWindowManager = (config) => new Promise((resolve, reject) => {
+  const wmConfig = config.WM;
 
-  OSjs.Core.getMountManager().init(callback);
-}
-
-/*
- * Initializes the Search Engine
- */
-function initSearch(config, callback) {
-  console.debug('initSearch()');
-
-  OSjs.Core.getSearchEngine().init(callback);
-}
-
-/*
- * Initializes the Window Manager
- */
-function initWindowManager(config, callback) {
-  console.debug('initWindowManager()');
-  if ( !config.WM || !config.WM.exec ) {
-    callback(OSjs.API._('ERR_CORE_INIT_NO_WM'));
-    return;
+  if ( !wmConfig || !wmConfig.exec ) {
+    reject(new Error(Locales._('ERR_CORE_INIT_NO_WM')));
+  } else {
+    Main.launch(wmConfig.exec, (wmConfig.args || {}), (app) => {
+      app.setup(() => resolve());
+    }, (error, name, args, exception) => {
+      console.warn(error, name, args, exception);
+      reject(new Error(Locales._('ERR_CORE_INIT_WM_FAILED_FMT', error)));
+    });
   }
+});
 
-  OSjs.API.launch(config.WM.exec, (config.WM.args || {}), function onWMLaunchSuccess(app) {
-    app.setup(callback);
-  }, function onWMLaunchError(error, name, args, exception) {
-    callback(OSjs.API._('ERR_CORE_INIT_WM_FAILED_FMT', error), exception);
-  });
-}
+///////////////////////////////////////////////////////////////////////////////
+// MISC
+///////////////////////////////////////////////////////////////////////////////
 
 /*
- * Initializes the Session
+ * Initializes the user session
  */
 function initSession(config, callback) {
+  // FIXME
   console.debug('initSession()');
-  OSjs.API.playSound('LOGIN');
 
   var list = [];
 
@@ -595,265 +631,208 @@ function initSession(config, callback) {
 
     console.info('initSession()->autostart()', list);
 
-    OSjs.API.launchList(list, null, null, callback);
+    Main.launchList(list, null, null, callback);
   });
 }
 
 /*
- * Wrapper for initializing OS.js
+ * When window gets an external message
  */
-function init(opts) {
-  console.group('init()');
+function onMessage(ev) {
+  if ( ev && ev.data && typeof ev.data.message !== 'undefined' && typeof ev.data.pid === 'number' ) {
+    console.debug('window::message()', ev.data);
+    var proc = Process.getProcess(ev.data.pid);
+    if ( proc ) {
+      if ( typeof proc.onPostMessage === 'function' ) {
+        proc.onPostMessage(ev.data.message, ev);
+      }
 
-  try {
-    opts = opts || {};
-
-    instanceOptions = Object.assign({
-      mocha: false,
-      onInit: function() {},
-      onInited: function() {}
-    }, opts);
-  } catch ( e ) {
-    console.warn('Invalid options', opts);
+      if ( typeof proc._getWindow === 'function' ) {
+        var win = proc._getWindow(ev.data.wid, 'wid');
+        if ( win ) {
+          win.onPostMessage(ev.data.message, ev);
+        }
+      }
+    }
   }
+}
 
-  var config = OSjs.Core.getConfig();
-  var splash = document.getElementById('LoadingScreen');
-  var loading = OSjs.API.createSplash('OS.js', null, null, splash);
-  var freeze = ['Bootstrap', 'API', 'Core', 'Dialogs', 'Extensions', 'GUI', 'Helpers', 'Locales', 'Utils', 'VFS'];
+///////////////////////////////////////////////////////////////////////////////
+// API
+///////////////////////////////////////////////////////////////////////////////
 
-  require('core/locales.js').init(config.LocaleOptions); // FIXME
+/**
+ * Starts OS.js
+ */
+export function start() {
+  if ( hasBooted || hasShutDown ) {
+    return;
+  }
+  hasBooted = true;
 
-  var queue = [
-    initPreload,
-    initHandler,
+  console.info('Starting OS.js');
+
+  const config = OSjs.Core.getConfig();
+  const total = 9;
+
+  compability();
+
+  Locales.init(config.Locale, config.LocaleOptions, config.Languages);
+
+  SplashScreen.show();
+
+  setConfig(config);
+
+  triggerHook('onInitialize');
+
+  Promise.each([
+    initPreloading,
+    initHandlers,
     initVFS,
     initSettingsManager,
     initPackageManager,
     initExtensions,
-    initSearch,
-    function initStoredMounts(cfg, cb) {
-      OSjs.Core.getMountManager().restore(() => cb());
-    },
-    function initDialogs(cfg, cb) {
-      return OSjs.GUI.DialogScheme.init(() => cb());
-    }
-  ];
+    initSearchEngine,
+    initGUI,
+    initWindowManager
+  ], (fn, index) => {
+    return new Promise((resolve, reject) => {
+      console.group('Initializing', index + 1, 'of', total);
+      SplashScreen.update(index, total);
 
-  function _inited() {
-    loading = loading.destroy();
-    splash = splash.style.display = 'none';
+      return fn(config).then((res) => {
+        console.groupEnd();
+        return resolve(res);
+      }).catch((err) => {
+        console.groupEnd();
+        return reject(err);
+      });
+    });
+  }).then(() => {
+    window.addEventListener('message', onMessage, false);
+
+    triggerHook('onInited');
+    SplashScreen.hide();
 
     var wm = OSjs.Core.getWindowManager();
     wm._fullyLoaded = true;
 
-    OSjs.API.triggerHook('onWMInited');
-
-    try {
-      instanceOptions.onInited();
-    } catch ( e ) {
-      console.warn(e);
-    }
-
-    console.groupEnd();
-  }
-
-  function _error(err) {
-    OSjs.API.error(OSjs.API._('ERR_CORE_INIT_FAILED'),
-                   OSjs.API._('ERR_CORE_INIT_FAILED_DESC'), err, null, true);
-  }
-
-  function _done() {
-    OSjs.API.triggerHook('onInited');
-    try {
-      instanceOptions.onInit();
-    } catch ( e ) {
-      console.warn(e);
-    }
-
-    loading.update(queue.length, queue.length);
-
-    freeze.forEach(function(f) {
-      if ( typeof OSjs[f] === 'object' ) {
-        Object.freeze(OSjs[f]);
-      }
+    initSession(config, function onSessionLoaded() {
+      triggerHook('onSessionLoaded');
     });
-
-    if ( instanceOptions.mocha ) {
-      _inited();
-    } else {
-      initWindowManager(config, function wmInited(err) {
-        if ( err ) {
-          _error(err);
-          return;
-        }
-
-        initEvents();
-
-        _inited();
-
-        initSession(config, function onSessionLoaded() {
-          OSjs.API.triggerHook('onSessionLoaded');
-        });
-      });
-    }
 
     return true;
-  }
-
-  splash.style.display = 'block';
-
-  initLayout();
-
-  Promise.each(queue, (entry, index) => {
-    return new Promise((yes, no) => {
-      if ( index < 1 ) {
-        OSjs.API.triggerHook('onInitialize');
-      }
-
-      loading.update(index, queue.length);
-
-      entry(config, function asyncDone(err) {
-        if ( err ) {
-          no(err);
-        } else {
-          yes();
-        }
-      });
-    });
-
-  }).then(_done).catch(_error);
+  }).catch((err) => {
+    const title = Locales._('ERR_CORE_INIT_FAILED');
+    const message = Locales._('ERR_CORE_INIT_FAILED_DESC');
+    alert(title + '\n\n' + message);
+    console.error(title, message, err);
+  });
 }
 
-module.exports = {
+/**
+ * Stops OS.js
+ * @param {Boolean} [restart=false] Restart instead of full stop
+ */
+export function stop(restart = false) {
+  if ( hasShutDown || !hasBooted ) {
+    return;
+  }
 
-  /**
-   * Restart OS.js
-   * @param {Boolean} [save]   Save current session when logging out
-   * @function run
-   * @memberof OSjs.Bootstrap
-   */
-  restart: function(save) {
-    if ( !loaded ) {
-      return;
-    }
+  hasShutDown = true;
+  hasBooted = false;
 
-    var auth = OSjs.Core.getAuthenticator();
-    var storage = OSjs.Core.getStorage();
+  window.removeEventListener('message', onMessage, false);
 
-    var saveFunction = save && storage ? function(cb) {
-      storage.saveSession(function() {
-        auth.logout(cb);
-      });
-    } : function(cb) {
-      auth.logout(cb);
-    };
+  const wm = WindowManager.instance;
+  if ( wm ) {
+    wm.toggleFullscreen();
+  }
 
-    saveFunction(function() {
-      console.clear();
-      OSjs.Bootstrap.stop(true);
-      OSjs.Bootstrap.run();
+  Preloader.clear();
+  GUI.blurMenu();
+  Process.killAll();
+  DialogScheme.destroy();
+  ServiceNotificationIcon.destroy();
+  SearchEngine.destroy();
+  PackageManager.destroy();
+  Authenticator.instance.destroy();
+  Storage.instance.destroy();
+  Connection.instance.destroy();
+
+  triggerHook('onShutdown');
+
+  console.warn('OS.js was shut down!');
+
+  if ( !restart && getConfig('ReloadOnShutdown') === true ) {
+    window.location.reload();
+  }
+}
+
+/**
+ * Restarts OS.js
+ * @param {Boolean} [save=false] Save session
+ */
+export function restart(save = false) {
+  // FIXME
+  const saveFunction = save && Storage.instance ? function(cb) {
+    Storage.instance.saveSession(function() {
+      Authenticator.instance.logout(cb);
     });
-  },
+  } : function(cb) {
+    Authenticator.instance.logout(cb);
+  };
 
-  /**
-   * Start OS.js
-   * @param {Object} opts Options
-   * @function run
-   * @memberof OSjs.Bootstrap
-   */
-  run: function(opts) {
-    if ( loaded ) {
-      return;
-    }
-    loaded = true;
+  saveFunction(function() {
+    console.clear();
+    stop(true);
+    start();
+  });
+}
 
-    init(opts);
-  },
+/**
+ * Perfors a log out of OS.js
+ */
+export function logout() {
+  const auth = Authenticator.instance;
+  const storage = Storage.instance;
+  const wm = WindowManager.instance;
 
-  /**
-   * Stop OS.js
-   * @param {Boolean} [restart] Restart does not fully shut down
-   * @function stop
-   * @memberof OSjs.Bootstrap
-   */
-  stop: function(restart) {
-    if ( !inited || !loaded || signingOut ) {
-      return;
-    }
+  function signOut(save) {
+    playSound('LOGOUT');
 
-    signingOut = true;
-
-    document.body.removeEventListener('contextmenu', events.body_contextmenu, false);
-    document.body.removeEventListener('click', events.body_click, false);
-    document.removeEventListener('keydown', events.keydown, true);
-    document.removeEventListener('keypress', events.keypress, true);
-    document.removeEventListener('keyup', events.keyup, true);
-    window.removeEventListener('orientationchange', events.orientationchange, false);
-    window.removeEventListener('hashchange', events.hashchange, false);
-    window.removeEventListener('resize', events.resize, false);
-    window.removeEventListener('scroll', events.scroll, false);
-    window.removeEventListener('fullscreenchange', events.fullscreen, false);
-    window.removeEventListener('mozfullscreenchange', events.fullscreen, false);
-    window.removeEventListener('webkitfullscreenchange', events.fullscreen, false);
-    window.removeEventListener('msfullscreenchange', events.fullscreen, false);
-    window.removeEventListener('message', events.message, false);
-
-    window.onerror = null;
-    window.onbeforeunload = null;
-
-    OSjs.API.toggleFullscreen();
-    OSjs.API.blurMenu();
-    OSjs.API.killAll();
-    OSjs.GUI.DialogScheme.destroy();
-
-    var ring = OSjs.API.getServiceNotificationIcon();
-    if ( ring ) {
-      ring.destroy();
-    }
-
-    OSjs.Core.getSearchEngine().destroy();
-    OSjs.Core.getPackageManager().destroy();
-    OSjs.Core.getAuthenticator().destroy();
-    OSjs.Core.getStorage().destroy();
-    OSjs.Core.getConnection().destroy();
-
-    //OSjs.Utils._clearPreloadCache(); // FIXME!!!
-
-    if ( restart ) {
-      Object.keys(OSjs.Applications).forEach(function(k) {
-        try {
-          delete OSjs.Applications[k];
-        } catch (e) {}
-      });
-      Object.keys(OSjs.Extensions).forEach(function(k) {
-        try {
-          delete OSjs.Extensions[k];
-        } catch (e) {}
+    if ( save ) {
+      storage.saveSession(function() {
+        auth.logout(function() {
+          stop();
+        });
       });
     } else {
-      OSjs.API.triggerHook('onShutdown');
-
-      console.warn('OS.js was shut down!');
-
-      if ( OSjs.API.getConfig('ReloadOnShutdown') === true ) {
-        window.location.reload();
-      }
-
-      Object.keys(OSjs).forEach(function(k) {
-        try {
-          delete OSjs[k];
-        } catch ( e ) {}
+      auth.logout(function() {
+        stop();
       });
     }
-
-    loaded = false;
-    inited = false;
-    signingOut = false;
-  },
-
-  isShuttingDown: function() {
-    return signingOut;
   }
-};
 
+  if ( wm ) {
+    const user = auth.getUser() || {name: Locales._('LBL_UNKNOWN')};
+    Dialog.create('Confirm', {
+      title: Locales._('DIALOG_LOGOUT_TITLE'),
+      message: Locales._('DIALOG_LOGOUT_MSG_FMT', user.name)
+    }, function(ev, btn) {
+      if ( ['no', 'yes'].indexOf(btn) !== -1 ) {
+        signOut(btn === 'yes');
+      }
+    });
+  } else {
+    signOut(true);
+  }
+}
+
+/**
+ * Checks if OS.js is running
+ * @return {Boolean}
+ */
+export function running() {
+  return !hasShutDown;
+}

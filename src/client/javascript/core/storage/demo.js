@@ -27,12 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
+import Promise from 'bluebird';
 import {getConfig} from 'core/config';
 import Storage from 'core/storage';
 
 export default class DemoStorage extends Storage {
 
-  init(callback) {
+  init() {
     const curr = getConfig('Version');
     const version = localStorage.getItem('__version__');
 
@@ -41,7 +42,7 @@ export default class DemoStorage extends Storage {
     }
     localStorage.setItem('__version__', String(curr));
 
-    callback(null, true);
+    return Promise.resolve();
   }
 
   saveSettings(pool, storage, callback) {

@@ -49,10 +49,6 @@ import * as Utils from 'utils/misc';
  * </code></pre>
  *
  * @summary Helper for making IFrame Applications.
- *
- * @constructor
- * @memberof OSjs.Helpers
- * @see OSjs.Core.Application
  */
 export default class IFrameApplication extends Application {
 

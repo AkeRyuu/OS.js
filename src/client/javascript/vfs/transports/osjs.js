@@ -33,11 +33,6 @@ import {getConfig} from 'core/config';
 import FileMetadata from 'vfs/file';
 import Connection from 'core/connection';
 
-/**
- * @namespace OSjs
- * @memberof OSjs.VFS.Transports
- */
-
 /////////////////////////////////////////////////////////////////////////////
 // WRAPPERS
 /////////////////////////////////////////////////////////////////////////////
@@ -49,9 +44,6 @@ import Connection from 'core/connection';
  * @param   {Object}                    [options]   Options
  *
  * @return  {String}                  URL based on input
- *
- * @function path
- * @memberof OSjs.VFS.Transports.OSjs
  */
 function makePath(item, options) {
   if ( typeof item === 'string' ) {
@@ -66,9 +58,6 @@ function makePath(item, options) {
  * @param {String}    name      Request method name
  * @param {Object}    args      Request arguments
  * @param {Function}  callback  Callback function
- *
- * @function request
- * @memberof OSjs.VFS.Transports.OSjs
  */
 function internalRequest(name, args, callback) {
   Connection.request('FS:' + name, args, (err, res) => {
@@ -87,9 +76,6 @@ function internalRequest(name, args, callback) {
  * @param   {Function}      callback    Callback function
  * @param   {Object}        options     Options
  * @param   {OSjs.VFS.File} [vfsfile]   Optional file metadata
- *
- * @function upload
- * @memberof OSjs.VFS.Transports.OSjs
  */
 function internalUpload(file, dest, callback, options, vfsfile) {
   options = options || {};
@@ -144,9 +130,6 @@ function internalUpload(file, dest, callback, options, vfsfile) {
  * @param   {Function}        callback        Callback function => fn(error, result)
  * @param   {Object}          options         Options
  * @param   {String}          [options.type]  What to return, default: binary. Can also be: text, datasource
- *
- * @function fetch
- * @memberof OSjs.VFS.Transports.OSjs
  */
 function internalFetch(url, mime, callback, options) {
   options = options || {};

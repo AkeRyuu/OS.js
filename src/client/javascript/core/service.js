@@ -51,7 +51,6 @@ import Process from 'core/process';
  * @param   {Object}    metadata    Package metadata
  *
  * @abstract
- * @extends core/process~Process
  */
 export default class Service extends Process {
 

@@ -59,9 +59,6 @@ import {getDefaultPath} from 'core/config';
  * @param  {Array}            [args.mfilter]            Array of function to filter module list
  * @param  {String}           [args.select]             Selection type (file/dir)
  * @param  {CallbackDialog}   callback                  Callback when done
- *
- * @constructor File
- * @memberof OSjs.Dialogs
  */
 export default class FileDialog extends DialogWindow {
   constructor(args, callback) {

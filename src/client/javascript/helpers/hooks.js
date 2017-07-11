@@ -27,46 +27,78 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import {getBrowserPath} from 'core/config';
-import MountManager from 'core/mount-manager';
-import BaseTransport from 'vfs/transports/osjs';
+const _hooks = {
+  'onInitialize': [],
+  'onInited': [],
+  'onSessionLoaded': [],
+  'onShutdown': [],
+  'onApplicationLaunch': [],
+  'onApplicationLaunched': [],
+  'onBlurMenu': []
+};
 
-/////////////////////////////////////////////////////////////////////////////
-// API
-/////////////////////////////////////////////////////////////////////////////
-
-/*
- * OSjs 'dist' VFS Transport Module
- *
- * This is just a custom version of 'OSjs' module
+/**
+ * TODO
  */
-const Transport = {
-  url: function(item, callback) {
-    const root = getBrowserPath();
-    const module = MountManager.getModuleFromPath(item.path, false, true);
-    const url = item.path.replace(module.match, root).replace(/^\/+/, '/');
+export function getHooks(name) {
+  return _hooks[name];
+}
 
-    callback(false, url);
-  },
+/**
+ * Method for triggering a hook
+ *
+ * @param   {String}    name      Hook name
+ * @param   {Array}     args      List of arguments
+ * @param   {Object}    thisarg   'this' ref
+ */
+export function triggerHook(name, args, thisarg) {
+  thisarg = thisarg || OSjs;
+  args = args || [];
 
-  scandir: function() {
-    return BaseTransport.module.scandir.apply(this, arguments);
-  },
-
-  read: function() {
-    return BaseTransport.module.read.apply(this, arguments);
+  if ( _hooks[name] ) {
+    _hooks[name].forEach(function(hook) {
+      if ( typeof hook === 'function' ) {
+        try {
+          hook.apply(thisarg, args);
+        } catch ( e ) {
+          console.warn('Error on Hook', e, e.stack);
+        }
+      } else {
+        console.warn('No such Hook', name);
+      }
+    });
   }
-};
+}
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-export default {
-  module: Transport,
-  defaults: function(opts) {
-    opts.readOnly = true;
-    opts.searchable = true;
+/**
+ * Method for adding a hook
+ *
+ * @param   {String}    name    Hook name
+ * @param   {Function}  fn      Callback => fn()
+ *
+ * @return  {Number}       The index of hook
+ */
+export function addHook(name, fn) {
+  if ( typeof _hooks[name] !== 'undefined' ) {
+    return _hooks[name].push(fn) - 1;
   }
-};
+  return -1;
+}
 
+/**
+ * Method for removing a hook
+ *
+ * @param   {String}    name    Hook name
+ * @param   {Number}    index     Hook index
+ *
+ * @return  {Boolean}
+ */
+export function removeHook(name, index) {
+  if ( typeof _hooks[name] !== 'undefined' ) {
+    if ( _hooks[name][index] ) {
+      _hooks[name][index] = null;
+      return true;
+    }
+  }
+  return false;
+}

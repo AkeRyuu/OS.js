@@ -34,9 +34,6 @@
  * use a File, Blob or ArrayBuffer, but this is an alternative.
  *
  * Useful for canvas data etc.
- *
- * @constructor
- * @memberof OSjs.VFS
  */
 export default class FileDataURL {
 

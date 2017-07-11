@@ -27,13 +27,9 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import Events from 'utils/events';
+import * as Events from 'utils/events';
 import Window from 'core/window';
-
-/**
- * @namespace Broadway
- * @memberof OSjs
- */
+import WindowManager from 'core/windowmanager';
 
 /////////////////////////////////////////////////////////////////////////////
 // API
@@ -43,9 +39,6 @@ import Window from 'core/window';
  * Broadway Window
  *
  * @abstract
- * @constructor
- * @memberof OSjs.Broadway
- * @extends OSjs.Core.Window
  */
 export default class BroadwayWindow extends Window {
 
@@ -84,7 +77,7 @@ export default class BroadwayWindow extends Window {
     this._canvas.height = this._dimension.h;
 
     const getMousePos = (ev) => {
-      const wm = require('core/windowmanager.js').instance;
+      const wm = WindowManager.instance;
       const theme = wm ? wm.getStyleTheme(true) : null;
       const topMargin = theme ? (theme.style.window.margin) : 26;
 

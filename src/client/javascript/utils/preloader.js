@@ -21,7 +21,7 @@ const getFileType = (src) => {
  * Ensures correct base uris
  */
 const getSource = (src) => {
-  if ( !src.match(/^(\/|file|https?)/) ) {
+  if ( src && !src.match(/^(\/|file|https?)/) ) {
     return getBrowserPath(src);
   }
   return src;
@@ -53,7 +53,12 @@ const handlers = {
         resolve();
       }
     };
-    el.onerror = (err) => reject(err || 'general error');
+    el.onerror = (err) => {
+      let error = new Error();
+      error.name = '<script> error';
+      error.message = 'Failed to load script';
+      reject(error);
+    };
     el.onload = () => resolve();
     el.src = src;
 
@@ -61,18 +66,28 @@ const handlers = {
   }),
 
   stylesheet: (src) => new Promise((resolve, reject) => {
+    let timeout;
+
+    const onerror = (str) => {
+      clearTimeout(timeout);
+
+      let error = new Error();
+      error.name = '<link> error';
+      error.message = str;
+      reject(error);
+    };
+
     const link = document.createElement('link');
     link.setAttribute('rel', 'stylesheet');
     link.setAttribute('type', 'text/css');
     link.onload = () => resolve();
-    link.onerror = (err) => reject(err || 'general error');
+    link.onerror = (err) => onerror('Failed to load link');
     link.setAttribute('href', src);
 
     document.getElementsByTagName('head')[0].appendChild(link);
 
-    let timeout = setTimeout(() => {
-      clearTimeout(timeout);
-      reject('timeout');
+    timeout = setTimeout(() => {
+      onerror('Loading stylesheet timed out');
     }, 30000);
 
     setTimeout(() => {
@@ -83,7 +98,7 @@ const handlers = {
     }, 10);
   }),
 
-  scheme: (src) => new Promise((resolve, reject) => {
+  html: (src) => new Promise((resolve, reject) => {
     axios.get(src).then((result) => {
       resolve(result.data);
     }).catch((err) => reject(err.message));
@@ -92,6 +107,27 @@ const handlers = {
 };
 
 class Preloader {
+  constructor() {
+    this.cache = {};
+  }
+
+  clear() {
+    this.cache = {};
+  }
+
+  /*
+   * @example
+   * [
+   *  {
+   *
+   *    "type": "javascript" // or "stylesheet",
+   *    "src": "url/uri",
+   *    "force": true // force to load even (reload)
+   *  },
+   *  "mycoolscript.js",
+   *  "mycoolstyle.css"
+   * ]
+   */
   preload(preloads, args) {
     args = args || {};
 
@@ -103,10 +139,7 @@ class Preloader {
           type: getFileType(p)
         };
       } else {
-        if ( p.src ) {
-          p.src = getSource(p.src);
-        }
-
+        p.src = getSource(p.src);
         if ( !p.type ) {
           p.type = getFileType(p.src);
         }
@@ -123,20 +156,35 @@ class Preloader {
     const loaded = [];
     const data = [];
 
+    const done = (item, preloadData, yes) => {
+      if ( typeof preloadData !== 'undefined' ) {
+        data.push({item, data: preloadData});
+      }
+
+      if ( args.cache !== false && typeof this.cache[item.src] === 'undefined' ) {
+        this.cache[item.src] = preloadData;
+      }
+
+      loaded.push(item.src);
+
+      return yes();
+    };
+
     const job = (item, index) => {
       if ( typeof args.progress === 'function' ) {
         args.progress(index, total);
       }
 
-      if ( handlers[item.type] ) {
+      const type = item.type === 'scheme' ? 'html' : item.type;
+      if ( handlers[type] ) {
         return new Promise((yes, no) => {
-          handlers[item.type](item.src).then((preloadData) => {
-            if ( typeof preloadData !== 'undefined' ) {
-              data.push({item, data: preloadData});
-            }
+          if ( !args.force && this.cache[item.src] ) {
+            done(item, this.cache[item.src], yes);
+            return;
+          }
 
-            loaded.push(item.src);
-            return yes();
+          handlers[type](item.src).then((preloadData) => {
+            return done(item, preloadData, yes);
           }).catch((e) => {
             console.warn('Failed loading', item.src, e);
             failed.push(item.src);

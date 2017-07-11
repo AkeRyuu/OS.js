@@ -31,6 +31,7 @@
 /**
  * @module core/settings-manager
  */
+import Promise from 'bluebird';
 import Storage from 'core/storage';
 import SettingsFragment from 'helpers/settings-fragment';
 
@@ -39,7 +40,6 @@ import SettingsFragment from 'helpers/settings-fragment';
  *
  * @summary Used for managing Settings across all applications and modules.
  *
- * @constructor
  * @see helpers/event-handler~EventHandler
  * @see core/settings-manager~SettingsManager
  */
@@ -52,13 +52,16 @@ class SettingsManager {
   }
 
   /**
-   * Initialize SettingsManager.
+   * Initialize Settings.
    * This is run when a user logs in. It will give saved data here
    *
    * @param {Object}    settings      Entire settings tree
+   * @return {Promise}
    */
   init(settings) {
     this.storage = settings || {};
+
+    return Promise.resolve();
   }
 
   /**

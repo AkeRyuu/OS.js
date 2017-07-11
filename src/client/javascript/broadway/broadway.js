@@ -33,9 +33,6 @@ import BroadwayConnection from 'broadway/connection';
 /**
  * This script is based on https://github.com/GNOME/gtk/tree/master/gdk/broadway
  * and was made to fit with OS.js
- *
- * @namespace Broadway
- * @memberof OSjs
  */
 
 /////////////////////////////////////////////////////////////////////////////
@@ -944,9 +941,6 @@ export default {
    *
    * @param {String}    url     Connection URL
    * @param {Option}    opts    Options
-   *
-   * @function connect
-   * @memberof OSjs.Broadway.GTK
    */
   connect: function(url, opts) {
     if ( ws ) {
@@ -1000,9 +994,6 @@ export default {
 
   /**
    * Disconnects the Broadway connection
-   *
-   * @function disconnect
-   * @memberof OSjs.Broadway.GTK
    */
   disconnect: function() {
     if ( ws ) {
@@ -1017,9 +1008,6 @@ export default {
    * @param {Number}  id      Window ID
    * @param {Number}  x       X Position
    * @param {Number}  y       Y Position
-   *
-   * @function move
-   * @memberof OSjs.Broadway.GTK
    */
   move: function(id, x, y) {
     if ( surfaces[id] ) {
@@ -1034,9 +1022,6 @@ export default {
    * Sends a notification to close a window
    *
    * @param {Number}  id      Window ID
-   *
-   * @function close
-   * @memberof OSjs.Broadway.GTK
    */
   close: function(id) {
     if ( surfaces[id] ) {
@@ -1049,9 +1034,6 @@ export default {
    *
    * @param {String}    cmd     Command name
    * @param {Array}     args    Command arguments
-   *
-   * @function send
-   * @memberof OSjs.Broadway.GTK
    */
   send: function(cmd, args) {
     sendInput(cmd, args);
@@ -1064,9 +1046,6 @@ export default {
    * @param {String}  type    Event Type
    * @param {Event}   ev      Event
    * @param {Object}  [opts]  Options
-   *
-   * @function inject
-   * @memberof OSjs.Broadway.GTK
    */
   inject: function(id, type, ev, opts) {
     if ( type === 'resize' ) {

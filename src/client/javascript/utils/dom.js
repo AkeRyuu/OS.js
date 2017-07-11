@@ -31,9 +31,6 @@
 /**
  * Get element by ID
  *
- * @function $
- * @memberof OSjs.Utils
- *
  * @param   {String}    id      DOM Element ID
  *
  * @return  {Node}        Found element or null
@@ -44,9 +41,6 @@ export function $(id) {
 
 /**
  * Remove unwanted characters from ID or className
- *
- * @function $safeName
- * @memberof OSjs.Utils
  *
  * @param   {String}    str     The name
  *
@@ -59,9 +53,6 @@ export function $safeName(str) {
 /**
  * Remove given element from parent
  *
- * @function $remove
- * @memberof OSjs.Utils
- *
  * @param   {Node}    node      The DOM Element
  */
 export function $remove(node) {
@@ -72,9 +63,6 @@ export function $remove(node) {
 
 /**
  * Empty this element (remove children)
- *
- * @function $empty
- * @memberof OSjs.Utils
  *
  * @param   {Node}             myNode                 The DOM Element
  */
@@ -88,9 +76,6 @@ export function $empty(myNode) {
 
 /**
  * Get CSS style attribute
- *
- * @function $getStyle
- * @memberof OSjs.Utils
  *
  * @param   {Node}          oElm          The DOM Element
  * @param   {String}        strCssRule    The CSS rule to get
@@ -115,9 +100,6 @@ export function $getStyle(oElm, strCssRule) {
  *
  * Modern browsers will return getBoundingClientRect()
  * See DOM documentation
- *
- * @function $position
- * @memberof OSjs.Utils
  *
  * @param   {Node}      el          The Element to find position of
  * @param   {Node}      [parentEl]  Parent to end loop in
@@ -146,9 +128,6 @@ export function $position(el, parentEl) {
 /**
  * Traverses down to the parentnode validated by filter
  *
- * @function $parent
- * @memberof OSjs.Utils
- *
  * @param   {Node}            el        The Element to find position of
  * @param   {Function}        cb        The callback function => fn(node) return true/false here
  *
@@ -174,9 +153,6 @@ export function $parent(el, cb) {
 /**
  * Get the index of an element within a node
  *
- * @function $index
- * @memberof OSjs.Utils
- *
  * @param   {Node}      el          The Element to check
  * @param   {Node}      [parentEl]  Parent to end loop in
  *
@@ -196,9 +172,6 @@ export function $index(el, parentEl) {
 
 /**
  * Selects range in a text field
- *
- * @function $selectRange
- * @memberof OSjs.Utils
  *
  * @param     {Node}      field     The DOM Element
  * @param     {Number}    start     Start position
@@ -233,9 +206,6 @@ export function $selectRange(field, start, end) {
 /**
  * Add a className to a DOM Element
  *
- * @function $addClass
- * @memberof OSjs.Utils
- *
  * @param   {Node}      el      The dom Element
  * @param   {String}    name    The class name
  */
@@ -250,9 +220,6 @@ export function $addClass(el, name) {
 /**
  * Remove a className from a DOM Element
  *
- * @function $removeClass
- * @memberof OSjs.Utils
- *
  * @param   {Node}      el      The dom Element
  * @param   {String}    name    The class name
  */
@@ -266,9 +233,6 @@ export function $removeClass(el, name) {
 
 /**
  * Check if a DOM Element has given className
- *
- * @function $hasClass
- * @memberof OSjs.Utils
  *
  * @param   {Node}      el      The dom Element
  * @param   {String}    name    The class name
@@ -288,9 +252,6 @@ export function $hasClass(el, name) {
  * Escapes the given string for HTML
  *
  * works sort of like PHPs htmlspecialchars()
- *
- * @function $escape
- * @memberof OSjs.Utils
  *
  * @param   {String}    str       Input
  *
@@ -319,9 +280,6 @@ export function $escape(str) {
  *  },
  *  some_custom_attribute: 'baz'
  * })
- *
- * @function $create
- * @memberof OSjs.Utils
  *
  * @param   {String}    tagName     Tag Name
  * @param   {Object}    properties  Tag Properties
@@ -365,9 +323,6 @@ export function $create(tagName, properties) {
 /**
  * Create a link stylesheet tag
  *
- * @function $createCSS
- * @memberof OSjs.Utils
- *
  * @param   {String}      src           The URL of resource
  * @param   {Function}    onload        onload callback
  * @param   {Function}    onerror       onerror callback
@@ -389,9 +344,6 @@ export function $createCSS(src, onload, onerror) {
 
 /**
  * Create a script tag
- *
- * @function $createJS
- * @memberof OSjs.Utils
  *
  * @param   {String}      src                   The URL of resource
  * @param   {Function}    onreadystatechange    readystatechange callback
@@ -425,9 +377,6 @@ export function $createJS(src, onreadystatechange, onload, onerror, attrs) {
 
 /**
  * Check if event happened on a form element
- *
- * @function $isFormElement
- * @memberof OSjs.Utils
  *
  * @param   {Event|Element}   input     DOM Event or Element
  * @param   {Array}           [types]   Optional Array of types
@@ -472,9 +421,6 @@ export function $isFormElement(input, types) {
  *
  * @example
  * $css(element, 'font-family'); // -> 'Arial'. Same as $getStyle
- *
- * @function $css
- * @memberof OSjs.Utils
  */
 export function $css(el, ink, inv) {
   function rep(k) {
@@ -503,9 +449,6 @@ export function $css(el, ink, inv) {
  *
  * @param {Node} el DOM Element
  * @return {String}
- *
- * @function $path
- * @memberof OSjs.Utils
  */
 export function $path(el) {
   function _path(e) {
@@ -547,9 +490,6 @@ export function $path(el) {
  * @param {String} path The path
  * @param {HTMLDocument} [doc] The document to resolve in
  * @return {Node}
- *
- * @function $fromPath
- * @memberof OSjs.Utils
  */
 export function $fromPath(path, doc) {
   doc = doc || document;

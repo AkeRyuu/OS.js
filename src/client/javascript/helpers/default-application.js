@@ -47,11 +47,6 @@ import {_} from 'core/locales';
  * Handles opening, saving and creation of files.
  *
  * @summary Helper for making Applications with file interaction.
- *
- * @constructor
- * @memberof OSjs.Helpers
- * @see OSjs.Helpers.DefaultApplicationWindow
- * @see OSjs.Core.Application
  */
 export default class DefaultApplication extends Application {
 
@@ -100,9 +95,6 @@ export default class DefaultApplication extends Application {
 
   /**
    * Open given File
-   *
-   * @function openFile
-   * @memberof OSjs.Helpers.DefaultApplication#
    *
    * @param   {OSjs.VFS.File}       file        File
    * @param   {OSjs.Core.Window}    win         Window reference
@@ -160,9 +152,6 @@ export default class DefaultApplication extends Application {
   /**
    * Save given File
    *
-   * @function saveFile
-   * @memberof OSjs.Helpers.DefaultApplication#
-   *
    * @param   {OSjs.VFS.File}       file        File
    * @param   {Mixed}               value       File contents
    * @param   {OSjs.Core.Window}    win         Window reference
@@ -191,9 +180,6 @@ export default class DefaultApplication extends Application {
 
   /**
    * Open Save dialog
-   *
-   * @function saveDialog
-   * @memberof OSjs.Helpers.DefaultApplication#
    *
    * @param   {OSjs.VFS.File}       file        File
    * @param   {OSjs.Core.Window}    win         Window reference
@@ -229,9 +215,6 @@ export default class DefaultApplication extends Application {
   /**
    * Open Open dialog
    *
-   * @function openDialog
-   * @memberof OSjs.Helpers.DefaultApplication#
-   *
    * @param   {OSjs.VFS.File}       [file]      Current File
    * @param   {OSjs.Core.Window}    [win]       Window reference
    */
@@ -257,9 +240,6 @@ export default class DefaultApplication extends Application {
 
   /**
    * Create a new file
-   *
-   * @function newDialog
-   * @memberof OSjs.Helpers.DefaultApplication#
    *
    * @param   {String}              [path]        Current path
    * @param   {OSjs.Core.Window}    [win]         Window reference

@@ -38,9 +38,6 @@ import {_} from 'core/locales';
  * @example
  *
  * OSjs.API.createDialog('FileProgress', {}, fn);
- *
- * @constructor FileProgress
- * @memberof OSjs.Dialogs
  */
 export default class FileProgressDialog extends DialogWindow {
 

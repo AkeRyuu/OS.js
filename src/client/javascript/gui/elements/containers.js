@@ -50,10 +50,6 @@ function toggleState(el, expanded) {
  * Element: 'gui-paned-view'
  *
  * A view with resizable content boxes
- *
- * @constructor PanedView
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIPanedView extends GUIElement {
   on(evName, callback, params) {
@@ -145,10 +141,6 @@ class GUIPanedView extends GUIElement {
  *   property  min-size  integer       Minimum size in pixels
  *   property  max-size  integer       Maxmimum size in pixels
  * </code></pre>
- *
- * @constructor PanedViewContainer
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIPanedViewContainer extends GUIElement {
   build() {
@@ -159,10 +151,6 @@ class GUIPanedViewContainer extends GUIElement {
 
 /**
  * Element: 'gui-button-bar'
- *
- * @constructor ButtonBar
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIButtonBar extends GUIElement {
   build() {
@@ -173,10 +161,6 @@ class GUIButtonBar extends GUIElement {
 
 /**
  * Element: 'gui-toolbar'
- *
- * @constructor ToolBar
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIToolBar extends GUIElement {
   build() {
@@ -189,10 +173,6 @@ class GUIToolBar extends GUIElement {
  * Element: 'gui-grid'
  *
  * A grid-type container with equal-sized containers
- *
- * @constructor Grid
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIGrid extends GUIElement {
   build() {
@@ -209,10 +189,6 @@ class GUIGrid extends GUIElement {
 
 /**
  * Element: 'gui-grid-row'
- *
- * @constructor GridRow
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIGridRow extends GUIElement {
 
@@ -220,10 +196,6 @@ class GUIGridRow extends GUIElement {
 
 /**
  * Element: 'gui-grid-entry'
- *
- * @constructor GridEntry
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIGridEntry extends GUIElement {
 
@@ -233,10 +205,6 @@ class GUIGridEntry extends GUIElement {
  * Element: 'gui-vbox'
  *
  * Vertical boxed layout
- *
- * @constructor VBox
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIVBox extends GUIElement {
 
@@ -254,10 +222,6 @@ class GUIVBox extends GUIElement {
  *   property  expand    boolean       Make content expand to full width
  *   property  fill      boolean       Make content fill up entire space
  * </code></pre>
- *
- * @constructor VBoxContainer
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIVBoxContainer extends GUIElement {
   build() {
@@ -271,10 +235,6 @@ class GUIVBoxContainer extends GUIElement {
  * Element: 'gui-hbox'
  *
  * Horizontal boxed layout
- *
- * @constructor HBox
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIHBox extends GUIElement {
 
@@ -292,10 +252,6 @@ class GUIHBox extends GUIElement {
  *   property  expand    boolean       Make content expand to full width
  *   property  fill      boolean       Make content fill up entire space
  * </code></pre>
- *
- * @constructor HBoxContainer
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIHBoxContainer extends GUIElement {
   build() {
@@ -314,10 +270,6 @@ class GUIHBoxContainer extends GUIElement {
  *   property  label     String        The label
  *   property  expanded  boolean       Expanded state (default=true)
  * </code></pre>
- *
- * @constructor Expander
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 
 class GUIExpander extends GUIElement {

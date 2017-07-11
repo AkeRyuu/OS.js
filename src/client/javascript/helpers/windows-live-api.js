@@ -29,15 +29,10 @@
  */
 
 import MountManager from 'core/mount-manager';
-import * as API from 'core/api';
+import ServiceNotificationIcon from 'helpers/service-notification-icon';
 import {preload} from 'utils/preloader';
 import {_} from 'core/locales';
 import {getConfig} from 'core/config';
-
-/**
- * @namespace OSjs.Helpers.WindowsLiveAPI
- * @memberof OSjs.Helpers
- */
 
 const redirectURI = window.location.href.replace(/\/$/, '') + '/vendor/wlOauthReceiver.html';
 
@@ -59,10 +54,6 @@ let SingletonInstance = null;
  * </b></pre>
  *
  * @summary Helper for communicating with Windows Live API.
- *
- * @constructor Class
- * @memberof OSjs.Helpers.WindowsLiveAPI
- * @see OSjs.Helpers.WindowsLiveAPI.createInsatance
  *
  * @link http://msdn.microsoft.com/en-us/library/hh826547.aspx
  * @link http://msdn.microsoft.com/en-us/library/hh826538.aspx
@@ -198,17 +189,11 @@ class WindowsLiveAPI {
   }
 
   _removeRing() {
-    const ring = API.getServiceNotificationIcon();
-    if ( ring ) {
-      ring.remove('Windows Live API');
-    }
+    ServiceNotificationIcon.remove('Windows Live API');
   }
 
   /**
    * Sign out of WindowsLiveAPI
-   *
-   * @function logout
-   * @memberof OSjs.Helpers.WindowsLiveAPI.Class#
    *
    * @param   {Function}    callback      Callback => fn(error, result)
    */
@@ -280,15 +265,12 @@ class WindowsLiveAPI {
     console.warn('WindowsLiveAPI::onLogin()', arguments);
     this.hasSession = true;
 
-    const ring = API.getServiceNotificationIcon();
-    if ( ring ) {
-      ring.add('Windows Live API', [{
-        title: _('WLAPI_SIGN_OUT'),
-        onClick: () => {
-          this.logout();
-        }
-      }]);
-    }
+    ServiceNotificationIcon.add('Windows Live API', [{
+      title: _('WLAPI_SIGN_OUT'),
+      onClick: () => {
+        this.logout();
+      }
+    }]);
   }
 
   /*

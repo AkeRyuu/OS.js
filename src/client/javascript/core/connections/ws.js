@@ -32,6 +32,7 @@ import {_} from 'core/locales';
 import * as VFS from 'vfs/fs';
 import FileMetadata from 'vfs/file';
 import Connection from 'core/connection';
+import Promise from 'bluebird';
 
 export default class WSConnection extends Connection {
   constructor() {
@@ -68,9 +69,18 @@ export default class WSConnection extends Connection {
     return super.destroy.apply(this, arguments);
   }
 
-  init(callback) {
+  init() {
     this.destroying = false;
-    this._connect(false, callback);
+
+    return new Promise((resolve, reject) => {
+      this._connect(false, (err, res) => {
+        if ( err ) {
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
+    });
   }
 
   _connect(reconnect, callback) {

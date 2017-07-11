@@ -267,10 +267,6 @@ class _GUIInput extends GUIElement {
  *   setter    label     String        The label text
  *   property  disabled  boolean       Disabled state
  * </code></pre>
- *
- * @constructor Label
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUILabel extends GUIElement {
   set(param, value, isHTML) {
@@ -320,10 +316,6 @@ class GUILabel extends GUIElement {
  *   property  placeholder   String        An optional placeholder
  *   event     change                      When input has changed => fn(ev)
  * </code></pre>
- *
- * @constructor Textarea
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUITextarea extends _GUIInput {
 
@@ -363,10 +355,6 @@ class GUITextarea extends _GUIInput {
  *   event     change                      When input has changed => fn(ev)
  *   event     enter                       When enter key was pressed => fn(ev)
  * </code></pre>
- *
- * @constructor Text
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIText extends _GUIInput {
   build() {
@@ -392,10 +380,6 @@ class GUIText extends _GUIInput {
  *   event     change                      When input has changed => fn(ev)
  *   event     enter                       When enter key was pressed => fn(ev)
  * </code></pre>
- *
- * @constructor Password
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIPassword extends _GUIInput {
   build() {
@@ -418,10 +402,6 @@ class GUIPassword extends _GUIInput {
  *   property  disabled  boolean       Disabled state
  *   event     change                  When input has changed => fn(ev)
  * </code></pre>
- *
- * @constructor FileUpload
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIFileUpload extends _GUIInput {
   build() {
@@ -453,10 +433,6 @@ class GUIFileUpload extends _GUIInput {
  *   property  group     String        (Optional) A group identificator
  *   event     change                  When input has changed => fn(ev)
  * </code></pre>
- *
- * @constructor Radio
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIRadio extends _GUIInput {
   build() {
@@ -481,10 +457,6 @@ class GUIRadio extends _GUIInput {
  *   property  group     String        (Optional) A group identificator
  *   event     change                  When input has changed => fn(ev)
  * </code></pre>
- *
- * @constructor Checkbox
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUICheckbox extends _GUIInput {
   build() {
@@ -507,10 +479,6 @@ class GUICheckbox extends _GUIInput {
  *   property  disabled  boolean       Disabled state
  *   event     change                  When input has changed => fn(ev)
  * </code></pre>
- *
- * @constructor Button
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUISwitch extends _GUIInput {
   set(param, value) {
@@ -577,10 +545,6 @@ class GUISwitch extends _GUIInput {
  *   property  icon      String        Icon source
  *   event     click                   When input was clicked => fn(ev)
  * </code></pre>
- *
- * @constructor Button
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIButton extends GUIElement {
   set(param, value, isHTML) {
@@ -716,10 +680,6 @@ class GUIButton extends GUIElement {
  *    label: "Label",
  *    value: "Value"
  *   })
- *
- * @constructor SelectList
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUISelect extends _GUIInput {
 
@@ -765,10 +725,6 @@ class GUISelect extends _GUIInput {
  *   action    clear                   Clear elements => fn()
  *   action    remove                  Removes element => fn(arg)
  * </code></pre>
- *
- * @constructor SelectList
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUISelectList extends GUISelect {
 
@@ -790,10 +746,6 @@ class GUISelectList extends GUISelect {
  *   property  disabled  boolean       Disabled state
  *   event     change                  When input has changed => fn(ev)
  * </code></pre>
- *
- * @constructor Slider
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUISlider extends _GUIInput {
   get(param) {
@@ -821,10 +773,6 @@ class GUISlider extends _GUIInput {
  *   setter    value     String        The value
  *   event     open                    When button was pressed => fn(ev)
  * </code></pre>
- *
- * @constructor InputModal
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIInputModal extends GUIElement {
   on(evName, callback, params) {

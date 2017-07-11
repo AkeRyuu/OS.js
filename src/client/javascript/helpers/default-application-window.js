@@ -45,11 +45,6 @@ import {_} from 'core/locales';
  * Use in combination with 'DefaultApplication'
  *
  * @summary Helper for making Applications with file interaction.
- *
- * @constructor
- * @memberof OSjs.Helpers
- * @see OSjs.Helpers.DefaultApplication
- * @see OSjs.Core.Window
  */
 export default class DefaultApplicationWindow extends Window {
 
@@ -161,9 +156,6 @@ export default class DefaultApplicationWindow extends Window {
   /**
    * Checks if current file has changed
    *
-   * @function  checkHasChanged
-   * @memberof OSjs.Helpers.DefaultApplicationWindow#
-   *
    * @param   {Function}      cb        Callback => fn(discard_changes)
    */
   checkHasChanged(cb) {
@@ -185,9 +177,6 @@ export default class DefaultApplicationWindow extends Window {
    *
    * YOU SHOULD EXTEND THIS METHOD IN YOUR WINDOW TO ACTUALLY DISPLAY CONTENT
    *
-   * @function  showFile
-   * @memberof OSjs.Helpers.DefaultApplicationWindow#
-   *
    * @param   {OSjs.VFS.File}       file        File
    * @param   {Mixed}               content     File contents
    */
@@ -197,9 +186,6 @@ export default class DefaultApplicationWindow extends Window {
 
   /**
    * Updates current view for given File
-   *
-   * @function updateFile
-   * @memberof OSjs.Helpers.DefaultApplicationWindow#
    *
    * @param   {OSjs.VFS.File}       file        File
    */
@@ -222,9 +208,6 @@ export default class DefaultApplicationWindow extends Window {
    * Gets file data
    *
    * YOU SHOULD IMPLEMENT THIS METHOD IN YOUR WINDOW TO RETURN FILE CONTENTS
-   *
-   * @function getFileData
-   * @memberof OSjs.Helpers.DefaultApplicationWindow#
    *
    * @return  {Mixed} File contents
    */

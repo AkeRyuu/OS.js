@@ -38,11 +38,6 @@ import {getConfig} from 'core/config';
 import FileMetadata from 'vfs/file';
 import FileDataURL from 'vfs/filedataurl';
 
-/**
- * @namespace GoogleDrive
- * @memberof OSjs.VFS.Modules
- */
-
 const gapi = window.gapi = window.gapi  || {};
 
 // https://developers.google.com/drive/web/quickstart/quickstart-js

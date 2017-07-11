@@ -447,4 +447,7 @@ const _ = require('./locale.js');
   OSjs.Applications.ApplicationSettings.Modules = OSjs.Applications.ApplicationSettings.Modules || {};
   OSjs.Applications.ApplicationSettings.SettingsItemDialog = SettingsItemDialog;
 
+  const modules = [/*'broadway', */'desktop', 'input', 'locale', 'panel', 'pm', 'search', 'sound', 'store', 'theme', 'user', 'users', 'vfs'];
+  modules.forEach((m) => require(`./module-${m}.js`));
+
 })(OSjs.Core.Application, OSjs.Core.Window, OSjs.Utils, OSjs.API, OSjs.VFS, OSjs.GUI);

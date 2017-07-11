@@ -32,11 +32,6 @@ import * as GUI from 'utils/gui';
 import * as Assets from 'core/assets';
 import {_} from 'core/locales';
 
-/**
- * @namespace Elements
- * @memberof OSjs.GUI
- */
-
 let REGISTRY = {};
 
 /*
@@ -126,9 +121,6 @@ function createElementInstance(tagName, el, q, buildArgs) {
  * @summary The Class used for all UI Elements.
  *
  * @link https://os-js.org/manual/gui/elements/
- *
- * @constructor Element
- * @memberof OSjs.GUI
  */
 export default class UIElement {
 

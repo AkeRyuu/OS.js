@@ -31,7 +31,6 @@
 /**
  * A collection of keycode mappings
  *
- * @memberof OSjs.Utils
  * @var
  */
 const Keycodes = (function() {

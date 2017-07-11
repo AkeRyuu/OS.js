@@ -36,9 +36,6 @@ import {_} from 'core/locales';
  * @example
  *
  * OSjs.API.createDialog('Confirm', {}, fn);
- *
- * @constructor Confirm
- * @memberof OSjs.Dialogs
  */
 export default class ConfirmDialog extends DialogWindow {
 

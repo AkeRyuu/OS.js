@@ -27,10 +27,10 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import * as API from 'core/api';
 import * as DOM from 'utils/dom';
 import * as Utils from 'utils/misc';
 import * as Events from 'utils/events';
+import {getConfig} from 'core/config';
 import GUIElement from 'gui/element';
 
 /////////////////////////////////////////////////////////////////////////////
@@ -46,10 +46,6 @@ import GUIElement from 'gui/element';
  *   getter    value   String        The value (color)
  *   setter    value   String        The value (color)
  * </code></pre>
- *
- * @constructor ColorBox
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIColorBox extends GUIElement {
   on(evName, callback, params) {
@@ -87,10 +83,6 @@ class GUIColorBox extends GUIElement {
  *   setter    value   String        The value (color)
  *   event     change                When input has changed => fn(ev)
  * </code></pre>
- *
- * @constructor ColorSwatch
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIColorSwatch extends GUIElement {
   on(evName, callback, params) {
@@ -172,16 +164,12 @@ class GUIColorSwatch extends GUIElement {
  * <pre><code>
  *   property  src     String        The source (src)
  * </code></pre>
- *
- * @constructor Iframe
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIIframe extends GUIElement {
 
   static get _tagName() {
     let tagName = 'iframe';
-    if ( (['nw', 'electron', 'x11']).indexOf(API.getConfig('Connection.Type')) >= 0 ) {
+    if ( (['nw', 'electron', 'x11']).indexOf(getConfig('Connection.Type')) >= 0 ) {
       tagName = 'webview';
     }
     return tagName;
@@ -216,10 +204,6 @@ class GUIIframe extends GUIElement {
  *   setter    progress    integer     Progress value (percentage)
  *   property  progress    integer     Progress value (percentage)
  * </code></pre>
- *
- * @constructor ProgressBar
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIProgressBar extends GUIElement {
   set(param, value) {
@@ -276,10 +260,6 @@ class GUIProgressBar extends GUIElement {
  *   setter    value       String      Content to set
  *   setter    label       String      Alias of 'value'
  * </code></pre>
- *
- * @constructor StatusBar
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIStatusBar extends GUIElement {
   set(param, value) {

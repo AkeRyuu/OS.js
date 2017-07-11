@@ -37,9 +37,6 @@ import {getConfig} from 'core/config';
  * @example
  *
  * OSjs.API.createDialog('Font', {}, fn);
- *
- * @constructor Font
- * @memberof OSjs.Dialogs
  */
 export default class FontDialog extends DialogWindow {
 

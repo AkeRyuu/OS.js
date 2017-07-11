@@ -35,6 +35,9 @@ import * as DOM from 'utils/dom';
 import * as GUI from 'utils/gui';
 import * as Events from 'utils/events';
 import * as Utils from 'utils/misc';
+import * as Assets from 'core/assets';
+import * as Main from 'core/main';
+import Keycodes from 'utils/keycodes';
 
 import Process from 'core/process';
 import Window from 'core/window';
@@ -44,366 +47,86 @@ import SettingsManager from 'core/settings-manager';
 
 import {_} from 'core/locales';
 import {getConfig} from 'core/config';
+import {createWindowBehaviour} from 'helpers/window-behaviour';
 
 /////////////////////////////////////////////////////////////////////////////
-// WINDOW MOVEMENT BEHAVIOUR
+// MISC HELPERS
 /////////////////////////////////////////////////////////////////////////////
 
-/*
- * Holds information about current behaviour
- */
-function BehaviourState(wm, win, action, mousePosition) {
-  this.win = win;
-  this.$element = win._$element;
-  this.$top = win._$top;
-  this.$handle = win._$resize;
-
-  this.rectWorkspace  = wm.getWindowSpace(true);
-  this.rectWindow     = {
-    x: win._position.x,
-    y: win._position.y,
-    w: win._dimension.w,
-    h: win._dimension.h,
-    r: win._dimension.w + win._position.x,
-    b: win._dimension.h + win._position.y
-  };
-
-  const theme = Utils.cloneObject(wm.getStyleTheme(true, true));
-  if ( !theme.style ) {
-    theme.style = {'window': {margin: 0, border: 0}};
+function checkForbiddenKeyCombo(ev) {
+  return false;
+  /* FIXME: This is not supported in browsers :( (in app mode it should be)
+  var forbiddenCtrl = ['n', 't', 'w'];
+  if ( ev.ctrlKey ) {
+    return forbiddenCtrl.some(function(i) {
+      return String.fromCharCode(ev.keyCode).toLowerCase() === i;
+    });
   }
-
-  this.theme = {
-    topMargin: theme.style.window.margin || 0, // FIXME
-    borderSize: theme.style.window.border || 0
-  };
-
-  this.snapping   = {
-    cornerSize: wm.getSetting('windowCornerSnap') || 0,
-    windowSize: wm.getSetting('windowSnap') || 0
-  };
-
-  this.action     = action;
-  this.moved      = false;
-  this.direction  = null;
-  this.startX     = mousePosition.x;
-  this.startY     = mousePosition.y;
-  this.minWidth   = win._properties.min_width;
-  this.minHeight  = win._properties.min_height;
-
-  const windowRects = [];
-  wm.getWindows().forEach((w) => {
-    if ( w && w._wid !== win._wid ) {
-      const pos = w._position;
-      const dim = w._dimension;
-      const rect = {
-        left: pos.x - this.theme.borderSize,
-        top: pos.y - this.theme.borderSize,
-        width: dim.w + (this.theme.borderSize * 2),
-        height: dim.h + (this.theme.borderSize * 2) + this.theme.topMargin
-      };
-
-      rect.right = rect.left + rect.width;
-      rect.bottom = (pos.y + dim.h) + this.theme.topMargin + this.theme.borderSize;//rect.top + rect.height;
-
-      windowRects.push(rect);
-    }
-  });
-
-  this.snapRects = windowRects;
+  return false;
+  */
 }
 
-BehaviourState.prototype.getRect = function() {
-  const win = this.win;
+function checkPrevent(ev, win) {
+  const d = ev.srcElement || ev.target;
+  const accept = [122, 123];
+  let doPrevent = d.tagName === 'BODY' ? true : false;
 
-  return {
-    left: win._position.x,
-    top: win._position.y,
-    width: win._dimension.w,
-    height: win._dimension.h
-  };
-};
-
-BehaviourState.prototype.calculateDirection = function() {
-  const dir = DOM.$position(this.$handle);
-  const dirX = this.startX - dir.left;
-  const dirY = this.startY - dir.top;
-  const dirD = 20;
-
-  const checks = {
-    nw: (dirX <= dirD) && (dirY <= dirD),
-    n: (dirX > dirD) && (dirY <= dirD),
-    w: (dirX <= dirD) && (dirY >= dirD),
-    ne: (dirX >= (dir.width - dirD)) && (dirY <= dirD),
-    e: (dirX >= (dir.width - dirD)) && (dirY > dirD),
-    se: (dirX >= (dir.width - dirD)) && (dirY >= (dir.height - dirD)),
-    sw: (dirX <= dirD) && (dirY >= (dir.height - dirD))
-  };
-
-  let direction = 's';
-  Object.keys(checks).forEach(function(k) {
-    if ( checks[k] ) {
-      direction = k;
+  // What browser default keys we prevent in certain situations
+  if ( (ev.keyCode === Keycodes.BACKSPACE) && !DOM.$isFormElement(ev) ) { // Backspace
+    doPrevent = true;
+  } else if ( (ev.keyCode === Keycodes.TAB) && DOM.$isFormElement(ev) ) { // Tab
+    doPrevent = true;
+  } else {
+    if ( accept.indexOf(ev.keyCode) !== -1 ) {
+      doPrevent = false;
+    } else if ( checkForbiddenKeyCombo(ev) ) {
+      doPrevent = true;
     }
-  });
-
-  this.direction = direction;
-};
-
-/*
- * Window Behavour Abstraction
- */
-function createWindowBehaviour(win, wm) {
-  let current = null;
-  let newRect = {};
-
-  /*
-   * Resizing action
-   */
-  function onWindowResize(ev, mousePosition, dx, dy) {
-    if ( !current || !current.direction ) {
-      return false;
-    }
-
-    let nw, nh, nl, nt;
-
-    (function() { // North/South
-      if ( current.direction.indexOf('s') !== -1 ) {
-        nh = current.rectWindow.h + dy;
-
-        newRect.height = Math.max(current.minHeight, nh);
-      } else if ( current.direction.indexOf('n') !== -1 ) {
-        nh = current.rectWindow.h - dy;
-        nt = current.rectWindow.y + dy;
-
-        if ( nt < current.rectWorkspace.top ) {
-          nt = current.rectWorkspace.top;
-          nh = newRect.height;
-        } else {
-          if ( nh < current.minHeight ) {
-            nt = current.rectWindow.b - current.minHeight;
-          }
-        }
-
-        newRect.height = Math.max(current.minHeight, nh);
-        newRect.top = nt;
-      }
-    })();
-
-    (function() { // East/West
-      if ( current.direction.indexOf('e') !== -1 ) {
-        nw = current.rectWindow.w + dx;
-
-        newRect.width = Math.max(current.minWidth, nw);
-      } else if ( current.direction.indexOf('w') !== -1 ) {
-        nw = current.rectWindow.w - dx;
-        nl = current.rectWindow.x + dx;
-
-        if ( nw < current.minWidth ) {
-          nl = current.rectWindow.r - current.minWidth;
-        }
-
-        newRect.width = Math.max(current.minWidth, nw);
-        newRect.left = nl;
-      }
-    })();
-
-    return newRect;
   }
 
-  /*
-   * Movement action
-   */
-  function onWindowMove(ev, mousePosition, dx, dy) {
-    let newWidth = null;
-    let newHeight = null;
-    let newLeft = current.rectWindow.x + dx;
-    let newTop = current.rectWindow.y + dy;
-
-    const borderSize = current.theme.borderSize;
-    const topMargin = current.theme.topMargin;
-    const cornerSnapSize = current.snapping.cornerSize;
-    const windowSnapSize = current.snapping.windowSize;
-
-    if ( newTop < current.rectWorkspace.top ) {
-      newTop = current.rectWorkspace.top;
-    }
-
-    let newRight = newLeft + current.rectWindow.w + (borderSize * 2);
-    let newBottom = newTop + current.rectWindow.h + topMargin + (borderSize);
-
-    // 8-directional corner window snapping
-    if ( cornerSnapSize > 0 ) {
-      if ( ((newLeft - borderSize) <= cornerSnapSize) && ((newLeft - borderSize) >= -cornerSnapSize) ) { // Left
-        newLeft = borderSize;
-      } else if ( (newRight >= (current.rectWorkspace.width - cornerSnapSize)) && (newRight <= (current.rectWorkspace.width + cornerSnapSize)) ) { // Right
-        newLeft = current.rectWorkspace.width - current.rectWindow.w - borderSize;
-      }
-      if ( (newTop <= (current.rectWorkspace.top + cornerSnapSize)) && (newTop >= (current.rectWorkspace.top - cornerSnapSize)) ) { // Top
-        newTop = current.rectWorkspace.top + (borderSize);
-      } else if (
-        (newBottom >= ((current.rectWorkspace.height + current.rectWorkspace.top) - cornerSnapSize)) &&
-          (newBottom <= ((current.rectWorkspace.height + current.rectWorkspace.top) + cornerSnapSize))
-      ) { // Bottom
-        newTop = (current.rectWorkspace.height + current.rectWorkspace.top) - current.rectWindow.h - topMargin - borderSize;
-      }
-    }
-
-    // Snapping to other windows
-    if ( windowSnapSize > 0 ) {
-      current.snapRects.every(function(rect) {
-        // >
-        if ( newRight >= (rect.left - windowSnapSize) && newRight <= (rect.left + windowSnapSize) ) { // Left
-          newLeft = rect.left - (current.rectWindow.w + (borderSize * 2));
-          return false;
-        }
-
-        // <
-        if ( (newLeft - borderSize) <= (rect.right + windowSnapSize) && (newLeft - borderSize) >= (rect.right - windowSnapSize) ) { // Right
-          newLeft = rect.right + (borderSize * 2);
-          return false;
-        }
-
-        // \/
-        if ( newBottom >= (rect.top - windowSnapSize) && newBottom <= (rect.top + windowSnapSize) ) { // Top
-          newTop = rect.top - (current.rectWindow.h + (borderSize * 2) + topMargin);
-          return false;
-        }
-
-        // /\
-        if ( newTop <= (rect.bottom + windowSnapSize) && newTop >= (rect.bottom - windowSnapSize) ) { // Bottom
-          newTop = rect.bottom + borderSize * 2;
-          return false;
-        }
-
-        return true;
-      });
-
-    }
-
-    return {left: newLeft, top: newTop, width: newWidth, height: newHeight};
+  // Only prevent default event if current window is not set up to capture them by force
+  if ( doPrevent && (!win || !win._properties.key_capture) ) {
+    return true;
   }
 
-  /*
-   * When mouse button is released
-   */
-  function onMouseUp(ev, action, win, mousePosition) {
-    if ( !current ) {
-      return;
+  return false;
+}
+
+function triggerFullscreen(el, state) {
+  function _request() {
+    if ( el.requestFullscreen ) {
+      el.requestFullscreen();
+    } else if ( el.mozRequestFullScreen ) {
+      el.mozRequestFullScreen();
+    } else if ( el.webkitRequestFullScreen ) {
+      el.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
     }
-
-    if ( current.moved ) {
-      if ( action === 'move' ) {
-        win._onChange('move', true);
-        win._emit('moved', [win._position.x, win._position.y]);
-      } else if ( action === 'resize' ) {
-        win._onChange('resize', true);
-        win._emit('resized', [win._dimension.w, win._dimension.h]);
-      }
-    }
-
-    current.$element.setAttribute('data-hint', '');
-
-    win._emit('postop');
-
-    current = null;
   }
 
-  /*
-   * When mouse is moved
-   */
-  function onMouseMove(ev, action, win, mousePosition) {
-    if ( !wm.getMouseLocked() || !action || !current ) {
-      return;
+  function _restore() {
+    if ( el.webkitCancelFullScreen ) {
+      el.webkitCancelFullScreen();
+    } else if ( el.mozCancelFullScreen ) {
+      el.mozCancelFullScreen();
+    } else if ( el.exitFullscreen ) {
+      el.exitFullscreen();
     }
+  }
 
-    ev.preventDefault();
-
-    let result;
-
-    const dx = mousePosition.x - current.startX;
-    const dy = mousePosition.y - current.startY;
-
-    if ( action === 'move' ) {
-      result = onWindowMove(ev, mousePosition, dx, dy);
+  if ( el ) {
+    if ( state ) {
+      _request();
     } else {
-      result = onWindowResize(ev, mousePosition, dx, dy);
+      _restore();
     }
-
-    if ( result ) {
-      if ( result.left !== null && result.top !== null ) {
-        win._move(result.left, result.top);
-        win._emit('move', [result.left, result.top]);
-      }
-      if ( result.width !== null && result.height !== null ) {
-        win._resize(result.width, result.height, true);
-        win._emit('resize', [result.width, result.height]);
-      }
-    }
-
-    current.moved = true;
-  }
-
-  /*
-   * When mouse button is pressed
-   */
-  function onMouseDown(ev, action, win, mousePosition) {
-    GUI.blurMenu();
-    ev.preventDefault();
-
-    if ( win._state.maximized ) {
-      return;
-    }
-
-    current = new BehaviourState(wm, win, action, mousePosition);
-    newRect = {};
-
-    win._focus();
-
-    if ( action === 'move' ) {
-      current.$element.setAttribute('data-hint', 'moving');
-    } else {
-      current.calculateDirection();
-      current.$element.setAttribute('data-hint', 'resizing');
-
-      newRect = current.getRect();
-    }
-
-    win._emit('preop');
-
-    function _onMouseMove(ev, pos) {
-      if ( wm._mouselock ) {
-        onMouseMove(ev, action, win, pos);
-      }
-    }
-    function _onMouseUp(ev, pos) {
-      onMouseUp(ev, action, win, pos);
-      Events.$unbind(document, 'mousemove:movewindow');
-      Events.$unbind(document, 'mouseup:movewindowstop');
-    }
-
-    Events.$bind(document, 'mousemove:movewindow', _onMouseMove, false);
-    Events.$bind(document, 'mouseup:movewindowstop', _onMouseUp, false);
-  }
-
-  /*
-   * Register a window
-   */
-  if ( win._properties.allow_move ) {
-    Events.$bind(win._$top, 'mousedown', (ev, pos) => {
-      onMouseDown(ev, 'move', win, pos);
-    }, true);
-  }
-  if ( win._properties.allow_resize ) {
-    Events.$bind(win._$resize, 'mousedown', (ev, pos) => {
-      onMouseDown(ev, 'resize', win, pos);
-    });
   }
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // WINDOW MANAGER
 /////////////////////////////////////////////////////////////////////////////
+
+let _instance;
 
 /**
  * WindowManager Process Class
@@ -414,12 +137,11 @@ function createWindowBehaviour(win, wm) {
  * @summary Class used for basis as a Window Manager.
  *
  * @abstract
- * @extends core/process~Process
  */
 export default class WindowManager extends Process {
 
   static get instance() {
-    return window.___osjs__wm_instance;
+    return _instance;
   }
 
   /**
@@ -437,7 +159,7 @@ export default class WindowManager extends Process {
     super(name, args, metadata);
 
     /* eslint consistent-this: "warn" */
-    window.___osjs__wm_instance = this;
+    _instance = this;
 
     this._$notifications = null;
     this._windows        = [];
@@ -452,6 +174,8 @@ export default class WindowManager extends Process {
     this._responsiveRes  = 800;
     this._scheme         = null;
     this._dcTimeout      = null;
+    this._resizeTimeout  = null;
+    this._$fullscreen    = null;
 
     // Important for usage as "Application"
     this.__name    = (name || 'WindowManager');
@@ -481,6 +205,22 @@ export default class WindowManager extends Process {
 
     Events.$unbind(document, 'mouseout:windowmanager');
     Events.$unbind(document, 'mouseenter:windowmanager');
+    Events.$unbind(window, 'orientationchange:windowmanager');
+    Events.$unbind(window, 'hashchange:windowmanager');
+    Events.$unbind(window, 'resize:windowmanager');
+    Events.$unbind(window, 'scroll:windowmanager');
+    Events.$unbind(window, 'fullscreenchange:windowmanager');
+    Events.$unbind(window, 'mozfullscreenchange:windowmanager');
+    Events.$unbind(window, 'webkitfullscreenchange:windowmanager');
+    Events.$unbind(window, 'msfullscreenchange:windowmanager');
+    Events.$unbind(document.body, 'contextmenu:windowmanager');
+    Events.$unbind(document.body, 'click:windowmanager');
+    Events.$unbind(document, 'keyup:windowmanager');
+    Events.$unbind(document, 'keydown:windowmanager');
+    Events.$unbind(document, 'keypress:windowmanager');
+
+    window.onerror = null;
+    window.onbeforeunload = null;
 
     // Destroy all windows
     this._windows.forEach((win, i) => {
@@ -498,8 +238,9 @@ export default class WindowManager extends Process {
     this._currentWin = null;
     this._lastWin = null;
     this._scheme = null;
+    this._$fullscreen = null;
 
-    window.___osjs__wm_instance = null;
+    _instance = null;
 
     return super.destroy();
   }
@@ -516,12 +257,24 @@ export default class WindowManager extends Process {
 
     this._scheme = scheme;
 
-    Events.$bind(document, 'mouseout:windowmanager', (ev) => {
-      this._onMouseLeave(ev);
-    });
-    Events.$bind(document, 'mouseenter:windowmanager', (ev) => {
-      this._onMouseLeave(ev);
-    });
+    Events.$bind(document, 'mouseout:windowmanager', (ev) => this._onMouseLeave(ev));
+    Events.$bind(document, 'mouseenter:windowmanager', (ev) => this._onMouseLeave(ev));
+    Events.$bind(window, 'orientationchange:windowmanager', (ev) => this._onOrientationChange(ev));
+    Events.$bind(window, 'hashchange:windowmanager', (ev) => this._onHashChange(ev));
+    Events.$bind(window, 'resize:windowmanager', (ev) => this._onResize(ev));
+    Events.$bind(window, 'scroll:windowmanager', (ev) => this._onScroll(ev));
+    Events.$bind(window, 'fullscreenchange:windowmanager', (ev) => this._onFullscreen(ev));
+    Events.$bind(window, 'mozfullscreenchange:windowmanager', (ev) => this._onFullscreen(ev));
+    Events.$bind(window, 'webkitfullscreenchange:windowmanager', (ev) => this._onFullscreen(ev));
+    Events.$bind(window, 'msfullscreenchange:windowmanager', (ev) => this._onFullscreen(ev));
+    Events.$bind(document.body, 'contextmenu:windowmanager', (ev) => this._onContextMenu(ev));
+    Events.$bind(document.body, 'click:windowmanager', (ev) => this._onClick(ev));
+    Events.$bind(document, 'keyup:windowmanager', (ev) => this._onKeyUp(ev));
+    Events.$bind(document, 'keydown:windowmanager', (ev) => this._onKeyDown(ev));
+    Events.$bind(document, 'keypress:windowmanager', (ev) => this._onKeyPress(ev));
+
+    window.onerror = this._onError.bind(this);
+    window.onbeforeunload = this._onBeforeUnload(this);
 
     const queries = this.getDefaultSetting('mediaQueries') || {};
 
@@ -531,7 +284,10 @@ export default class WindowManager extends Process {
     });
     this._responsiveRes = maxWidth || 800;
 
+    this._onOrientationChange();
     this.resize();
+
+    Assets.playSound('LOGIN');
   }
 
   /**
@@ -703,51 +459,6 @@ export default class WindowManager extends Process {
     this._stylesheet = null;
   }
 
-  /**
-   * When Key Down Event received
-   *
-   * @param   {Event}                  ev      DOM Event
-   * @param   {OSjs.CoreWindow}        win     Active window
-   */
-  onKeyDown(ev, win) {
-    // Implement in your WM
-  }
-
-  /**
-   * When orientation of device has changed
-   *
-   * @param   {Event}    ev             DOM Event
-   * @param   {String}   orientation    Orientation string
-   */
-  onOrientationChange(ev, orientation) {
-    console.info('ORIENTATION CHANGED', ev, orientation);
-
-    this._onDisplayChange();
-  }
-
-  /**
-   * When size of the device display has been changed
-   *
-   * @param   {Event}    ev             DOM Event
-   */
-  onResize(ev) {
-    this._onDisplayChange();
-  }
-
-  /**
-   * When session has been loaded
-   *
-   * @return {Boolean}
-   */
-  onSessionLoaded() {
-    if ( this._sessionLoaded ) {
-      return false;
-    }
-
-    this._sessionLoaded = true;
-    return true;
-  }
-
   resize(ev, rect) {
     // Implement in your WM
     this._isResponsive = window.innerWidth <= 1024;
@@ -828,6 +539,80 @@ export default class WindowManager extends Process {
     // Implement in your WM
   }
 
+  /**
+   * Toggles fullscreen for given DOM element
+   * @param {Node} el The element
+   * @param {Boolean} t Fullscreen state
+   */
+  toggleFullscreen(el, t) {
+    if ( typeof t === 'boolean' ) {
+      triggerFullscreen(el, t);
+    } else {
+      const prev = this._$fullscreen;
+      if ( prev  && prev !== el ) {
+        triggerFullscreen(prev, false);
+      }
+      triggerFullscreen(el, prev !== el);
+    }
+
+    this._$fullscreen = el;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // EVENT HANDLERS
+  /////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * When Key Down Event received
+   *
+   * @param   {Event}                  ev      DOM Event
+   * @param   {OSjs.CoreWindow}        win     Active window
+   */
+  onKeyDown(ev, win) {
+    // Implement in your WM
+  }
+
+  /**
+   * When orientation of device has changed
+   *
+   * @param   {Event}    ev             DOM Event
+   * @param   {String}   orientation    Orientation string
+   */
+  onOrientationChange(ev, orientation) {
+    console.info('ORIENTATION CHANGED', ev, orientation);
+
+    document.body.setAttribute('data-orientation', orientation);
+
+    this._onDisplayChange();
+  }
+
+  /**
+   * When size of the device display has been changed
+   *
+   * @param   {Event}    ev             DOM Event
+   */
+  onResize(ev) {
+    this._onDisplayChange();
+  }
+
+  /**
+   * When session has been loaded
+   *
+   * @return {Boolean}
+   */
+  onSessionLoaded() {
+    if ( this._sessionLoaded ) {
+      return false;
+    }
+
+    this._sessionLoaded = true;
+    return true;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // BASE EVENT HANDLERS
+  /////////////////////////////////////////////////////////////////////////////
+
   _onMouseEnter(ev) {
     this._mouselock = true;
   }
@@ -858,6 +643,190 @@ export default class WindowManager extends Process {
 
     document.body.setAttribute('data-responsive', String(self._isResponsive));
   }
+
+  _onOrientationChange(ev) {
+    let orientation = 'landscape';
+    if ( window.screen && window.screen.orientation ) {
+      if ( window.screen.orientation.type.indexOf('portrait') !== -1 ) {
+        orientation = 'portrait';
+      }
+    }
+
+    this.onOrientationChange(ev, orientation);
+  }
+
+  _onHashChange(ev) {
+    const hash = window.location.hash.substr(1);
+    const spl = hash.split(/^([\w\.\-_]+)\:(.*)/);
+
+    function getArgs(q) {
+      const args = {};
+      q.split('&').forEach(function(a) {
+        const b = a.split('=');
+        const k = decodeURIComponent(b[0]);
+        args[k] = decodeURIComponent(b[1] || '');
+      });
+      return args;
+    }
+
+    if ( spl.length === 4 ) {
+      const root = spl[1];
+      const args = getArgs(spl[2]);
+
+      if ( root ) {
+        Process.getProcess(root).forEach(function(p) {
+          p._onMessage('hashchange', {
+            hash: hash,
+            args: args
+          }, {source: null});
+        });
+      }
+    }
+  }
+
+  _onResize(ev) {
+    clearTimeout(this._resizeTimeout);
+    this._resizeTimeout = setTimeout(() => {
+      const space = this.getWindowSpace();
+      this.resize(ev, space);
+    }, 100);
+  }
+
+  _onScroll(ev) {
+    if ( ev.target === document || ev.target === document.body ) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      return false;
+    }
+
+    document.body.scrollTop = 0;
+    document.body.scrollLeft = 0;
+    return true;
+  }
+
+  _onFullscreen(ev) {
+    try {
+      const notif = this.getNotificationIcon('_FullscreenNotification');
+      if ( notif ) {
+        if ( !document.fullScreen && !document.mozFullScreen && !document.webkitIsFullScreen && !document.msFullscreenElement ) {
+          notif.opts._isFullscreen = false;
+          notif.setImage(Assets.getIcon('actions/view-fullscreen.png', '16x16'));
+        } else {
+          notif.opts._isFullscreen = true;
+          notif.setImage(Assets.getIcon('actions/view-restore.png', '16x16'));
+        }
+      }
+    } catch ( e ) {
+      console.warn(e.stack, e);
+    }
+  }
+
+  _onContextMenu(ev) {
+    ev.stopPropagation();
+
+    this.onContextMenu(ev);
+    if ( !DOM.$isFormElement(ev) ) {
+      ev.preventDefault();
+      return false;
+    }
+
+    return true;
+  }
+
+  _onClick(ev) {
+    const t = ev.target;
+    const allowed = ['GUI-MENU-BAR-ENTRY', 'GUI-MENU-ENTRY'];
+    if ( !t || allowed.indexOf(t.tagName) === -1  ) {
+      GUI.blurMenu();
+    }
+
+    if ( t === document.body ) {
+      const win = this.getCurrentWindow();
+      if ( win ) {
+        win._blur();
+      }
+    }
+
+    if ( this.onGlobalClick ) {
+      this.onGlobalClick(ev);
+    }
+  }
+
+  _onKeyUp(ev) {
+    const win = this.getCurrentWindow();
+
+    this.onKeyUp(ev, win);
+
+    if ( win ) {
+      return win._onKeyEvent(ev, 'keyup');
+    }
+
+    return true;
+  }
+
+  _onKeyDown(ev) {
+    const win = this.getCurrentWindow();
+
+    const reacted = (() => {
+      const combination = this.onKeyDown(ev, win);
+      if ( win && !combination ) {
+        win._onKeyEvent(ev, 'keydown');
+      }
+      return combination;
+    })();
+
+    if ( checkPrevent(ev, win) || reacted ) {
+      ev.preventDefault();
+    }
+
+    return true;
+  }
+
+  _onKeyPress(ev) {
+    if ( checkForbiddenKeyCombo(ev) ) {
+      ev.preventDefault();
+    }
+
+    const win = this.getCurrentWindow();
+    if ( win ) {
+      return win._onKeyEvent(ev, 'keypress');
+    }
+    return true;
+  }
+
+  _onBeforeUnload(ev) {
+    if ( getConfig('ShowQuitWarning') ) {
+      return _('MSG_SESSION_WARNING');
+    }
+    return null;
+  }
+
+  _onError(message, url, linenumber, column, exception) {
+    if ( typeof exception === 'string' ) {
+      exception = null;
+    }
+
+    exception = exception || {
+      name: 'window::onerror()',
+      fileName: url,
+      lineNumber: linenumber + ':' + column,
+      message: message
+    };
+
+    console.warn('window::onerror()', arguments);
+
+    Main.error(_('ERR_JAVASCRIPT_EXCEPTION'),
+               _('ERR_JAVACSRIPT_EXCEPTION_DESC'),
+               _('BUGREPORT_MSG'),
+               exception,
+               true );
+
+    return false;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // GETTERS AND SETTERS
+  /////////////////////////////////////////////////////////////////////////////
 
   /**
    * Get default Settings

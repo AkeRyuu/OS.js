@@ -27,46 +27,37 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import {getBrowserPath} from 'core/config';
-import MountManager from 'core/mount-manager';
-import BaseTransport from 'vfs/transports/osjs';
 
-/////////////////////////////////////////////////////////////////////////////
-// API
-/////////////////////////////////////////////////////////////////////////////
+class SplashScreen {
 
-/*
- * OSjs 'dist' VFS Transport Module
- *
- * This is just a custom version of 'OSjs' module
- */
-const Transport = {
-  url: function(item, callback) {
-    const root = getBrowserPath();
-    const module = MountManager.getModuleFromPath(item.path, false, true);
-    const url = item.path.replace(module.match, root).replace(/^\/+/, '/');
-
-    callback(false, url);
-  },
-
-  scandir: function() {
-    return BaseTransport.module.scandir.apply(this, arguments);
-  },
-
-  read: function() {
-    return BaseTransport.module.read.apply(this, arguments);
+  constructor() {
+    this.$el = document.getElementById('LoadingScreen');
+    this.$progress = this.$el ? this.$el.querySelector('.progress') : null;
   }
-};
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-export default {
-  module: Transport,
-  defaults: function(opts) {
-    opts.readOnly = true;
-    opts.searchable = true;
+  show() {
+    if ( this.$el ) {
+      this.$el.style.display = 'block';
+    }
   }
-};
 
+  hide() {
+    if ( this.$el ) {
+      this.$el.style.display = 'none';
+    }
+  }
+
+  update(p, c) {
+    if ( this.$progress ) {
+      let per = c ? 0 : 100;
+      if ( c ) {
+        per = (p / c) * 100;
+      }
+
+      this.$progress.style.width = String(per) + '%';
+    }
+  }
+
+}
+
+export default (new SplashScreen());

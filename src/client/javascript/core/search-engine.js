@@ -31,12 +31,12 @@
 /**
  * @module core/search-engine
  */
+import Promise from 'bluebird';
 import PackageManager from 'core/package-manager';
 import SettingsManager from 'core/settings-manager';
 import FileMetadata from 'vfs/file';
 import * as Assets from 'core/assets';
 import * as VFS from 'vfs/fs';
-import * as Utils from 'utils/misc';
 
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -141,30 +141,30 @@ const FilesystemModule = {
     }
 
     let found = [];
-    Utils.asyncs(settings.paths, (e, i, n) => {
-      VFS.find(e, {query: q, limit: (args.limit ? args.dlimit : 0), recursive: args.recursive}, (error, result) => {
-        if ( error ) {
-          console.warn(error);
-        }
+    Promise.each(settings.paths, (e) => {
+      return new Promise((n) => {
+        VFS.find(e, {query: q, limit: (args.limit ? args.dlimit : 0), recursive: args.recursive}, (error, result) => {
+          if ( error ) {
+            console.warn(error);
+          }
 
-        if ( result ) {
-          const list = result.map((iter) => {
-            return {
-              title: iter.filename,
-              description: iter.path,
-              icon: Assets.getFileIcon(new FileMetadata(iter)),
-              launch: {application: '', args: '', file: iter}
-            };
-          });
+          if ( result ) {
+            const list = result.map((iter) => {
+              return {
+                title: iter.filename,
+                description: iter.path,
+                icon: Assets.getFileIcon(new FileMetadata(iter)),
+                launch: {application: '', args: '', file: iter}
+              };
+            });
 
-          found = found.concat(list);
-        }
+            found = found.concat(list);
+          }
 
-        n();
+          n();
+        });
       });
-    }, function() {
-      cb(false, found);
-    });
+    }).then(() => cb(false, found)).catch(cb);
   },
   reindex: function(args, cb) {
     cb(false, true);
@@ -182,87 +182,76 @@ const FilesystemModule = {
  *
  * @summary The Search Engine for location files and application.
  */
-const SearchEngine = (function() {
+class SearchEngine {
 
-  let modules = [
-    ApplicationModule,
-    FilesystemModule
-  ];
+  constructor() {
+    this.settings = {};
+    this.inited = false;
+    this.modules = [
+      ApplicationModule,
+      FilesystemModule
+    ];
+  }
 
-  let settings = {};
-  let inited = false;
+  /**
+   * Initialize instance
+   *
+   * @return {Promise}
+   */
+  init() {
+    console.debug('SearchEngine::init()');
 
-  return Object.seal({
+    if ( !this.inited ) {
+      this.settings = SettingsManager.get('SearchEngine') || {};
+      this.inited = true;
+    }
 
-    /**
-     * Initialize instance
-     *
-     * @function init
-     * @memberof OSjs.Core.SearchEngine#
-     *
-     * @param   {Function}    cb        Callback => fn(error, result)
-     */
-    init: function(cb) {
-      console.debug('SearchEngine::init()');
+    return Promise.resolve();
+  }
 
-      if ( inited ) {
-        return;
-      }
+  /**
+   * Destroy instance
+   */
+  destroy() {
+    console.debug('SearchEngine::destroy()');
 
-      settings = SettingsManager.get('SearchEngine') || {};
+    this.modules.forEach((m) => {
+      m.destroy();
+    });
 
-      inited = true;
+    this.modules = [];
+    this.settings = {};
+    this.inited = false;
+  }
 
-      cb();
-    },
+  /**
+   * Perform a search
+   *
+   * @param   {String}      q         Search query
+   * @param   {Object}      args      Arguments
+   * @param   {Function}    cb        Callback => fn(error, result)
+   */
+  search(q, args, cb) {
+    let result = [];
+    let errors = [];
 
-    /**
-     * Destroy instance
-     *
-     * @function destroy
-     * @memberof OSjs.Core.SearchEngine#
-     */
-    destroy: function() {
-      console.debug('SearchEngine::destroy()');
+    args = Object.assign({}, {
+      recursive: false,
+      limit: 0,
+      dlimit: 0
+    }, args);
 
-      modules.forEach((m) => {
-        m.destroy();
-      });
+    if ( args.limit ) {
+      args.dlimit = args.limit;
+    }
 
-      modules = [];
-      settings = {};
-      inited = false;
-    },
+    Promise.each([this.modules], (module) => {
+      return new Promise((next) => {
 
-    /**
-     * Perform a search
-     *
-     * @function search
-     * @memberof OSjs.Core.SearchEngine#
-     *
-     * @param   {String}      q         Search query
-     * @param   {Object}      args      Arguments
-     * @param   {Function}    cb        Callback => fn(error, result)
-     */
-    search: function(q, args, cb) {
-      let result = [];
-      let errors = [];
-
-      args = Object.assign({}, {
-        recursive: false,
-        limit: 0,
-        dlimit: 0
-      }, args);
-
-      if ( args.limit ) {
-        args.dlimit = args.limit;
-      }
-
-      Utils.asyncs(modules, (module, index, next) => {
         console.debug('SearchEngine::search()', '=>', module);
 
         if ( !args.limit || args.dlimit > 0 ) {
-          module.search(q, args, settings, (err, res) => {
+          module.search(q, args, this.settings, (err, res) => {
             if ( err ) {
               errors.push(err);
             } else {
@@ -276,25 +265,25 @@ const SearchEngine = (function() {
         } else {
           cb(errors, result);
         }
-      }, () => {
-        cb(errors, result);
       });
-    },
+    }).then(() => cb(errors, result)).catch(() => {
+      cb(errors, result);
+    });
+  }
 
-    /**
-     * Reindex databases
-     *
-     * @TODO implement
-     * @function reindex
-     * @memberof OSjs.Core.SearchEngine#
-     *
-     * @param   {Object}      args      Arguments
-     * @param   {Function}    cb        Callback => fn(error, result)
-     */
-    reindex: function(args, cb) {
-      const errors = [];
+  /**
+   * Reindex databases
+   *
+   * @TODO implement
+   *
+   * @param   {Object}      args      Arguments
+   * @param   {Function}    cb        Callback => fn(error, result)
+   */
+  reindex(args, cb) {
+    const errors = [];
 
-      Utils.asyncs(modules, (module, index, next) => {
+    Promise.each(this.modules, (module) => {
+      return new Promise((next) => {
         console.debug('SearchEngine::reindex()', '=>', module);
 
         module.reindex(args, (err, res) => {
@@ -303,29 +292,25 @@ const SearchEngine = (function() {
           }
           next();
         });
-      }, () => {
-        cb(errors, true);
       });
-    },
+    }).then(() => cb(errors, true)).catch((err) => cb(err, false));
+  }
 
-    /**
-     * Configure the Search Engine
-     *
-     * @TODO implement
-     * @function configure
-     * @memberof OSjs.Core.SearchEngine#
-     *
-     * @param   {Object}      opts          Settings Object
-     * @param   {Boolean}     [save=true]   Save settings
-     */
-    configure: function(opts, save) {
-    }
-  });
+  /**
+   * Configure the Search Engine
+   *
+   * @TODO implement
+   *
+   * @param   {Object}      opts          Settings Object
+   * @param   {Boolean}     [save=true]   Save settings
+   */
+  configure(opts, save) {
+  }
 
-})();
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-export default SearchEngine;
+export default (new SearchEngine());

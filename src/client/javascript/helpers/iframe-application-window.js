@@ -45,10 +45,6 @@ let IFRAME_COUNT = 0;
  *
  * @summary Helper for making IFrame Applications.
  *
- * @constructor
- * @memberof OSjs.Helpers
- * @see OSjs.Core.Window
- *
  * @link https://os-js.org/manual/package/iframe/
  */
 export default class IFrameApplicationWindow extends Window {
@@ -153,9 +149,6 @@ export default class IFrameApplicationWindow extends Window {
   /**
    * Post a message to IFrame Application
    *
-   * @function postMessage
-   * @memberof OSjs.Helpers.IframeApplicationWindow#
-   *
    * @param   {Mixed}       message     The message
    */
   postMessage(message) {
@@ -172,9 +165,6 @@ export default class IFrameApplicationWindow extends Window {
   /**
    * When Window receives a message from IFrame Application
    *
-   * @function onPostMessage
-   * @memberof OSjs.Helpers.IframeApplicationWindow#
-   *
    * @param   {Mixed}       message     The message
    * @param   {Event}       ev          DOM Event
    */
@@ -184,9 +174,6 @@ export default class IFrameApplicationWindow extends Window {
 
   /**
    * Set Iframe source
-   *
-   * @function setLocation
-   * @memberof OSjs.Helpers.IframeApplicationWindow#
    *
    * @param   {String}      src       Source
    * @param   {Element}     iframe    Iframe element

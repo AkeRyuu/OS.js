@@ -273,9 +273,6 @@ function matchValueByKey(r, val, key, idx) {
  *   action    clear                   Clear elements => fn()
  * </code></pre>
  *
- * @constructor DataView
- * @memberof OSjs.GUI
- * @extends OSjs.GUI.Element
  * @abstract
  */
 export default class UIDataView extends UIElement {

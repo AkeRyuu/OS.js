@@ -36,9 +36,6 @@ import {_} from 'core/locales';
  * @example
  *
  * OSjs.API.createDialog('Alert', {}, fn);
- *
- * @constructor Alert
- * @memberof OSjs.Dialogs
  */
 export default class AlertDialog extends DialogWindow {
 

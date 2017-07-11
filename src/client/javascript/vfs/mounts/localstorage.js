@@ -28,6 +28,7 @@
  * @licence Simplified BSD License
  */
 /*eslint no-use-before-define: "off"*/
+import Promise from 'bluebird';
 import Process from 'core/process';
 import * as FS from 'utils/fs';
 import * as Utils from 'utils/misc';
@@ -35,11 +36,6 @@ import * as VFS from 'vfs/fs';
 import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 import FileMetadata from 'vfs/file';
-
-/**
- * @namespace LocalStorage
- * @memberof OSjs.VFS.Modules
- */
 
 /*
  * This storage works like this:
@@ -449,18 +445,20 @@ const LocalStorageStorage = {
             const list = scanStorage(s, false);
 
             if ( list && list.length ) {
-              Utils.asyncs(list, (entry, idx, next) => {
-                const rp = entry.path.substr(src.path.length);
-                const nd = new FileMetadata(dest.path + rp);
+              Promise.each(list, (entry) => {
+                return new Promise((next) => {
+                  const rp = entry.path.substr(src.path.length);
+                  const nd = new FileMetadata(dest.path + rp);
 
-                //console.warn('----->', 'source root', s);
-                //console.warn('----->', 'dest root', d);
-                //console.warn('----->', 'files', list.length, idx);
-                //console.warn('----->', 'relative', rp);
-                //console.warn('----->', 'new file', nd);
+                  //console.warn('----->', 'source root', s);
+                  //console.warn('----->', 'dest root', d);
+                  //console.warn('----->', 'files', list.length, idx);
+                  //console.warn('----->', 'relative', rp);
+                  //console.warn('----->', 'new file', nd);
 
-                _op(entry, nd, next);
-              }, () => {
+                  _op(entry, nd, next);
+                });
+              }).then(() => {
                 cb(false, true);
               });
             } else {

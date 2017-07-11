@@ -134,10 +134,6 @@ function createTyped(child, par) {
  *   Events:
  *    select        When an entry was selected (click) => fn(ev)
  * <pre><code>
- *
- * @constructor MenuEntry
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIMenuEntry extends GUIElement {
   on(evName, callback, params) {
@@ -196,10 +192,6 @@ class GUIMenuEntry extends GUIElement {
  *   Setters:
  *    checked       Set checkbox/option checked value
  * </code></pre>
- *
- * @constructor Menu
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIMenu extends GUIElement {
   on(evName, callback, params) {
@@ -282,10 +274,6 @@ class GUIMenu extends GUIElement {
  * <pre><code>
  *   event     select               When an entry was selected (click) => fn(ev)
  * </code></pre>
- *
- * @constructor MenuBar
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIMenuBar extends GUIElement {
   on(evName, callback, params) {

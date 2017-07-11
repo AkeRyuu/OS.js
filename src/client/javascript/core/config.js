@@ -27,13 +27,21 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
+import * as SimpleJSON from 'simplejsonconf';
+
+let _CONFIG = {};
+
+/**
+ * Sets the configuration tree
+ *
+ * @param {Object} config Configuration tree
+ */
+export function setConfig(config) {
+  _CONFIG = config;
+}
 
 /**
  * Method for getting a config parameter by path (Ex: "VFS.Mountpoints.shared.enabled")
- *
- * @function getConfig
- * @memberof OSjs.API
- * @see OSjs.Core.getConfig
  *
  * @param   {String}    [path]                        Path
  * @param   {Mixed}     [defaultValue=undefined]      Use default value
@@ -41,38 +49,15 @@
  * @return  {Mixed}             Parameter value or entire tree on no path
  */
 export function getConfig(path, defaultValue) {
-  const config = OSjs.Core.getConfig();
-  if ( typeof path === 'string' ) {
-    let result = config[path];
-    if ( path.indexOf('.') !== -1 ) {
-      const queue = path.split(/\./);
-
-      let ns = config;
-      queue.forEach((k, i) => {
-        if ( i >= queue.length - 1 ) {
-          if ( ns ) {
-            result = ns[k];
-          }
-        } else {
-          ns = ns[k];
-        }
-      });
-    }
-
-    if ( typeof result === 'undefined' && typeof defaultValue !== 'undefined' ) {
-      return defaultValue;
-    }
-
-    return typeof result === 'object' ? JSON.parse(JSON.stringify(result)) : result;
+  if ( !path ) {
+    return Object.assign({}, _CONFIG);
   }
-  return config;
+  const result = SimpleJSON.getJSON(_CONFIG, path, defaultValue);
+  return (typeof result === 'object' && !(result instanceof Array)) ? Object.assign({}, result) : result;
 }
 
 /**
  * Get default configured path
- *
- * @function getDefaultPath
- * @memberof OSjs.API
  *
  * @param   {String}    fallback      Fallback path on error (default= "osjs:///")
  * @return  {String}
@@ -87,8 +72,6 @@ export function getDefaultPath(fallback) {
 /**
  * Checks if running OS.js instance is in standalone mode
  *
- * @function isStandalone
- * @memberof OSjs.API
  * @return {Boolean}
  */
 export function isStandalone() {
@@ -100,8 +83,6 @@ export function isStandalone() {
  *
  * @param {String}    [app]     Append this path
  *
- * @function getBrowserPath
- * @memberof OSjs.API
  * @return {String}
  */
 export function getBrowserPath(app) {

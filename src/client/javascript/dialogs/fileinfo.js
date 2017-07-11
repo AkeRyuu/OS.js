@@ -37,9 +37,6 @@ import {_} from 'core/locales';
  * @example
  *
  * OSjs.API.createDialog('FileInfo', {}, fn);
- *
- * @constructor FileInfo
- * @memberof OSjs.Dialogs
  */
 export default class FileInfoDialog extends DialogWindow {
 

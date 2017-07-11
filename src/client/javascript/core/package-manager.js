@@ -53,7 +53,7 @@ import Connection from 'core/connection';
 // PACKAGE MANAGER
 /////////////////////////////////////////////////////////////////////////////
 
-class PM {
+class PackageManager {
 
   constructor() {
     this.packages = [];
@@ -67,49 +67,31 @@ class PM {
 
   /**
    * Load Metadata from server and set packages
-   *
-   * @function load
-   * @memberof OSjs.Core.PackageManager#
-   *
-   * @param  {Function} callback      callback
    */
-  load(callback) {
-    callback = callback || {};
-
+  init() {
     console.debug('PackageManager::load()');
 
-    const loadMetadata = (cb) => {
+    return new Promise((resolve, reject) => {
       this._loadMetadata((err) => {
         if ( err ) {
-          callback(err, false, this);
-          return;
-        }
-
-        const len = Object.keys(this.packages).length;
-        if ( len ) {
-          cb();
+          reject(err);
         } else {
-          callback(false, _('ERR_PACKAGE_ENUM_FAILED'), this);
+          const len = Object.keys(this.packages).length;
+          if ( len ) {
+            this._loadExtensions().then(resolve).catch(reject);
+          } else {
+            reject(_('ERR_PACKAGE_ENUM_FAILED'));
+          }
         }
-      });
-    };
-
-    loadMetadata(() => {
-      this._loadExtensions(() => {
-        callback(true, false, this);
       });
     });
   }
 
   /**
    * Internal method for loading all extensions
-   *
-   * @function _loadExtensions
-   * @memberof OSjs.Core.PackageManager#
-   *
-   * @param  {Function} callback      callback
+   * @return {Promise}
    */
-  _loadExtensions(callback) {
+  _loadExtensions() {
     let preloads = [];
 
     Object.keys(this.packages).forEach((k) => {
@@ -120,17 +102,14 @@ class PM {
     });
 
     if ( preloads.length ) {
-      preload(preloads).then(() => callback()).catch(() => callback());
-    } else {
-      callback();
+      return preload(preloads);
     }
+
+    return Promise.resolve();
   }
 
   /**
    * Internal method for loading all package metadata
-   *
-   * @function _loadMetadata
-   * @memberof OSjs.Core.PackageManager#
    *
    * @param  {Function} callback      callback
    */
@@ -205,9 +184,6 @@ class PM {
   /**
    * Generates user-installed package metadata (on runtime)
    *
-   * @function generateUserMetadata
-   * @memberof OSjs.Core.PackageManager#
-   *
    * @param  {Function} callback      callback
    */
   generateUserMetadata(callback) {
@@ -222,10 +198,6 @@ class PM {
    *
    * @param   {Object}    result    Package dict (manifest data)
    * @param   {String}    scope     Package scope (system/user)
-   *
-   *
-   * @function _addPackages
-   * @memberof OSjs.Core.PackageManager#
    */
   _addPackages(result, scope) {
     console.debug('PackageManager::_addPackages()', result);
@@ -263,9 +235,6 @@ class PM {
   /**
    * Installs a package by ZIP
    *
-   * @function install
-   * @memberof OSjs.Core.PackageManager#
-   *
    * @param {OSjs.VFS.File}   file        The ZIP file
    * @param {String}          root        Packge install root (defaults to first path)
    * @param {Function}        cb          Callback function
@@ -289,9 +258,6 @@ class PM {
   /**
    * Uninstalls given package
    *
-   * @function uninstall
-   * @memberof OSjs.Core.PackageManager#
-   *
    * @param {OSjs.VFS.File}   file        The path
    * @param {Function}        cb          Callback function
    */
@@ -308,9 +274,6 @@ class PM {
   /**
    * Sets the package blacklist
    *
-   * @function setBlacklist
-   * @memberof OSjs.Core.PackageManager#
-   *
    * @param   {String[]}       list        List of package names
    */
   setBlacklist(list) {
@@ -319,9 +282,6 @@ class PM {
 
   /**
    * Get a list of packges from online repositories
-   *
-   * @function getStorePackages
-   * @memberof OSjs.Core.PackageManager#
    *
    * @param {Object}    opts      Options
    * @param {Function}  callback  Callback => fn(error, result)
@@ -359,9 +319,6 @@ class PM {
   /**
    * Get package by name
    *
-   * @function getPackage
-   * @memberof OSjs.Core.PackageManager#
-   *
    * @param {String}    name      Package name
    *
    * @return {Metadata}
@@ -375,9 +332,6 @@ class PM {
 
   /**
    * Get all packages
-   *
-   * @function getPackages
-   * @memberof OSjs.Core.PackageManager#
    *
    * @param {Boolean}     [filtered=true]      Returns filtered list
    *
@@ -422,9 +376,6 @@ class PM {
   /**
    * Get packages by Mime support type
    *
-   * @function getPackagesByMime
-   * @memberof OSjs.Core.PackageManager#
-   *
    * @param {String}    mime      MIME string
    *
    * @return  {Metadata[]}
@@ -449,8 +400,6 @@ class PM {
   /**
    * Add a dummy package (useful for having shortcuts in the launcher menu)
    *
-   * @function addDummyPackage
-   * @memberof OSjs.Core.PackageManager#
    * @throws {Error} On invalid package name or callback
    *
    * @param   {String}      n             Name of your package
@@ -486,4 +435,4 @@ class PM {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-export default (new PM());
+export default (new PackageManager());

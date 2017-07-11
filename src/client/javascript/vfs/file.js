@@ -39,10 +39,6 @@ import {_} from 'core/locales';
  * This object has the same properties as in the option list below
  *
  * If you construct without a MIME type, OS.js will try to guess what it is.
- *
- * @constructor File
- * @memberof OSjs.VFS
- * @see OSjs.VFS.file
  */
 export default class FileMetadata {
   /*eslint valid-jsdoc: "off"*/

@@ -28,28 +28,10 @@
  * @licence Simplified BSD License
  */
 import * as VFS from 'vfs/fs';
-import {getConfig} from 'core/config';
 import FileMetadata from 'vfs/file';
 import Connection from 'core/connection';
 
 export default class HttpConnection extends Connection {
-
-  createRequest(method, args, onsuccess, onerror, options) {
-    const res = super.createRequest(...arguments);
-
-    if ( res === false ) {
-      const url = (() => {
-        if ( method.match(/^FS:/) ) {
-          return getConfig('Connection.FSURI') + '/' + method.replace(/^FS\:/, '');
-        }
-        return getConfig('Connection.APIURI') + '/' + method;
-      })();
-
-      return this._requestXHR(url, args, options, onsuccess, onerror);
-    }
-
-    return res;
-  }
 
   onVFSRequestCompleted(module, method, args, error, result, callback, appRef) {
     if ( !error ) {

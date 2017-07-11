@@ -27,6 +27,7 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
+import Promise from 'bluebird';
 import axios from 'axios';
 
 import * as FS from 'utils/fs';
@@ -124,35 +125,41 @@ function resolveExternalFragments(root, html, cb) {
   doc.innerHTML = html;
 
   let nodes = doc.querySelectorAll('gui-fragment[data-fragment-external]');
-  Utils.asyncs(nodes.map(function(el) {
+
+  Promise.each(nodes.map(function(el) {
     return {
       element: el,
       uri: el.getAttribute('data-fragment-external')
     };
-  }), function asyncIter(iter, index, next) {
-    const uri = iter.uri.replace(/^\//, '');
-    if ( uri.length < 3 ) {
-      console.warn('resolveExternalFragments()', 'invalid', iter);
-      next();
-      return;
-    }
+  }), (iter) => {
+    return new Promise((next) => {
+      const uri = iter.uri.replace(/^\//, '');
+      if ( uri.length < 3 ) {
+        console.warn('resolveExternalFragments()', 'invalid', iter);
+        next();
+        return;
+      }
 
-    axios({
-      url: FS.pathJoin(root, uri),
-      method: 'GET'
-    }).then((response) => {
-      let tmp = document.createElement('div');
-      tmp.innerHTML = cleanScheme(response.data);
-      addChildren(tmp, iter.element, iter.element);
-      tmp = next();
-    }).catch((err) => {
-      next();
+      axios({
+        url: FS.pathJoin(root, uri),
+        method: 'GET'
+      }).then((response) => {
+        let tmp = document.createElement('div');
+        tmp.innerHTML = cleanScheme(response.data);
+        addChildren(tmp, iter.element, iter.element);
+        tmp = next();
+      }).catch((err) => {
+        next();
+      });
     });
-  }, function asyncDone() {
+
+  }).then(() => {
     cb(doc.innerHTML);
 
     doc = null;
     nodes = null;
+
+    return true;
   });
 }
 
@@ -164,9 +171,6 @@ function resolveExternalFragments(root, html, cb) {
  * The class for loading and parsing UI Schemes
  *
  * @summary Class for loading, parsing and manipulating Scheme files.
- *
- * @constructor Scheme
- * @memberof OSjs.GUI
  */
 export default class UIScheme {
 

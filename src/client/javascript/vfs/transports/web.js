@@ -32,11 +32,6 @@ import axios from 'axios';
 import * as FS from 'utils/fs';
 import MountManager from 'core/mount-manager';
 
-/**
- * @namespace Web
- * @memberof OSjs.VFS.Transports
- */
-
 /*
  * THIS IS AN EXPERIMENTAL WEB TRANSPORT MODULE FOR OS.js VFS
  *
@@ -60,9 +55,6 @@ import MountManager from 'core/mount-manager';
  * @param   {(String|OSjs.VFS.File)}    file        VFS File
  *
  * @return  {String}                  URL based on input
- *
- * @function path
- * @memberof OSjs.VFS.Transports.Web
  */
 function makePath(file) {
   const rel = MountManager.getPathProtocol(file.path);

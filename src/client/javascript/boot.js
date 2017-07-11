@@ -1,17 +1,15 @@
 window.OSjs = window.OSjs || {};
 
 import polyfill from 'polyfill';
-import compability from 'compability';
-import {run} from 'core/init';
+import {start} from 'core/init';
 
-const start = () => {
+const run = () => {
   polyfill();
-  compability();
-  run();
+  start();
 };
 
 if ( document.readyState !== 'loading' ) {
-  start();
+  run();
 } else {
-  document.addEventListener('DOMContentLoaded', () => start());
+  document.addEventListener('DOMContentLoaded', () => run());
 }

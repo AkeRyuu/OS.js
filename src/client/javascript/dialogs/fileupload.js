@@ -39,9 +39,6 @@ import {getConfig, getDefaultPath} from 'core/config';
  * @example
  *
  * OSjs.API.createDialog('FileUpload', {}, fn);
- *
- * @constructor FileUpload
- * @memberof OSjs.Dialogs
  */
 export default class FileUploadDialog extends DialogWindow {
 
@@ -143,7 +140,7 @@ export default class FileUploadDialog extends DialogWindow {
           return;
         }
         progressDialog._close(true);
-        self.onClose(ev, 'ok', file);
+        this.onClose(ev, 'ok', file);
       }, {
         onprogress: (ev) => {
           if ( ev.lengthComputable ) {

@@ -35,11 +35,6 @@ import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 import FileMetadata from 'vfs/file';
 
-/**
- * @namespace WebDAV
- * @memberof OSjs.VFS.Transports
- */
-
 /////////////////////////////////////////////////////////////////////////////
 // HELPERS
 /////////////////////////////////////////////////////////////////////////////
@@ -295,9 +290,6 @@ const Transport = {
  * @param   {(String|OSjs.VFS.File)}    item        VFS File
  *
  * @return  {String}                  URL based on input
- *
- * @function path
- * @memberof OSjs.VFS.Transports.WebDAV
  */
 function makePath(item) {
   if ( typeof item === 'string' ) {

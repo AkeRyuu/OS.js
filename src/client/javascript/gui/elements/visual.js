@@ -86,10 +86,6 @@ function createVisualElement(el, nodeType, applyArgs) {
  *   setter    src   String        The source (src)
  *   property  src   String        The source (src)
  * </code></pre>
- *
- * @constructor Audio
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIAudio extends GUIElement {
   on(evName, callback, params) {
@@ -115,10 +111,6 @@ class GUIAudio extends GUIElement {
  *   setter    src   String        The source (src)
  *   property  src   String        The source (src)
  * </code></pre>
- *
- * @constructor Video
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIVideo extends GUIElement {
   on(evName, callback, params) {
@@ -144,10 +136,6 @@ class GUIVideo extends GUIElement {
  *   setter    src   String        The source (src)
  *   property  src   String        The source (src)
  * </code></pre>
- *
- * @constructor Image
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUIImage extends GUIElement {
   on(evName, callback, params) {
@@ -173,10 +161,6 @@ class GUIImage extends GUIElement {
  *   setter    src   String        The source (src)
  *   property  src   String        The source (src)
  * </code></pre>
- *
- * @constructor Canvas
- * @extends OSjs.GUI.Element
- * @memberof OSjs.GUI.Elements
  */
 class GUICanvas extends GUIElement {
   on(evName, callback, params) {

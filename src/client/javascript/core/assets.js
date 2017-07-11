@@ -37,9 +37,6 @@ import {getConfig} from 'core/config';
 /**
  * Get path to css theme
  *
- * @function getThemeCSS
- * @memberof OSjs.API
- *
  * @param   {String}    name    CSS Stylesheet name (without extension)
  *
  * @return  {String}            The absolute URL of css file
@@ -56,9 +53,6 @@ export function getThemeCSS(name) {
 
 /**
  * Get a icon based in file and mime
- *
- * @function getFileIcon
- * @memberof OSjs.API
  *
  * @param   {File}      file            File Data (see supported types)
  * @param   {String}    [size=16x16]    Icon size
@@ -134,9 +128,6 @@ export function getFileIcon(file, size, icon) {
 /**
  * Default method for getting a resource from current theme
  *
- * @function getThemeResource
- * @memberof OSjs.API
- *
  * @param   {String}    name    Resource filename
  * @param   {String}    type    Type ('base' or a sub-folder)
  *
@@ -170,9 +161,6 @@ export function getThemeResource(name, type) {
 /**
  * Default method for getting a sound from theme
  *
- * @function getSound
- * @memberof OSjs.API
- *
  * @param   {String}    name    Resource filename
  *
  * @return  {String}            The absolute URL to the resource
@@ -197,9 +185,6 @@ export function getSound(name) {
 
 /**
  * Default method for getting a icon from theme
- *
- * @function getIcon
- * @memberof OSjs.API
  *
  * @param   {String}              name          Resource filename
  * @param   {String}              [size=16x16]  Icon size
@@ -247,9 +232,6 @@ export function getIcon(name, size, app) {
 
 /**
  * Global function for playing a sound
- *
- * @function playSound
- * @memberof OSjs.API
  *
  * @param   {String}      name      Sound name
  * @param   {Number}      volume    Sound volume (0.0 - 1.0)

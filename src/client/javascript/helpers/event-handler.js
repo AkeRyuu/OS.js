@@ -34,9 +34,6 @@
  * This class just holds a map of events that you can trigger.
  *
  * @summary Helper for handling events.
- *
- * @constructor
- * @memberof OSjs.Helpers
  */
 export default class EventHandler {
 
@@ -64,9 +61,6 @@ export default class EventHandler {
    *
    * You can also give a RegExp pattern as a name to match multiple entries,
    * as well as a comma separated string.
-   *
-   * @function on
-   * @memberof OSjs.Helpers.EventHandler#
    * @throws {Error} On invalid callback
    *
    * @param   {String}    name        Event name
@@ -112,8 +106,6 @@ export default class EventHandler {
   /**
    * Unregister an event
    *
-   * @function off
-   * @memberof OSjs.Helpers.EventHandler#
    * @throws {Error} On event name
    *
    * @param   {String}    name        Event name
@@ -133,9 +125,6 @@ export default class EventHandler {
 
   /**
    * Fire an event
-   *
-   * @function emit
-   * @memberof OSjs.Helpers.EventHandler#
    *
    * @param   {String}    name        Event name
    * @param   {Array}     args        List of arguments to send to .apply()

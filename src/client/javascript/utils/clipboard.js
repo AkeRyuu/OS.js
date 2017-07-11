@@ -34,9 +34,6 @@ let _CLIPBOARD;         // Current 'clipboard' data
  *
  * NOTE: This does not set the operating system clipboard (yet...)
  *
- * @function setClipboard
- * @memberof OSjs.API
- *
  * @param   {Mixed}       data      What data to set
  */
 export function setClipboard(data) {
@@ -48,9 +45,6 @@ export function setClipboard(data) {
  * Get the "clipboard" data
  *
  * NOTE: This does not the operating system clipboard (yet...)
- *
- * @function getClipboard
- * @memberof OSjs.API
  *
  * @return  {Mixed}
  */

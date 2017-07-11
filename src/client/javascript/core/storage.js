@@ -31,10 +31,13 @@
 /**
  * @module core/storage
  */
+import Promise from 'bluebird';
 import Connection from 'core/connection';
 import Process from 'core/process';
 import SettingsManager from 'core/settings-manager';
 import * as Utils from 'utils/misc';
+
+let _instance;
 
 /**
  * Storage Base Class
@@ -44,30 +47,28 @@ import * as Utils from 'utils/misc';
 export default class Storage {
 
   static get instance() {
-    return window.___osjs__storage_instance;
+    return _instance;
   }
 
   constructor() {
     /* eslint consistent-this: "warn" */
-    window.___osjs__storage_instance = this;
+    _instance = this;
 
     this.saveTimeout = null;
   }
 
   /**
    * Initializes the Storage
-   *
-   * @param   {CallbackHandler}      callback        Callback function
    */
-  init(callback) {
-    callback(null, true);
+  init() {
+    return Promise.resolve();
   }
 
   /**
    * Destroys the Storage
    */
   destroy() {
-    window.___osjs__storage_instance = null;
+    _instance = null;
   }
 
   /**

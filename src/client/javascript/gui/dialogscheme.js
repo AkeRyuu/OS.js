@@ -8,10 +8,10 @@
  * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *    list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ *    and/or other materials provided with the distribution
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,46 +27,62 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import {getBrowserPath} from 'core/config';
-import MountManager from 'core/mount-manager';
-import BaseTransport from 'vfs/transports/osjs';
+import {isStandalone, getConfig} from 'core/config';
+import GUIScheme from 'gui/scheme';
 
-/////////////////////////////////////////////////////////////////////////////
-// API
-/////////////////////////////////////////////////////////////////////////////
+let dialogScheme;
 
-/*
- * OSjs 'dist' VFS Transport Module
- *
- * This is just a custom version of 'OSjs' module
- */
-const Transport = {
-  url: function(item, callback) {
-    const root = getBrowserPath();
-    const module = MountManager.getModuleFromPath(item.path, false, true);
-    const url = item.path.replace(module.match, root).replace(/^\/+/, '/');
+class DialogScheme {
 
-    callback(false, url);
-  },
-
-  scandir: function() {
-    return BaseTransport.module.scandir.apply(this, arguments);
-  },
-
-  read: function() {
-    return BaseTransport.module.read.apply(this, arguments);
+  /**
+   * Get the Dialog scheme
+   *
+   * @return {OSjs.GUI.Scheme}
+   */
+  get() {
+    return dialogScheme;
   }
-};
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-export default {
-  module: Transport,
-  defaults: function(opts) {
-    opts.readOnly = true;
-    opts.searchable = true;
+  /**
+   * Destroy the Dialog scheme
+   */
+  destroy() {
+    if ( dialogScheme ) {
+      dialogScheme.destroy();
+    }
+    dialogScheme = null;
   }
-};
 
+  /**
+   * Initialize the Dialog scheme
+   *
+   * @return {Promise}
+   */
+  init() {
+    if ( dialogScheme ) {
+      return Promise.resolve();
+    }
+
+    if ( isStandalone() ) {
+      const html = OSjs.STANDALONE.SCHEMES['/dialogs.html'];
+      dialogScheme = new GUIScheme();
+      dialogScheme.loadString(html);
+      return Promise.resolve();
+    }
+
+    const root = getConfig('Connection.RootURI');
+    const url = root + 'dialogs.html';
+
+    return new Promise((cb) => {
+      dialogScheme = new GUIScheme(url);
+      dialogScheme.load(function(error) {
+        if ( error ) {
+          console.warn('OSjs.GUI.initDialogScheme()', 'error loading dialog schemes', error);
+        }
+        cb();
+      });
+    });
+  }
+}
+
+export default (new DialogScheme());

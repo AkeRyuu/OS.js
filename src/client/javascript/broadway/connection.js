@@ -30,15 +30,11 @@
 import DialogWindow from 'core/dialog';
 import BroadwayWindow from 'broadway/window';
 import Broadway from 'broadway/broadway';
-import Assets from 'core/assets';
-import Main from 'core/main';
-import GUI from 'utils/gui';
+import WindowManager from 'core/windowmanager';
+import * as Assets from 'core/assets';
+import * as Main from 'core/main';
+import * as GUI from 'utils/gui';
 import {getConfig} from 'core/config';
-
-/**
- * @namespace Broadway
- * @memberof OSjs
- */
 
 let _connected = false;
 let _ws = null;
@@ -64,7 +60,7 @@ function createURL(cfg) {
  * Get window
  */
 function actionOnWindow(id, cb) {
-  const wm = require('core/windowmanager.js').instance;
+  const wm = WindowManager.instance;
   if ( wm ) {
     const win = wm.getWindow('BroadwayWindow' + String(id));
     if ( win ) {
@@ -78,7 +74,7 @@ function actionOnWindow(id, cb) {
  * Removes the notification icon
  */
 function removeNotification() {
-  const wm = require('core/windowmanager.js').instance;
+  const wm = WindowManager.instance;
   if ( wm ) {
     wm.removeNotificationIcon('BroadwayService');
   }
@@ -88,7 +84,7 @@ function removeNotification() {
  * Updates notification icon based on state(s)
  */
 function updateNotification() {
-  const wm = require('core/windowmanager.js').instance;
+  const wm = WindowManager.instance;
   if ( wm ) {
     const n = wm.getNotificationIcon('BroadwayService');
     if ( n ) {
@@ -101,7 +97,7 @@ function updateNotification() {
  * Creates the notification icon
  */
 function createNotification() {
-  const wm = require('core/windowmanager.js').instance;
+  const wm = WindowManager.instance;
   const conf = getConfig('Broadway');
 
   function displayMenu(ev) {
@@ -179,7 +175,7 @@ const onResize = (function() {
   let wm;
   return function() {
     if ( !wm ) {
-      wm = require('core/windowmanager.js').instance;
+      wm = WindowManager.instance;
     }
 
     if ( wm ) {
@@ -202,9 +198,6 @@ const onResize = (function() {
 
 /**
  * Initializes Broadway
- *
- * @function init
- * @memberof OSjs.Broadway.Connection
  */
 function init() {
   createNotification();
@@ -212,9 +205,6 @@ function init() {
 
 /**
  * Disconnects the Broadway connections
- *
- * @function disconnect
- * @memberof OSjs.Broadway.Connection
  */
 function disconnect() {
   _connected = false;
@@ -230,7 +220,7 @@ function disconnect() {
     console.warn(e);
   }
 
-  const wm = require('core/windowmanager.js').instance;
+  const wm = WindowManager.instance;
   if ( wm ) {
     wm.getWindows().forEach(function(w) {
       if ( w && w instanceof BroadwayWindow ) {
@@ -246,9 +236,6 @@ function disconnect() {
 
 /**
  * Creates new Broadway connections
- *
- * @function connect
- * @memberof OSjs.Broadway.Connection
  */
 function connect() {
   if ( _connected || _ws ) {
@@ -277,9 +264,6 @@ function connect() {
  * Spawns a new process on the Broadway server
  *
  * @param {String}  cmd     Command
- *
- * @function spawn
- * @memberof OSjs.Broadway.Connection
  */
 function spawn(cmd) {
   if ( !_connected || !_ws ) {
@@ -335,7 +319,7 @@ export default {
 
     onMoveSurface: function(id, has_pos, has_size, surface) {
       return actionOnWindow(id, function(win) {
-        const wm = require('core/windowmanager.js').instance;
+        const wm = WindowManager.instance;
         const space = wm.getWindowSpace();
 
         if ( has_pos ) {
@@ -349,7 +333,7 @@ export default {
     },
 
     onCreateSurface: function(id, surface) {
-      const wm = require('core/windowmanager.js').instance;
+      const wm = WindowManager.instance;
       if ( !surface.isTemp ) {
         const win = new BroadwayWindow(id, surface.x, surface.y, surface.width, surface.height, surface.canvas, Broadway);
         wm.addWindow(win, true);

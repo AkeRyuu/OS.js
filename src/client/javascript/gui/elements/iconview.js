@@ -81,10 +81,6 @@ function initEntry(cls, cel) {
  *      icon: "Optional icon path",
  *      value: "something or JSON or whatever"
  *   }])
- *
- * @constructor IconView
- * @extends OSjs.GUI.DataView
- * @memberof OSjs.GUI.Elements
  */
 class GUIIconView extends GUIDataView {
 
