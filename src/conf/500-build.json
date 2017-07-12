@@ -1,38 +1,56 @@
 {
   "build": {
-    "dist": {
-      "template": "default"
-    },
-    "statics": {
-      "src/client/dialogs.html": "dist/dialogs.html",
-      "?src/templates/misc/vfs/home/.desktop/.shortcuts.json": "vfs/home/demo/.desktop/.shortcuts.json"
-    },
-    "javascript": "src/client/javascript/boot.js",
-    "locales": [
-      "src/client/javascript/locales/en_EN.js",
-      "src/client/javascript/locales/bg_BG.js",
-      "src/client/javascript/locales/no_NO.js",
-      "src/client/javascript/locales/de_DE.js",
-      "src/client/javascript/locales/es_ES.js",
-      "src/client/javascript/locales/fr_FR.js",
-      "src/client/javascript/locales/ru_RU.js",
-      "src/client/javascript/locales/ko_KR.js",
-      "src/client/javascript/locales/zh_CN.js",
-      "src/client/javascript/locales/nl_NL.js",
-      "src/client/javascript/locales/pl_PL.js",
-      "src/client/javascript/locales/pt_BR.js",
-      "src/client/javascript/locales/sk_SK.js",
-      "src/client/javascript/locales/vi_VN.js",
-      "src/client/javascript/locales/tr_TR.js",
-      "src/client/javascript/locales/it_IT.js",
-      "src/client/javascript/locales/fa_FA.js",
-      "src/client/javascript/locales/ar_DZ.js"
+    "template": "default",
+    "static": [
+      "src/client/dialogs.html",
+      "src/templates/dist/%build.template%/api.php",
+      "src/templates/dist/%build.template%/blank.css",
+      "src/templates/dist/windows-live-oauth.html",
+      "src/templates/dist/dropbox-oauth.html"
     ],
-    "stylesheets": [
-      "src/client/stylesheets/core.css",
-      "src/client/stylesheets/gui.css",
-      "dev:src/client/stylesheets/debug.css"
-    ],
+    "webpack": {
+      "output": {
+        "publicPath": "/",
+        "path": "%ROOT%/dist"
+      },
+      "resolve": {
+        "modules": [
+          "%ROOT%/src/client/javascript",
+          "%ROOT%/node_modules"
+        ]
+      },
+      "entry": {
+        "vendor": [
+          "node_modules/zlibjs/bin/rawinflate.min.js"
+        ],
+        "osjs": [
+          "src/client/javascript/boot.js",
+          "src/client/stylesheets/core.css",
+          "src/client/stylesheets/gui.css",
+          "dev:src/client/stylesheets/debug.css"
+        ],
+        "locales": [
+          "src/client/javascript/locales/en_EN.js",
+          "src/client/javascript/locales/bg_BG.js",
+          "src/client/javascript/locales/no_NO.js",
+          "src/client/javascript/locales/de_DE.js",
+          "src/client/javascript/locales/es_ES.js",
+          "src/client/javascript/locales/fr_FR.js",
+          "src/client/javascript/locales/ru_RU.js",
+          "src/client/javascript/locales/ko_KR.js",
+          "src/client/javascript/locales/zh_CN.js",
+          "src/client/javascript/locales/nl_NL.js",
+          "src/client/javascript/locales/pl_PL.js",
+          "src/client/javascript/locales/pt_BR.js",
+          "src/client/javascript/locales/sk_SK.js",
+          "src/client/javascript/locales/vi_VN.js",
+          "src/client/javascript/locales/tr_TR.js",
+          "src/client/javascript/locales/it_IT.js",
+          "src/client/javascript/locales/fa_FA.js",
+          "src/client/javascript/locales/ar_DZ.js"
+        ]
+      }
+    },
     "overlays": {
     }
   }

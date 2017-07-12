@@ -67,7 +67,7 @@ function DropboxVFS() {
     if ( !href.match(/\/$/) ) {
       href += '/';
     }
-    href += 'vendor/dropboxOauthReceiver.html';
+    href += 'vendor/dropbox-oauth.html';
 
     let authDriver = new window.Dropbox.AuthDriver.Popup({
       receiverUrl: href

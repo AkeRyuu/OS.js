@@ -27,16 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-// TODO: Overlays
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const path = require('path');
-const osjs = require('./src/build/index.js');
+const osjs = require('osjs-build');
 
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBALS
@@ -48,35 +45,13 @@ const debug = process.env.OSJS_DEBUG ===  'true';
 // HELPERS
 ///////////////////////////////////////////////////////////////////////////////
 
-const getAbsolute = (iter) => path.join(__dirname, iter.replace(/^(dev|prod):/, ''));
-const getTemplateFile = (filename) => path.join(__dirname, 'src/templates/dist', 'default', filename);
+const fixPath = (iter) => iter.replace(/^(dev|prod):/, '');
+const getAbsolute = (filename) => path.resolve(__dirname, filename);
+const getTemplateFile = (tpl, filename) => path.join(__dirname, 'src/templates/dist', tpl || 'default', filename);
 const getThemePath = (type) => path.join(__dirname, 'src/client/themes', type);
 const getThemeFile = (type, name) => path.join(__dirname, 'src/client/themes', type, name);
 const getStyleFile = (name) => path.join(__dirname, 'src/client/themes/styles', name, 'style.less');
 const getFontFile = (font) => path.join(__dirname, 'src/client/themes/fonts', font, 'style.css');
-
-function getBuildFiles(opts) {
-  const merges = Object.assign({
-    javascripts: [],
-    stylesheets: [],
-    locales: []
-  }, opts);
-
-  if ( opts.overlays ) {
-    Object.keys(opts.overlays).forEach((k) => {
-      const a = opts.overlays[k];
-      if ( a ) {
-        Object.keys(merges).forEach((m) => {
-          if ( a[m] instanceof Array ) {
-            merges[m] = merges[m].concat(a[m]);
-          }
-        });
-      }
-    });
-  }
-
-  return merges;
-}
 
 function getFiltered(i) {
   if ( i.match(/^dev:/) && !debug ) {
@@ -86,23 +61,6 @@ function getFiltered(i) {
     return false;
   }
   return true;
-}
-
-function getCoreFiles(cfg) {
-  const bf = getBuildFiles(cfg.build);
-
-  let files = [];
-  files = files.concat([getAbsolute(bf.javascript)]);
-  files = files.concat(bf.stylesheets.filter(getFiltered).map((n) => getAbsolute(n)));
-
-  return files;
-}
-
-function getLocaleFiles(cfg) {
-  const bf = getBuildFiles(cfg.build);
-  const files = bf.locales.filter(getFiltered).map(getAbsolute);
-
-  return files;
 }
 
 function getThemeFiles(cfg) {
@@ -115,33 +73,36 @@ function getThemeFiles(cfg) {
 
 function getStaticFiles(cfg) {
   let files = [
-    {from: getAbsolute('src/client/dialogs.html')},
-    {from: getTemplateFile('api.php')},
-    {from: getTemplateFile('blank.css')},
     {
-      context: getThemePath('wallpapers'),
+      context: getAbsolute(getThemePath('wallpapers')),
       from: '*',
       to: 'themes/wallpapers'
     }
   ];
 
+  files = files.concat(cfg.build.static.filter(getFiltered).map((i) => {
+    return {
+      from: getAbsolute(fixPath(i))
+    };
+  }));
+
   files = files.concat(cfg.themes.styles.map((i) => {
     return {
-      from: path.join(getThemeFile('styles', i), 'theme.js'),
+      from: getAbsolute(path.join(getThemeFile('styles', i), 'theme.js')),
       to: 'themes/styles/' + i
     };
   }));
 
   files = files.concat(cfg.themes.icons.map((i) => {
     return {
-      from: getThemeFile('icons', i),
+      from: getAbsolute(getThemeFile('icons', i)),
       to: 'themes/icons/' + i
     };
   }));
 
   files = files.concat(cfg.themes.sounds.map((i) => {
     return {
-      from: getThemeFile('sounds', i),
+      from: getAbsolute(getThemeFile('sounds', i)),
       to: 'themes/sounds/' + i
     };
   }));
@@ -154,33 +115,31 @@ function getStaticFiles(cfg) {
 ///////////////////////////////////////////////////////////////////////////////
 
 module.exports = new Promise((resolve, reject) => {
-  osjs.webpack.createConfiguration().then((result) => {
+  osjs.webpack.createConfiguration({
+    exclude: /node_modules\/(?![axios|bluebird|simplejsonconf])/
+  }).then((result) => {
     let {cfg, webpack, options} = result;
 
     if ( options.verbose ) {
       console.log('Build options', JSON.stringify(options));
     }
 
-    //let CircularDependencyPlugin = require('circular-dependency-plugin');
-
     if ( options.assets !== false ) {
       webpack.plugins = webpack.plugins.concat([
-        /*new CircularDependencyPlugin({
-          exclude: /node_modules/,
-          failOnError: false
-        }),*/
         new HtmlWebpackPlugin({
-          template: getTemplateFile('index.ejs'),
+          template: getTemplateFile(cfg.build.template, 'index.ejs'),
           osjs: {
             scripts: [
-              'settings.js'
+              'settings.js',
+              'vendor.js'
             ],
             styles: [
+              'vendor.css'
             ]
           }
         }),
 
-        new FaviconsWebpackPlugin(getTemplateFile('favicon.png')),
+        new FaviconsWebpackPlugin(getTemplateFile(cfg.build.template, 'favicon.png')),
 
         new CopyWebpackPlugin(getStaticFiles(cfg), {
           ignore: [
@@ -195,22 +154,17 @@ module.exports = new Promise((resolve, reject) => {
       loader: 'file-loader?name=themes/fonts/[name].[ext]'
     });
 
-    resolve(osjs.utils.mergeObject(webpack, {
-      resolve: {
-        modules: [
-          path.join(__dirname, 'src/client/javascript'),
-          path.join(__dirname, 'node_modules')
-        ]
-      },
-      entry: {
-        locales: getLocaleFiles(cfg),
-        osjs: getCoreFiles(cfg),
-        themes: getThemeFiles(cfg)
-      },
-      output: {
-        publicPath: '/',
-        path: getAbsolute('dist')
-      }
-    }));
+    const webpackConfig = Object.assign({}, cfg.build.webpack);
+    webpackConfig.entry.themes = getThemeFiles(cfg);
+
+    Object.keys(webpackConfig.entry).forEach((k) => {
+      webpackConfig.entry[k] = webpackConfig.entry[k]
+        .filter(getFiltered)
+        .map(fixPath)
+        .map(getAbsolute);
+    });
+
+    const finalConfig = osjs.utils.mergeObject(webpack, webpackConfig);
+    resolve(finalConfig);
   }).catch(reject);
 });

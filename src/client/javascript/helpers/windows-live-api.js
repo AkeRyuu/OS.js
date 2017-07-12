@@ -34,7 +34,7 @@ import {preload} from 'utils/preloader';
 import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 
-const redirectURI = window.location.href.replace(/\/$/, '') + '/vendor/wlOauthReceiver.html';
+const redirectURI = window.location.href.replace(/\/$/, '') + '/vendor/windows-live-oauth.html';
 
 /////////////////////////////////////////////////////////////////////////////
 // API

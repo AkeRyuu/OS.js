@@ -166,7 +166,10 @@ function parseOptions(inp) {
     debug: debugMode,
     minimize: !debugMode,
     sourcemaps: true,
-    devtool: 'cheap-source-map'
+    devtool: 'cheap-source-map',
+    exclude: /(node_modules|bower_components)/,
+    outputSourceMap: '[file].map',
+    outputFileName: '[name].js'
   }, env, inp);
 
   // Our values does not come back identical :/
@@ -231,8 +234,8 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
         },
 
         output: {
-          sourceMapFilename: '[file].map',
-          filename: '[name].js'
+          sourceMapFilename: options.outputSourceMap,
+          filename: options.outputFileName
         },
 
         module: {
@@ -247,10 +250,11 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
             },
             {
               test: /\.js$/,
-              exclude: /(node_modules|bower_components)/,
+              exclude: options.exclude,
               use: {
                 loader: 'babel-loader',
                 options: {
+                  'presets': ['es2015'],
                   cacheDirectory: true,
                   plugins: [
                   ]
