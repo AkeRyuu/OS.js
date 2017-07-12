@@ -27,8 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-/*eslint strict:["error", "global"]*/
-'use strict';
 
 const _vfs = require('./../../core/vfs.js');
 const _http = require('./../../core/http.js');

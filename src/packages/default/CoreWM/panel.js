@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 (function(WindowManager, Window, GUI, Utils, API, VFS) {
-  'use strict';
 
   /////////////////////////////////////////////////////////////////////////////
   // PANEL ITEM DIALOG

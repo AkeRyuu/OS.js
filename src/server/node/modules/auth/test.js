@@ -27,8 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-/*eslint strict:["error", "global"]*/
-'use strict';
 
 module.exports.login = function(http, data) {
   return new Promise((resolve, reject) => {

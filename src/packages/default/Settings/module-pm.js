@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 (function(Application, Window, Utils, API, PM, GUI, VFS) {
-  'use strict';
 
   var list, hidden;
 

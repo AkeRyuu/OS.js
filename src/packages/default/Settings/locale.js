@@ -28,8 +28,6 @@
  * @licence Simplified BSD License
  */
 // jscs:disable validateQuoteMarks
-'use strict';
-
 const {API} = OSjs;
 
 const _Locales = {

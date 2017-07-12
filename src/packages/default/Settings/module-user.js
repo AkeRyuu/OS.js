@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 (function(Application, Window, Utils, API, User, GUI) {
-  'use strict';
 
   /////////////////////////////////////////////////////////////////////////////
   // MODULE

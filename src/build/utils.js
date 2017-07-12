@@ -27,7 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 const qs = require('querystring');
 const path = require('path');

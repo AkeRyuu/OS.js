@@ -32,7 +32,6 @@
  */
 
 /*eslint key-spacing: "off"*/
-'use strict';
 
 module.exports = {
   //

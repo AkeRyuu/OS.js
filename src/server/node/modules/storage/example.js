@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/*eslint strict:["error", "global"]*/
-'use strict';
-
 /**
  * Sets user settings
  *

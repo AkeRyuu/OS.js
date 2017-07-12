@@ -32,8 +32,6 @@ const _ = require('./locale.js');
 
 /*eslint valid-jsdoc: "off"*/
 (function(Application, Window, Utils, API, VFS, GUI) {
-  'use strict';
-
   var DEFAULT_GROUP = 'misc';
 
   var _groups = {

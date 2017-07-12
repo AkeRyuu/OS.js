@@ -28,7 +28,6 @@
  * @licence Simplified BSD License
  */
 // jscs:disable validateQuoteMarks
-'use strict';
 
 const {__} = require('core/locales.js');
 

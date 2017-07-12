@@ -27,8 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-/*eslint strict:["error", "global"]*/
-'use strict';
 
 const _logger = require('./../../lib/logger.js');
 const _spawn = require('child_process').spawn;

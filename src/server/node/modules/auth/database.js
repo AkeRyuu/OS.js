@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/*eslint strict:["error", "global"]*/
-'use strict';
-
 const _bcrypt = require('bcrypt');
 const _db = require('./../../lib/database.js');
 const _logger = require('./../../lib/logger.js');

@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/*eslint eqeqeq: "off"*/
-'use strict';
-
 const {Utils, GUI} = OSjs;
 const {Window, Application} = OSjs.Core;
 
@@ -144,7 +141,7 @@ class ApplicationCalculatorWindow extends Window {
   operation(val) {
     var self = this;
 
-    if (this.temp == '' && ['plus', 'minus', 'multiply', 'divide'].indexOf(val) !== -1) {
+    if (this.temp === '' && ['plus', 'minus', 'multiply', 'divide'].indexOf(val) !== -1) {
       this.temp = this._find('Output').get('value');
     }
 

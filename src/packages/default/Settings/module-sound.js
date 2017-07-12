@@ -32,7 +32,6 @@
 const _ = require('./locale.js');
 
 (function(Application, Window, Utils, API, VFS, GUI) {
-  'use strict';
 
   var sounds = {};
 

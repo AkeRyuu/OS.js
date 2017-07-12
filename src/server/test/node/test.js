@@ -555,7 +555,7 @@
         });
 
         it('should return 200 on success', function(done) {
-          get(url + '/packages/default/Calculator/_app.min.js', function(err, res, body) {
+          get(url + '/packages/default/Calculator/main.js', function(err, res, body) {
             assert.equal(200, res.statusCode);
             done();
           });

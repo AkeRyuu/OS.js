@@ -1,5 +1,3 @@
-/*eslint strict:["error", "global"]*/
-'use strict';
 
 const _request = require('request');
 

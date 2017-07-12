@@ -1,5 +1,3 @@
-/*eslint strict:["error", "global"]*/
-'use strict';
 
 /*!
  * OS.js - JavaScript Cloud/Web Desktop Platform

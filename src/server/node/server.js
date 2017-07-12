@@ -27,8 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-/*eslint strict:["error", "global"]*/
-'use strict';
 
 var ver = process.version.substr(1).split(/\./g);
 if ( parseInt(ver[0], 10) < 4 ) {

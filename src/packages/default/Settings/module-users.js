@@ -32,7 +32,6 @@
 const _ = require('./locale.js');
 
 (function(Application, Window, Utils, API, User, GUI) {
-  'use strict';
 
   function renderUsers(win, scheme) {
     API.call('users', {command: 'list'}, function(err, users) {

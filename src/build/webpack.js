@@ -27,9 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
-
-// TODO: Keep special comments in output
 
 const Webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');

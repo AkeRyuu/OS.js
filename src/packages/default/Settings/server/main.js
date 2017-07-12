@@ -29,17 +29,12 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-(function() {
-  'use strict';
+module.exports.api = {
+  test: function(env, http, resolve, reject, args) {
+    resolve('test');
+  }
+};
 
-  module.exports.api = {
-    test: function(env, http, resolve, reject, args) {
-      resolve('test');
-    }
-  };
-
-  module.exports.register = function(env, metadata, servers) {
-  };
-
-})();
+module.exports.register = function(env, metadata, servers) {
+};
 

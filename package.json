@@ -60,7 +60,7 @@
     "clean-webpack-plugin": "^0.1.16",
     "copy-webpack-plugin": "^4.0.1",
     "css-loader": "^0.28.4",
-    "extract-text-webpack-plugin": "^2.1.2",
+    "extract-text-webpack-plugin": "^3.0.0",
     "favicons-webpack-plugin": "0.0.7",
     "file-loader": "^0.11.2",
     "grunt": ">=1.0.1",
@@ -73,10 +73,10 @@
     "html-webpack-plugin": "^2.29.0",
     "less": "^2.7.2",
     "less-loader": "^4.0.4",
+    "osjs-build": "file:./src/build",
     "promise-limit": "^2.4.0",
     "style-loader": "^0.18.2",
     "then-jsonp": "^1.0.3",
-    "webpack": "^3.1.0",
-    "osjs-build": "file:./src/build"
+    "webpack": "^3.1.0"
   }
 }

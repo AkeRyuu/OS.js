@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 (function(CoreWM, Panel, PanelItem, Utils, API, GUI, VFS) {
-  'use strict';
 
   /////////////////////////////////////////////////////////////////////////////
   // ITEM

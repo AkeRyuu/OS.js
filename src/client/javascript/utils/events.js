@@ -176,8 +176,8 @@ export const keyCombination = (function() {
       const fk = !!modifiers[f](ev);
       return checkMods[f] === fk;
     }) && checkKeys.every((f) => {
-        return getKeyName(ev.keyCode) === f;
-      });
+      return getKeyName(ev.keyCode) === f;
+    });
   };
 })();
 

@@ -29,7 +29,6 @@
  */
 
 // jscs:disable validateQuoteMarks
-'use strict';
 
 const {API} = OSjs;
 

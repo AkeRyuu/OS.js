@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 (function(WindowManager, GUI, Utils, API, VFS) {
-  'use strict';
 
   var PADDING_PANEL_AUTOHIDE = 10; // FIXME: Replace with a constant ?!
 

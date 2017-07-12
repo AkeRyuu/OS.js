@@ -38,39 +38,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-csslint');
   grunt.loadNpmTasks('grunt-contrib-validate-xml');
 
-  grunt.registerTask('testBuild', 'Tests the build', function() {
-    var files = [
-      'src/server/settings.json',
-      'src/server/packages.json',
-      'dist/themes/fonts.min.css',
-      'dist/themes/styles/default.min.css',
-      'dist/themes/sounds/default/message.mp3',
-      'dist/themes/sounds/default/message.oga',
-      'dist/themes/icons/default/metadata.json',
-      'dist/packages/default/CoreWM/_app.min.js',
-      'dist/packages/default/CoreWM/_app.min.css',
-      'dist/index.html',
-      'dist/favicon.ico',
-      'dist/dialogs.html',
-      'dist/locales.min.js',
-      'dist/osjs.min.js',
-      'dist/osjs.min.css',
-      'dist/settings.js',
-      'dist/splash.png'
-    ];
-
-    var result = files.every(function(filename) {
-      if ( !grunt.file.exists(filename) ) {
-        grunt.log.error('Missing file from build: ' + filename);
-        return false;
-      }
-      return true;
-    });
-
-    return result;
-  });
-
-  grunt.registerTask('test', ['eslint', 'csslint', 'validate_xml', 'mochaTest'/*, 'mocha'*/, 'testBuild']);
+  grunt.registerTask('test', ['eslint', 'csslint', 'validate_xml', 'mochaTest'/*, 'mocha'*/]);
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),

@@ -29,8 +29,6 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-'use strict';
-
 const {API} = OSjs;
 const {Window, Application} = OSjs.Core;
 

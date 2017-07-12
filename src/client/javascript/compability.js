@@ -1,3 +1,4 @@
+/* eslint new-cap:"off" */
 module.exports = function() {
   /**
    * @namespace Bootstrap

@@ -28,7 +28,6 @@
  * @licence Simplified BSD License
  */
 /*eslint key-spacing: "off"*/
-'use strict';
 
 module.exports = {
   'ERR_FILE_OPEN'     : 'Fehler beim Öffnen der Datei',

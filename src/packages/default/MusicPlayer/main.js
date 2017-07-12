@@ -29,7 +29,6 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-'use strict';
 // TODO: Playlist
 // TODO: Server seek support: https://gist.github.com/codler/3906826
 

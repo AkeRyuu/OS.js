@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 (function(WindowManager, Window, GUI, Utils, API, VFS) {
-  'use strict';
 
   function _createIcon(aiter, aname, arg) {
     return API.getIcon(aiter.icon, arg, aiter.className);

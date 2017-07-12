@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 (function(CoreWM, Panel, PanelItem, PanelItemDialog, Utils, API, VFS, GUI, Window) {
-  'use strict';
 
   /////////////////////////////////////////////////////////////////////////////
   // Search Settings Dialog

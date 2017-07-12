@@ -29,8 +29,6 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-'use strict';
-
 const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
 
 /////////////////////////////////////////////////////////////////////////////

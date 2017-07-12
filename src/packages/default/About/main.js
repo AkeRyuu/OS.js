@@ -27,8 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-/*eslint valid-jsdoc: "off"*/
-'use strict';
 
 const {Window, Application} = OSjs.Core;
 

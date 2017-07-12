@@ -29,7 +29,6 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-'use strict';
 
 const {API, VFS, GUI, Utils} = OSjs;
 const {Window, Application} = OSjs.Core;

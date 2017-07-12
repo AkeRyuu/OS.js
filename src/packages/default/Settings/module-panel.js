@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 (function(Application, Window, Utils, API, Panel, GUI) {
-  'use strict';
 
   var panelItems = [];
   var items = [];

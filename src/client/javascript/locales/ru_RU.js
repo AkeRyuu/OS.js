@@ -29,7 +29,6 @@
  */
 
 /*eslint key-spacing: "off"*/
-'use strict';
 
 module.exports = {
   'ERR_FILE_OPEN'             : 'Ошибка открытия файла',

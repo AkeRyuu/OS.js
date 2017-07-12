@@ -1,5 +1,3 @@
-'use strict';
-
 const path = require('path');
 const osjs = require('osjs-build');
 

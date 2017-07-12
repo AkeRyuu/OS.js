@@ -29,7 +29,6 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-'use strict';
 
 const {API, GUI, VFS, Utils} = OSjs;
 const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
