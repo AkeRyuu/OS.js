@@ -8,10 +8,10 @@
  * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *    list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ *    and/or other materials provided with the distribution
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,168 +27,79 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import * as FS from 'utils/fs';
-import {_} from 'core/locales';
-import {getConfig} from 'core/config';
+import Promise from 'bluebird';
 import FileMetadata from 'vfs/file';
+import FS from 'utils/fs';
 import Connection from 'core/connection';
+import Transport from 'vfs/transport';
+import {getConfig} from 'core/config';
+import {_} from 'core/locales';
 
-/////////////////////////////////////////////////////////////////////////////
-// WRAPPERS
-/////////////////////////////////////////////////////////////////////////////
+export default class OSjsTransport extends Transport {
 
-/**
- * Make a OS.js Server HTTP URL for VFS
- *
- * @param   {(String|OSjs.VFS.File)}    item        VFS File
- * @param   {Object}                    [options]   Options
- *
- * @return  {String}                  URL based on input
- */
-function makePath(item, options) {
-  if ( typeof item === 'string' ) {
-    item = new FileMetadata(item);
-  }
-  return Connection.instance.getVFSPath(item, options);
-}
-
-/**
- * Perform default VFS call via backend
- *
- * @param {String}    name      Request method name
- * @param {Object}    args      Request arguments
- * @param {Function}  callback  Callback function
- */
-function internalRequest(name, args, callback) {
-  Connection.request('FS:' + name, args, (err, res) => {
-    if ( !err && typeof res === 'undefined' ) {
-      err = _('ERR_VFS_FATAL');
-    }
-    callback(err, res);
-  });
-}
-
-/**
- * Wrapper for internal file uploads
- *
- * @param   {Object}        file        Upload object
- * @param   {Object}        dest        Destination file info (VFS Object if possible)
- * @param   {Function}      callback    Callback function
- * @param   {Object}        options     Options
- * @param   {OSjs.VFS.File} [vfsfile]   Optional file metadata
- */
-function internalUpload(file, dest, callback, options, vfsfile) {
-  options = options || {};
-
-  if ( dest instanceof FileMetadata ) {
-    dest = dest.path;
-  }
-
-  if ( typeof file.size !== 'undefined' ) {
-    const maxSize = getConfig('VFS.MaxUploadSize');
-    if ( maxSize > 0 ) {
-      const bytes = file.size;
-      if ( bytes > maxSize ) {
-        const msg = _('DIALOG_UPLOAD_TOO_BIG_FMT', FS.humanFileSize(maxSize));
-        callback('error', null, msg);
-        return;
-      }
-    }
-  }
-
-  const fd  = new FormData();
-  fd.append('path', dest);
-  if ( vfsfile ) {
-    fd.append('filename', vfsfile.filename);
-  }
-
-  if ( options ) {
-    Object.keys(options).forEach((key) => {
-      if ( key !== 'meta' && typeof options[key] !== 'function' ) {
-        fd.append(key, String(options[key]));
-      }
+  _request(method, args) {
+    return new Promise((resolve, reject) => {
+      Connection.request('FS:' + method, args, (err, res) => {
+        if ( !err && typeof res === 'undefined' ) {
+          err = _('ERR_VFS_FATAL');
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
     });
   }
 
-  if ( file instanceof window.ArrayBuffer ) {
-    fd.append('size', String(file.byteLength));
-  }
-
-  FS.addFormFile(fd, 'upload', file, options.meta);
-
-  Connection.request('FS:upload', fd, callback, null, options);
-}
-
-/**
- * Read a remote file with URL (CORS)
- *
- * This function basically does a cURL call and downloads
- * the data.
- *
- * @param   {String}          url             URL
- * @param   {String}          mime            MIME Type
- * @param   {Function}        callback        Callback function => fn(error, result)
- * @param   {Object}          options         Options
- * @param   {String}          [options.type]  What to return, default: binary. Can also be: text, datasource
- */
-function internalFetch(url, mime, callback, options) {
-  options = options || {};
-  options.type = options.type || 'binary';
-  mime = options.mime || 'application/octet-stream';
-
-  console.debug('VFS::Transports::OSjs::fetch()', url, mime);
-
-  if ( arguments.length < 1 ) {
-    throw new Error(_('ERR_VFS_NUM_ARGS'));
-  }
-
-  options = options || {};
-
-  Connection.request('curl', {
-    url: url,
-    binary: true,
-    mime: mime
-  }, (error, response) => {
-    if ( error ) {
-      callback(error);
-      return;
-    }
-
-    if ( !response.body ) {
-      callback(_('ERR_VFS_REMOTEREAD_EMPTY'));
-      return;
-    }
-
-    if ( options.type.toLowerCase() === 'datasource' ) {
-      callback(false, response.body);
-      return;
-    }
-
-    FS.dataSourceToAb(response.body, mime, (error, response) => {
-      if ( options.type === 'text' ) {
-        FS.abToText(response, mime, (error, text) => {
-          callback(error, text);
-        });
-        return;
-      }
-      callback(error, response);
-    });
-  });
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// API
-/////////////////////////////////////////////////////////////////////////////
-
-/*
- * Default VFS Transport Module
- *
- * All mountpoints without a spesified Transport module is routed through
- * here. This means the node/php server handles the request directly
- */
-const Transport = {
-  scandir: (item, callback, options) => {
+  _requestUpload(dest, file, options) {
     options = options || {};
+    dest = (dest instanceof FileMetadata) ? dest.path : dest;
+
+    if ( typeof file.size !== 'undefined' ) {
+      const maxSize = getConfig('VFS.MaxUploadSize');
+      if ( maxSize > 0 ) {
+        const bytes = file.size;
+        if ( bytes > maxSize ) {
+          const msg = _('DIALOG_UPLOAD_TOO_BIG_FMT', FS.humanFileSize(maxSize));
+          return Promise.reject(new Error(msg));
+        }
+      }
+    }
+
+    const fd  = new FormData();
+    fd.append('path', dest);
+    if ( file ) {
+      fd.append('filename', file.filename);
+    }
+
+    if ( options ) {
+      Object.keys(options).forEach((key) => {
+        if ( key !== 'meta' && typeof options[key] !== 'function' ) {
+          fd.append(key, String(options[key]));
+        }
+      });
+    }
+
+    if ( file instanceof window.ArrayBuffer ) {
+      fd.append('size', String(file.byteLength));
+    }
+
+    FS.addFormFile(fd, 'upload', file, options.meta);
+
+    return new Promise((resolve, reject) => {
+      Connection.request('FS:upload', fd, (err, res) => {
+        if ( err ) {
+          reject(err);
+        } else {
+
+          resolve(res);
+        }
+      }, null, options);
+    });
+  }
+
+  scandir(item, options) {
+    options = options || {};
+
     const args = {
       path: item.path,
       options: {
@@ -196,100 +107,99 @@ const Transport = {
       }
     };
 
-    internalRequest('scandir', args, (error, result) => {
-      const list = [];
-      if ( result ) {
-        result.forEach((iter) => {
-          list.push(new FileMetadata(iter));
-        });
-      }
-      callback(error, list);
+    return new Promise((resolve, reject) => {
+      this._request('scandir', args).then((result) => {
+        return resolve(result.map((i) => new FileMetadata(i)));
+      }).catch(reject);
     });
-  },
+  }
 
-  write: function(item, data, callback, options) {
+  read(item, options) {
+    return this._request('get', {path: item.path}, options);
+  }
+
+  write(file, data, options) {
     options = options || {};
-    options.meta = item;
+    options.meta = file;
     options.overwrite = true;
     options.onprogress = options.onprogress || function() {};
 
-    function _write(dataSource) {
-      const wopts = {path: item.path, data: dataSource};
-      internalRequest('write', wopts, callback, options);
-    }
-
+    // Backward compability
     if ( options.upload === false ) {
       if ( typeof data === 'string' && !data.length ) {
-        _write(data);
+        return this._request('write', {path: file.path, data: data}, options);
       } else {
-        FS.abToDataSource(data, item.mime, (error, dataSource) => {
-          if ( error ) {
-            callback(error);
-            return;
-          }
-
-          _write(dataSource);
+        return new Promise((resolve, reject) => {
+          FS.abToDataSource(data, file.mime, (error, dataSource) => {
+            if ( error ) {
+              reject(error);
+            } else {
+              this._request('write', {path: file.path, data: dataSource}, options)
+                .then(resolve).catch(reject);
+            }
+          });
         });
       }
-      return;
     }
 
-    const parentItem = new FileMetadata(FS.dirname(item.path), item.mime);
-    internalUpload(data, parentItem, () => {
-      callback(null, true);
-    }, options, item);
-  },
-
-  read: function(item, callback, options) {
-    internalRequest('get', {path: item.path}, callback, options);
-  },
-
-  copy: function(src, dest, callback) {
-    internalRequest('copy', {src: src.path, dest: dest.path}, callback);
-  },
-
-  move: function(src, dest, callback) {
-    internalRequest('move', {src: src.path, dest: dest.path}, callback);
-  },
-
-  unlink: function(item, callback) {
-    internalRequest('delete', {path: item.path}, callback);
-  },
-
-  mkdir: function(item, callback) {
-    internalRequest('mkdir', {path: item.path}, callback);
-  },
-
-  exists: function(item, callback) {
-    internalRequest('exists', {path: item.path}, callback);
-  },
-
-  fileinfo: function(item, callback) {
-    internalRequest('fileinfo', {path: item.path}, callback);
-  },
-
-  find: function(item, args, callback) {
-    internalRequest('find', {path: item.path, args: args}, callback);
-  },
-
-  url: function(item, callback, options) {
-    callback(false, makePath(item, options));
-  },
-
-  freeSpace: function(root, callback) {
-    internalRequest('freeSpace', {root: root}, callback);
+    const parentfile = new FileMetadata(FS.dirname(file.path), file.mime);
+    return this._requestUpload(parentfile, file, options);
   }
-};
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
+  unlink(src) {
+    return this._request('delete', {path: src.path});
+  }
 
-export default {
-  request: internalRequest,
-  upload: internalUpload,
-  fetch: internalFetch,
+  copy(src, dest) {
+    return this._request('copy', {src: src.path, dest: dest.path});
+  }
 
-  module: Transport,
-  path: makePath
-};
+  move(src, dest) {
+    return this._request('move', {src: src.path, dest: dest.path});
+  }
+
+  exists(item) {
+    return this._request('exists', {path: item.path});
+  }
+
+  fileinfo(item) {
+    return this._request('fileinfo', {path: item.path});
+  }
+
+  mkdir(dir) {
+    return this._request('mkdir', {path: dir.path});
+  }
+
+  upload(file, dest, options) {
+    return this._requestUpload(file, dest, options);
+  }
+
+  url(item, options) {
+    if ( typeof item === 'string' ) {
+      item = new FileMetadata(item);
+    }
+
+    return Promise.resolve(Connection.instance.getVFSPath(item, options));
+  }
+
+  find(file, options) {
+    return this._request('find', {path: file.path, args: options});
+  }
+
+  trash(file) {
+    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+  }
+
+  untrash(file) {
+    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+  }
+
+  emptyTrash() {
+    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+  }
+
+  freeSpace(root) {
+    return this._request('freeSpace', {root: root});
+  }
+
+}

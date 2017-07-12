@@ -110,129 +110,15 @@ const initHandlers = (config) => new Promise((resolve, reject) => {
  * @return {Promise}
  */
 const initVFS = (config) => new Promise((resolve, reject) => {
-
-  const ondone = () => {
-    const MountDropbox = require('vfs/mounts/dropbox.js');
-    const MountGoogleDrive = require('vfs/mounts/googledrive.js');
-    const MountLocalStorage = require('vfs/mounts/localstorage.js');
-    const MountOneDrive = require('vfs/mounts/onedrive.js');
-
-    /*
-     * A hidden mountpoint for making HTTP requests via VFS
-     */
-    MountManager._add({
-      readOnly: true,
-      name: 'HTTP',
-      transport: 'HTTP',
-      description: 'HTTP',
-      visible: false,
-      searchable: false,
-      unmount: function(cb) {
-        cb(false, false);
-      },
-      mounted: function() {
-        return true;
-      },
-      enabled: function() {
-        return true;
-      },
-      root: 'http:///',
-      icon: 'places/google-drive.png',
-      match: /^https?\:\/\//
-    });
-
-    /*
-     * This is the Dropbox VFS Abstraction for OS.js
-     */
-    MountManager._add({
-      readOnly: false,
-      name: 'Dropbox',
-      transport: 'Dropbox',
-      description: 'Dropbox',
-      visible: true,
-      searchable: false,
-      root: 'dropbox:///',
-      icon: 'places/dropbox.png',
-      match: /^dropbox\:\/\//,
-      mount: MountDropbox.default.mount,
-      mounted: MountDropbox.default.mounted,
-      enabled: MountDropbox.default.enabled,
-      unmount: MountDropbox.default.unmount,
-      request: MountDropbox.default.request
-    });
-
-    /*
-     * This is the Google Drive VFS Abstraction for OS.js
-     */
-    MountManager._add({
-      readOnly: false,
-      name: 'GoogleDrive',
-      transport: 'GoogleDrive',
-      description: 'Google Drive',
-      visible: true,
-      searchable: false,
-      root: 'google-drive:///',
-      icon: 'places/google-drive.png',
-      match: /^google-drive\:\/\//,
-      mount: MountGoogleDrive.default.mount,
-      mounted: MountGoogleDrive.default.mounted,
-      enabled: MountGoogleDrive.default.enabled,
-      unmount: MountGoogleDrive.default.unmount,
-      request: MountGoogleDrive.default.request
-    });
-
-    /*
-     * Browser LocalStorage VFS Module
-     *
-     * This is *experimental* at best. It involves making a real-ish filesystemwhich
-     * I don't have much experience in :P This is why it is disabled by default!
-     */
-    MountManager._add({
-      readOnly: false,
-      name: 'LocalStorage',
-      transport: 'LocalStorage',
-      description: getConfig('VFS.LocalStorage.Options.description', 'LocalStorage'),
-      visible: true,
-      searchable: false,
-      root: 'localstorage:///',
-      icon: getConfig('VFS.LocalStorage.Options.icon', 'apps/web-browser.png'),
-      match: /^localstorage\:\/\//,
-      mount: MountLocalStorage.default.mount,
-      mounted: MountLocalStorage.default.mounted,
-      enabled: MountLocalStorage.default.enabled,
-      unmount: MountLocalStorage.default.unmount,
-      request: MountLocalStorage.default.request
-    });
-
-    /*
-     * This is the Microsoft OneDrive VFS Abstraction for OS.js
-     */
-    MountManager._add({
-      readOnly: false,
-      name: 'OneDrive',
-      transport: 'OneDrive',
-      description: 'OneDrive',
-      visible: true,
-      searchable: false,
-      root: 'onedrive:///',
-      icon: 'places/onedrive.png',
-      match: /^onedrive\:\/\//,
-      mount: MountOneDrive.default.mount,
-      mounted: MountOneDrive.default.mounted,
-      enabled: MountOneDrive.default.enabled,
-      unmount: MountOneDrive.default.unmount,
-      request: MountOneDrive.default.request
-    });
-  };
+  const mountPoints = SettingsManager.instance('VFS').get('mounts', []);
 
   MountManager.init().then((res) => {
-
-    // FIXME: Catch errors
-    return MountManager.restore().then(() => {
-      ondone();
-
+    return MountManager.addList(mountPoints).then((res) => {
       return resolve(res);
-    }).catch(() => resolve());
+    }).catch((e) => {
+      console.warn('A module failed to load!', e);
+      resolve();
+    });
   }).catch(reject);
 });
 

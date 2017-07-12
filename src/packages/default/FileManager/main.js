@@ -398,8 +398,8 @@ class ApplicationFileManagerWindow extends Window {
     }
 
     OSjs.Core.getMountManager().getModules({special: true}).forEach(function(m, i) {
-      if ( path.match(m.module.match) ) {
-        found = m.module.root;
+      if ( path.match(m.option('match')) ) {
+        found = m.option('root');
       }
     });
 
@@ -414,26 +414,26 @@ class ApplicationFileManagerWindow extends Window {
 
     var sideViewItems = [];
     OSjs.Core.getMountManager().getModules({special: true}).forEach(function(m, i) {
-      if ( m.module.dynamic && !m.module.mounted() ) {
+      if ( m.option('dynamic') && !m.mounted() ) {
         return;
       }
 
-      var classNames = [m.module.mounted() ? 'mounted' : 'unmounted'];
-      if ( m.module.readOnly ) {
+      var classNames = [m.mounted() ? 'mounted' : 'unmounted'];
+      if ( m.isReadOnly() ) {
         classNames.push('readonly gui-has-emblem');
       }
 
       sideViewItems.push({
-        value: m.module,
+        value: m.options,
         className: classNames.join(' '),
         columns: [
           {
-            label: m.module.description,
-            icon: API.getIcon(m.module.icon)
+            label: m.option('description'),
+            icon: API.getIcon(m.option('icon'))
           }
         ],
         onCreated: function(nel) {
-          if ( m.module.readOnly ) {
+          if ( m.isReadOnly() ) {
             nel.style.backgroundImage = 'url(' + API.getIcon('emblems/emblem-readonly.png', '16x16') + ')';
           }
         }

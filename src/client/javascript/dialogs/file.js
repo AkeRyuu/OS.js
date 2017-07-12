@@ -243,7 +243,7 @@ export default class FileDialog extends DialogWindow {
 
         this.args.mfilter.forEach((fn) => {
           if ( !success ) {
-            success = fn(m);
+            success = fn({name: m.name, module: m.options});
           }
         });
 
@@ -252,8 +252,8 @@ export default class FileDialog extends DialogWindow {
       return true;
     }).map((m) => {
       return {
-        label: m.name + (m.module.readOnly ? Utils.format(' ({0})', _('LBL_READONLY')) : ''),
-        value: m.module.root
+        label: m.option('title') + (m.isReadOnly() ? Utils.format(' ({0})', _('LBL_READONLY')) : ''),
+        value: m.option('root')
       };
     });
 

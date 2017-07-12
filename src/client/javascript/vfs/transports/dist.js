@@ -8,10 +8,10 @@
  * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *    list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ *    and/or other materials provided with the distribution
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,46 +27,28 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import {getBrowserPath} from 'core/config';
+import Promise from 'bluebird';
+import OSjsTransport from 'vfs/transports/osjs';
 import MountManager from 'core/mount-manager';
-import BaseTransport from 'vfs/transports/osjs';
+import {getBrowserPath} from 'core/config';
+import {_} from 'core/locales';
 
-/////////////////////////////////////////////////////////////////////////////
-// API
-/////////////////////////////////////////////////////////////////////////////
+export default class DistTransport extends OSjsTransport {
 
-/*
- * OSjs 'dist' VFS Transport Module
- *
- * This is just a custom version of 'OSjs' module
- */
-const Transport = {
-  url: function(item, callback) {
+  request(method, args, options) {
+    if ( ['url', 'scandir', 'read'].indexOf(method) === -1 ) {
+      return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    }
+
+    return super.request(...arguments);
+  }
+
+  url(item) {
     const root = getBrowserPath();
-    const module = MountManager.getModuleFromPath(item.path, false, true);
-    const url = item.path.replace(module.match, root).replace(/^\/+/, '/');
+    const module = MountManager.getModuleFromPath(item.path);
+    const url = item.path.replace(module.option('match'), root).replace(/^\/+/, '/');
 
-    callback(false, url);
-  },
-
-  scandir: function() {
-    return BaseTransport.module.scandir.apply(this, arguments);
-  },
-
-  read: function() {
-    return BaseTransport.module.read.apply(this, arguments);
+    return Promise.resolve(url);
   }
-};
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-export default {
-  module: Transport,
-  defaults: function(opts) {
-    opts.readOnly = true;
-    opts.searchable = true;
-  }
-};
-
+}

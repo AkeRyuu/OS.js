@@ -523,14 +523,14 @@ export function openFile(file, args) {
 
       reject(new Error(_('ERR_APP_MIME_NOT_FOUND_FMT', file.mime)));
     } else if ( pack.length === 1 ) {
-      launch(pack[1]).then(resolve).catch(reject);
+      launch(pack[1], args).then(resolve).catch(reject);
     } else {
       Dialog.create('ApplicationChooser', {
         file: file,
         list: pack
       }, (ev, btn, result) => {
         if ( btn === 'ok' ) {
-          launch(result.name);
+          launch(result.name, args);
 
           SettingsManager.set('DefaultApplication', file.mime, result.useDefault ? result.name : null);
 

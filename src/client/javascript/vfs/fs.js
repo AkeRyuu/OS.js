@@ -27,17 +27,13 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-import axios from 'axios';
-
 import * as FS from 'utils/fs';
 import FileMetadata from 'vfs/file';
 import FileDataURL from 'vfs/filedataurl';
-import * as Main from 'core/main';
 import Process from 'core/process';
 import MountManager from 'core/mount-manager';
 import PackageManager from 'core/package-manager';
 import SettingsManager from 'core/settings-manager';
-import Connection from 'core/connection';
 import {_} from 'core/locales';
 
 /**
@@ -121,84 +117,6 @@ function noop(err, res) {
 }
 
 /*
- * Perform VFS request
- */
-function request(test, method, args, callback, options, appRef) {
-  const mm = MountManager;
-  const d = mm.getModuleFromPath(test, false);
-
-  if ( !d ) {
-    throw new Error(_('ERR_VFSMODULE_NOT_FOUND_FMT', test));
-  }
-  if ( typeof method !== 'string' ) {
-    throw new TypeError(_('ERR_ARGUMENT_FMT', 'VFS::' + method, 'method', 'String', typeof method));
-  }
-  if ( !(args instanceof Object) ) {
-    throw new TypeError(_('ERR_ARGUMENT_FMT', 'VFS::' + method, 'args', 'Object', typeof args));
-  }
-  if ( !(callback instanceof Function) ) {
-    throw new TypeError(_('ERR_ARGUMENT_FMT', 'VFS::' + method, 'callback', 'Function', typeof callback));
-  }
-  if ( options && !(options instanceof Object) ) {
-    throw new TypeError(_('ERR_ARGUMENT_FMT', 'VFS::' + method, 'options', 'Object', typeof options));
-  }
-
-  const conn = Connection.instance;
-  conn.onVFSRequest(d, method, args, function vfsRequestCallback(err, response) {
-    if ( arguments.length === 2 ) {
-      console.warn('VFS::request()', 'Core::onVFSRequest hijacked the VFS request');
-      callback(err, response);
-      return;
-    }
-
-    try {
-      mm.getModule(d).request(method, args, function(err, res) {
-        conn.onVFSRequestCompleted(d, method, args, err, res, function(e, r) {
-          if ( arguments.length === 2 ) {
-            console.warn('VFS::request()', 'Core::onVFSRequestCompleted hijacked the VFS request');
-            callback(e, r);
-            return;
-          } else {
-            callback(err, res);
-          }
-        }, appRef);
-      }, options);
-    } catch ( e ) {
-      const msg = _('ERR_VFSMODULE_EXCEPTION_FMT', e.toString());
-      callback(msg);
-      console.warn('VFS::request()', 'exception', e.stack, e);
-    }
-  });
-}
-
-/*
- * Just a helper function to reduce codesize by wrapping the general
- * request flow into one handy-dandy function.
- */
-function requestWrapper(args, errstr, callback, onfinished, options, appRef) {
-  function _finished(error, response) {
-    if ( error ) {
-      error = _(errstr, error);
-    }
-
-    if ( onfinished ) {
-      response = onfinished(error, response);
-    }
-    callback(error, response);
-  }
-
-  args.push(_finished);
-  args.push(options || {});
-  args.push(appRef);
-
-  try {
-    request.apply(null, args);
-  } catch ( e ) {
-    _finished(e);
-  }
-}
-
-/*
  * Check if given item has an aliased mount associated with it
  * and return the real path
  */
@@ -211,14 +129,6 @@ function hasAlias(item, retm) {
   }
 
   return false;
-}
-
-/*
- * Check if destination is readOnly
- */
-function isReadOnly(item) {
-  const m = MountManager.getModuleFromPath(item.path, false, true) || {};
-  return m.readOnly === true;
 }
 
 /*
@@ -241,13 +151,13 @@ function checkMetadataArgument(item, err, checkRo) {
     item.path = alias;
   }
 
-  const mm = MountManager;
-  if ( !mm.getModuleFromPath(item.path, false) ) {
+  const mountpoint = MountManager.getModuleFromPath(item.path);
+  if ( !mountpoint ) {
     throw new Error(_('ERR_VFSMODULE_NOT_FOUND_FMT', item.path));
   }
 
-  if ( checkRo && isReadOnly(item) ) {
-    throw new Error(_('ERR_VFSMODULE_READONLY_FMT', mm.getModuleFromPath(item.path)));
+  if ( checkRo && mountpoint.isReadOnly() ) {
+    throw new Error(_('ERR_VFSMODULE_READONLY_FMT', mountpoint.name));
   }
 
   return item;
@@ -258,15 +168,18 @@ function checkMetadataArgument(item, err, checkRo) {
  */
 function hasSameTransport(src, dest) {
   // Modules using the normal server API
-  const mm = MountManager;
-  if ( mm.isInternal(src.path) && mm.isInternal(dest.path) ) {
+  const msrc = MountManager.getModuleFromPath(src.path);
+  const mdst = MountManager.getModuleFromPath(dest.path);
+
+  if ( !msrc || !mdst || (msrc === mdst) ) {
     return true;
   }
 
-  const msrc = mm.getModuleFromPath(src.path, false, true) || {};
-  const mdst = mm.getModuleFromPath(dest.path, false, true) || {};
+  if ( (msrc && mdst) && (msrc.option('internal') && mdst.option('internal')) ) {
+    return true;
+  }
 
-  return (msrc.transport === mdst.transport) || (msrc.name === mdst.name);
+  return msrc.option('transport') === mdst.option('tranport');
 }
 
 /*
@@ -275,9 +188,9 @@ function hasSameTransport(src, dest) {
 function existsWrapper(item, callback, options) {
   options = options || {};
 
-  try {
-    if ( options.overwrite === true ) {
-      callback();
+  return new Promise((resolve, reject) => {
+    if ( options.overwrite ) {
+      resolve();
     } else {
       exists(item, function(error, result) {
         if ( error ) {
@@ -285,15 +198,13 @@ function existsWrapper(item, callback, options) {
         }
 
         if ( result ) {
-          callback(_('ERR_VFS_FILE_EXISTS'));
+          reject(new Error(_('ERR_VFS_FILE_EXISTS')));
         } else {
-          callback();
+          resolve();
         }
       });
     }
-  } catch ( e ) {
-    callback(e);
-  }
+  });
 }
 
 /*
@@ -365,16 +276,72 @@ function findAlias(item) {
 
   let found = null;
   mm.getModules().forEach(function(iter) {
-    if ( !found && iter.module.options && iter.module.options.alias ) {
-      const a = iter.module.options.alias;
+    if ( !found && iter.option('options').alias ) {
+      const a = iter.option('options').alias;
       if ( item.path.substr(0, a.length) === a ) {
-        found = iter.module;
+        found = iter;
       }
     }
   });
 
   return found;
 }
+
+function convertWriteData(data, mime) {
+  const convertTo = (m, d, resolve, reject) => {
+    FS[m](d, mime, function(error, response) {
+      if ( error ) {
+        reject(new Error(error));
+      } else {
+        resolve(response);
+      }
+    });
+  };
+
+  return new Promise((resolve, reject) => {
+    try {
+      if ( typeof data === 'string' ) {
+        if ( data.length ) {
+          return convertTo('textToAb', data, resolve, reject);
+        }
+      } else {
+        if ( data instanceof FileDataURL ) {
+          return convertTo('dataSourceToAb', data.toString(), resolve, reject);
+        } else if ( window.Blob && data instanceof window.Blob ) {
+          return convertTo('blobToAb', data, resolve, reject);
+        }
+      }
+    } catch ( e ) {
+      return reject(e);
+    }
+
+    return resolve(data);
+  });
+}
+
+function performRequest(method, args, options, test, appRef, errorStr, callback) {
+  const promise = new Promise((resolve, reject) => {
+    if ( options && !(options instanceof Object) ) {
+      reject(new TypeError(_('ERR_ARGUMENT_FMT', 'VFS::' + method, 'options', 'Object', typeof options)));
+      return;
+    }
+
+    const mountpoint = MountManager.getModuleFromPath(test);
+    if ( !mountpoint ) {
+      reject(new Error(_('ERR_VFSMODULE_NOT_FOUND_FMT', test)));
+      return;
+    }
+
+    mountpoint.request(method, args, options).then(resolve).catch(reject);
+  });
+
+  promise.then((res) => callback(false, res))
+    .catch((e) => callback(e));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// VFS METHODS
+/////////////////////////////////////////////////////////////////////////////
 
 /*
  * Wrapper for broadcasting VFS messages
@@ -393,7 +360,7 @@ export function broadcastMessage(msg, item, appRef) {
         const n = new FileMetadata(i);
         const alias = findAlias(n);
         if ( alias ) {
-          n.path = n.path.replace(alias.options.alias, alias.root);
+          n.path = n.path.replace(alias.option('options').alias, alias.option('root'));
           return n;
         }
       }
@@ -426,10 +393,6 @@ export function broadcastMessage(msg, item, appRef) {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// VFS METHODS
-/////////////////////////////////////////////////////////////////////////////
-
 /**
  * Find file(s)
  *
@@ -459,7 +422,7 @@ export function find(item, args, callback, options) {
     return;
   }
 
-  requestWrapper([item.path, 'find', [item, args]], 'ERR_VFSMODULE_FIND_FMT', callback, null, options);
+  performRequest('find', [item, args], options, item.path, null, 'ERR_VFSMODULE_FIND_FMT');
 }
 
 /**
@@ -499,7 +462,7 @@ export function scandir(item, callback, options) {
     return;
   }
 
-  requestWrapper([item.path, 'scandir', [item]], 'ERR_VFSMODULE_SCANDIR_FMT', function(error, result) {
+  performRequest('scandir', [item], options, item.path, null, 'ERR_VFSMODULE_SCANDIR_FMT', function(error, result) {
     // Makes sure aliased mounts have correct paths and entries
     if ( result instanceof Array ) {
 
@@ -560,56 +523,17 @@ export function write(item, data, callback, options, appRef) {
     return;
   }
 
-  function _finished(error, result) {
-    if ( error ) {
-      error = _('ERR_VFSMODULE_WRITE_FMT', error);
-    }
-
-    callback(error, result);
-  }
-
-  function _write(filedata) {
-    try {
-      request(item.path, 'write', [item, filedata], _finished, options, appRef);
-    } catch ( e ) {
-      _finished(e);
-    }
-  }
-
-  function _converted(error, response) {
-    if ( error ) {
-      _finished(error, null);
-      return;
-    }
-    _write(response);
-  }
-
-  try {
-    if ( typeof data === 'string' ) {
-      if ( data.length ) {
-        FS.textToAb(data, item.mime, function(error, response) {
-          _converted(error, response);
-        });
-      } else {
-        _converted(null, data);
-      }
-    } else {
-      if ( data instanceof FileDataURL ) {
-        FS.dataSourceToAb(data.toString(), item.mime, function(error, response) {
-          _converted(error, response);
-        });
-        return;
-      } else if ( window.Blob && data instanceof window.Blob ) {
-        FS.blobToAb(data, function(error, response) {
-          _converted(error, response);
-        });
-        return;
-      }
-      _write(data);
-    }
-  } catch ( e ) {
-    _finished(e);
-  }
+  const mountpoint = MountManager.getModuleFromPath(item.path);
+  convertWriteData(data, item.mime).then((ab) => {
+    mountpoint.request('write', [item, ab], options).then((res) => {
+      return callback(false, res);
+    }).catch((e) => {
+      callback(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));
+    });
+    return true;
+  }).catch((e) => {
+    callback(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));
+  });
 }
 
 /**
@@ -639,13 +563,8 @@ export function read(item, callback, options) {
     return;
   }
 
-  function _finished(error, response) {
-    if ( error ) {
-      error = _('ERR_VFSMODULE_READ_FMT', error);
-      callback(error);
-      return;
-    }
-
+  const mountpoint = MountManager.getModuleFromPath(item.path);
+  mountpoint.request('read', [item], options).then((response) => {
     if ( options.type ) {
       const types = {
         datasource: function readToDataSource() {
@@ -681,20 +600,15 @@ export function read(item, callback, options) {
       const type = options.type.toLowerCase();
       if ( types[type] ) {
         types[type]();
-        return;
+      } else {
+        callback(false, response);
       }
     }
 
-    callback(error, error ? null : response);
-  }
-
-  try {
-    request(item.path, 'read', [item], function(error, response) {
-      _finished(error, error ? false : response);
-    }, options);
-  } catch ( e ) {
-    _finished(e);
-  }
+    return true;
+  }).catch((e) => {
+    callback(_('ERR_VFSMODULE_READ_FMT', e));
+  });
 }
 
 /**
@@ -719,8 +633,6 @@ export function copy(src, dest, callback, options, appRef) {
     return;
   }
 
-  const mm = MountManager;
-
   try {
     src = checkMetadataArgument(src, _('ERR_VFS_EXPECT_SRC_FILE'));
     dest = checkMetadataArgument(dest, _('ERR_VFS_EXPECT_DST_FILE'), true);
@@ -742,61 +654,33 @@ export function copy(src, dest, callback, options, appRef) {
     }
   }
 
-  function doRequest() {
-    function _finished(error, result) {
-      callback(error, result);
-    }
-
-    if ( hasSameTransport(src, dest) ) {
-      request(src.path, 'copy', [src, dest], function(error, response) {
-        dialogProgress(100);
-        if ( error ) {
-          error = _('ERR_VFSMODULE_COPY_FMT', error);
-        }
-        _finished(error, response);
-      }, options, appRef);
-    } else {
-      const msrc = mm.getModuleFromPath(src.path);
-      const mdst = mm.getModuleFromPath(dest.path);
-
-      // FIXME: This does not work for folders
-      if ( src.type === 'dir' ) {
-        _finished(_('ERR_VFSMODULE_COPY_FMT', 'Copying folders between different transports is not yet supported!'));
-        return;
-      }
-
-      dest.mime = src.mime;
-
-      mm.getModule(msrc).request('read', [src], function(error, data) {
-        dialogProgress(50);
-
-        if ( error ) {
-          _finished(_('ERR_VFS_TRANSFER_FMT', error));
-          return;
-        }
-
-        mm.getModule(mdst).request('write', [dest, data], function(error, result) {
+  const promise = new Promise((resolve, reject) => {
+    existsWrapper(dest).then(() => {
+      const sourceMountpoint  = MountManager.getModuleFromPath(src.path);
+      const destMountpoint = MountManager.getModuleFromPath(dest.path);
+      if ( hasSameTransport(src, dest) ) {
+        sourceMountpoint.request('copy', [src, dest], options).then(() => {
           dialogProgress(100);
+          return resolve(true);
+        }).catch(reject);
+      } else {
+        sourceMountpoint.request('read', [src], options).then((data) => {
+          dialogProgress(50);
 
-          if ( error ) {
-            error = _('ERR_VFSMODULE_COPY_FMT', error);
-          }
-          _finished(error, result);
-        }, options);
-      }, options);
-    }
-  }
-
-  existsWrapper(dest, function(error) {
-    if ( error ) {
-      callback(_('ERR_VFSMODULE_COPY_FMT', error));
-    } else {
-      try {
-        doRequest();
-      } catch ( e ) {
-        callback(_('ERR_VFSMODULE_COPY_FMT', e));
+          return destMountpoint.request('write', [dest, data], options).then((res) => {
+            dialogProgress(100);
+            return resolve(res);
+          }).catch(reject);
+        }).catch(reject);
       }
-    }
+      return true;
+    }).catch(reject);
+  });
+
+  promise.then((r) => {
+    return callback(false, r);
+  }).catch((e) => {
+    callback(_('ERR_VFSMODULE_COPY_FMT', e));
   });
 }
 
@@ -822,60 +706,42 @@ export function move(src, dest, callback, options, appRef) {
     return;
   }
 
-  const mm = MountManager;
-
-  try {
-    src = checkMetadataArgument(src, _('ERR_VFS_EXPECT_SRC_FILE'));
-    dest = checkMetadataArgument(dest, _('ERR_VFS_EXPECT_DST_FILE'), true);
-  } catch ( e ) {
-    callback(e);
-    return;
-  }
-
-  function doRequest() {
-    function _finished(error, result) {
-      callback(error, result);
-    }
-
-    if ( hasSameTransport(src, dest) ) {
-      request(src.path, 'move', [src, dest], function(error, response) {
-        if ( error ) {
-          error = _('ERR_VFSMODULE_MOVE_FMT', error);
-        }
-        _finished(error, error ? null : response, dest);
-      }, options, appRef);
-    } else {
-      const msrc = mm.getModuleFromPath(src.path);
-      //const mdst = mm.getModuleFromPath(dest.path);
-
-      dest.mime = src.mime;
-
-      copy(src, dest, function(error, result) {
-        if ( error ) {
-          error = _('ERR_VFS_TRANSFER_FMT', error);
-          _finished(error);
-        } else {
-          mm.getModule(msrc).request('unlink', [src], function(error, result) {
-            if ( error ) {
-              error = _('ERR_VFS_TRANSFER_FMT', error);
-            }
-            _finished(error, result, dest);
-          }, options);
-        }
-      });
+  function dialogProgress(prog) {
+    if ( options.dialog ) {
+      options.dialog.setProgress(prog);
     }
   }
 
-  existsWrapper(dest, function(error) {
-    if ( error ) {
-      callback(_('ERR_VFSMODULE_MOVE_FMT', error));
-    } else {
-      try {
-        doRequest();
-      } catch ( e ) {
-        callback(_('ERR_VFSMODULE_MOVE_FMT', e));
+  const promise = new Promise((resolve, reject) => {
+    existsWrapper(dest).then(() => {
+      const sourceMountpoint  = MountManager.getModuleFromPath(src.path);
+      const destMountpoint = MountManager.getModuleFromPath(dest.path);
+      if ( hasSameTransport(src, dest) ) {
+        sourceMountpoint.request('move', [src, dest], options).then(() => {
+          dialogProgress(100);
+          return resolve(true);
+        }).catch(reject);
+      } else {
+        sourceMountpoint.request('read', [src], options).then((data) => {
+          dialogProgress(50);
+
+          return destMountpoint.request('write', [dest, data], options).then((res) => {
+            dialogProgress(100);
+
+            return sourceMountpoint.request('unlink', [src], options).then((res) => {
+              return resolve(res);
+            }).catch(reject);
+          }).catch(reject);
+        }).catch(reject);
       }
-    }
+      return true;
+    }).catch(reject);
+  });
+
+  promise.then((r) => {
+    return callback(false, r);
+  }).catch((e) => {
+    callback(_('ERR_VFSMODULE_MOVE_FMT', e));
   });
 }
 
@@ -923,25 +789,21 @@ export function unlink(item, callback, options, appRef) {
     return;
   }
 
-  function _checkPath() {
-    const pkgdir = SettingsManager.instance('PackageManager').get('PackagePaths', []);
-
-    const found = pkgdir.some(function(i) {
-      const chkdir = new FileMetadata(i);
-      const idir = FS.dirname(item.path);
-      return idir === chkdir.path;
-    });
-
-    if ( found ) {
-      PackageManager.generateUserMetadata(function() {});
-    }
-  }
-
-  requestWrapper([item.path, 'unlink', [item]], 'ERR_VFSMODULE_UNLINK_FMT', callback, function(error, response) {
+  performRequest('unlink', [item], options, item.path, null, 'ERR_VFSMODULE_UNLINK_FMT', function(error, response) {
     if ( !error ) {
-      _checkPath();
+      const pkgdir = SettingsManager.instance('PackageManager').get('PackagePaths', []);
+
+      const found = pkgdir.some(function(i) {
+        const chkdir = new FileMetadata(i);
+        const idir = FS.dirname(item.path);
+        return idir === chkdir.path;
+      });
+
+      if ( found ) {
+        PackageManager.generateUserMetadata(function() {});
+      }
     }
-    return response;
+    callback(error, response);
   }, options, appRef);
 }
 
@@ -973,18 +835,10 @@ export function mkdir(item, callback, options, appRef) {
     return;
   }
 
-  existsWrapper(item, function(error) {
-    if ( error ) {
-      callback(_('ERR_VFSMODULE_MKDIR_FMT', error));
-    } else {
-      requestWrapper([item.path, 'mkdir', [item]], 'ERR_VFSMODULE_MKDIR_FMT', callback, function(error, response) {
-        if ( error ) {
-          console.warn(error);
-        }
-
-        return response;
-      }, options, appRef);
-    }
+  existsWrapper(item).then(() => {
+    return performRequest('mkdir', [item], options, item.path, null, 'ERR_VFSMODULE_MKDIR_FMT', callback, options, appRef);
+  }).catch((e) => {
+    callback(_('ERR_VFSMODULE_MKDIR_FMT', e));
   });
 }
 
@@ -1011,7 +865,8 @@ export function exists(item, callback) {
     callback(e);
     return;
   }
-  requestWrapper([item.path, 'exists', [item]], 'ERR_VFSMODULE_EXISTS_FMT', callback);
+
+  performRequest('exists', [item], {}, item.path, null, 'ERR_VFSMODULE_EXISTS_FMT', callback);
 }
 
 /**
@@ -1037,7 +892,8 @@ export function fileinfo(item, callback) {
     callback(e);
     return;
   }
-  requestWrapper([item.path, 'fileinfo', [item]], 'ERR_VFSMODULE_FILEINFO_FMT', callback);
+
+  performRequest('fileinfo', [item], {}, item.path, null, 'ERR_VFSMODULE_FILEINFO_FMT', callback);
 }
 
 /**
@@ -1066,9 +922,7 @@ export function url(item, callback, options) {
     return;
   }
 
-  requestWrapper([item.path, 'url', [item]], 'ERR_VFSMODULE_URL_FMT', callback, function(error, response) {
-    return error ? false : response;
-  }, options);
+  performRequest('url', [item], options, item.path, null, 'ERR_VFSMODULE_URL_FMT', callback, options);
 }
 
 /**
@@ -1104,61 +958,30 @@ export function upload(args, callback, options, appRef) {
     return;
   }
 
-  const mm = MountManager;
-  if ( !mm.isInternal(args.destination) ) {
-    args.files.forEach(function(f, i) {
-      request(args.destination, 'upload', [f, args.destination], callback, options);
-    });
-    return;
-  }
+  const dest = new FileMetadata(args.destination);
+  const mountpoint = MountManager.getModuleFromPath(args.destination);
 
-  if ( isReadOnly(new FileMetadata(args.destination)) ) {
-    callback(_('ERR_VFSMODULE_READONLY_FMT', mm.getModuleFromPath(args.destination)));
-    return;
-  }
-
-  args.files.forEach(function(f, i) {
+  Promise.all(args.files, (f) => {
     const filename = (f instanceof window.File) ? f.name : f.filename;
-    const dest = new FileMetadata(FS.pathJoin(args.destination, filename));
+    const fileDest = new FileMetadata(FS.pathJoin(args.destination, filename));
 
-    existsWrapper(dest, function(error) {
-      if ( error ) {
-        callback(error);
-        return;
-      }
+    return new Promise((resolve, reject) => {
+      existsWrapper(fileDest).then(() => {
+        return mountpoint.request('upload', [f, dest], options).then((res) => {
+          let file = FileMetadata.fromUpload(args.destination, f);
+          file = checkMetadataArgument(file);
 
-      try {
-        let realDest = new FileMetadata(args.destination);
+          broadcastMessage('vfs:upload', file, args.app, appRef);
 
-        const tmpPath = hasAlias(realDest);
-        if ( tmpPath ) {
-          realDest = tmpPath;
-        }
-
-        OSjs.VFS.Transports.OSjs.upload(f, realDest, function(err, result, ev) {
-          if ( err ) {
-            console.warn(err);
-            if ( err === 'canceled' ) {
-              callback(_('ERR_VFS_UPLOAD_CANCELLED'), null, ev);
-            } else {
-              const errstr = err ? err.toString() : 'Unknown reason';
-              const msg = _('ERR_VFS_UPLOAD_FAIL_FMT', errstr);
-              callback(msg, null, ev);
-            }
-          } else {
-            let file = FileMetadata.fromUpload(args.destination, f);
-            file = checkMetadataArgument(file);
-
-            broadcastMessage('vfs:upload', file, args.app, appRef);
-            callback(false, file, ev);
-          }
-        }, options);
-      } catch ( e ) {
-        callback(_('ERR_VFS_UPLOAD_FAIL_FMT', e));
-      }
-    }, options);
+          return resolve(res);
+        }).catch(reject);
+      }).catch(reject);
+    });
+  }).then(() => {
+    return callback(false, true);
+  }).catch((e) => {
+    callback(_('ERR_VFS_UPLOAD_FAIL_FMT', e));
   });
-
 }
 
 /**
@@ -1166,83 +989,50 @@ export function upload(args, callback, options, appRef) {
  *
  * @summary Downloads a file to the computer
  *
- * @param   {OSjs.VFS.File}   args      File Metadata (you can also provide a string)
+ * @param   {OSjs.VFS.File}   file      File Metadata (you can also provide a string)
  * @param   {CallbackVFS}     callback  Callback function
  */
-export const download = (function download() {
-  let _didx = 1;
+export function download(file, callback) {
+  callback = callback || noop;
 
-  return function(args, callback) {
-    callback = callback || noop;
-    args = args || {};
+  console.debug('VFS::download()', file);
+  if ( arguments.length < 2 ) {
+    callback(_('ERR_VFS_NUM_ARGS'));
+    return;
+  }
 
-    console.debug('VFS::download()', args);
-    if ( arguments.length < 2 ) {
-      callback(_('ERR_VFS_NUM_ARGS'));
-      return;
-    }
+  try {
+    file = checkMetadataArgument(file);
+  } catch ( e ) {
+    callback(e);
+    return;
+  }
 
-    try {
-      args = checkMetadataArgument(args);
-    } catch ( e ) {
-      callback(e);
-      return;
-    }
+  if ( !file.path ) {
+    callback(_('ERR_VFS_DOWNLOAD_NO_FILE'));
+    return;
+  }
 
-    if ( !args.path ) {
-      callback(_('ERR_VFS_DOWNLOAD_NO_FILE'));
-      return;
-    }
+  const promise = new Promise((resolve, reject) => {
+    const mountpoint = MountManager.getModuleFromPath(file);
+    mountpoint.request('download', [file], {}).then(() => {
 
-    const lname = 'DownloadFile_' + _didx;
-    _didx++;
-
-    Main.createLoading(lname, {className: 'BusyNotification', tooltip: _('TOOLTIP_VFS_DOWNLOAD_NOTIFICATION')});
-
-    const mm = MountManager;
-    const dmodule = mm.getModuleFromPath(args.path);
-    if ( !mm.isInternal(args.path) ) {
-      let file = args;
-      if ( !(file instanceof FileMetadata) ) {
-        file = new FileMetadata(args.path);
-        if ( args.id ) {
-          file.id = args.id;
-        }
+      if ( mountpoint.option('internal') ) {
+        mountpoint.download(file).then(resolve).catch(reject);
+      } else {
+        mountpoint.read(file).then(resolve).catch(reject);
       }
 
-      mm.getModule(dmodule).request('read', [file], function(error, result) {
-        Main.destroyLoading(lname);
-
-        if ( error ) {
-          callback(_('ERR_VFS_DOWNLOAD_FAILED', error));
-          return;
-        }
-
-        callback(false, result);
-      });
-      return;
-    }
-
-    url(args, function(error, url) {
-      if ( error ) {
-        callback(error);
-        return;
-      }
-
-      axios({
-        responseType: 'arraybuffer',
-        url: url,
-        method: 'GET'
-      }).then((result) => {
-        Main.destroyLoading(lname);
-        callback(false, result.data);
-      }).catch((error) => {
-        Main.destroyLoading(lname);
-        callback(error.message);
-      });
+      return true;
     });
-  };
-})();
+  });
+
+  promise.then((res) => {
+    return callback(false, res);
+  }).catch((e) => {
+    callback(_('ERR_VFS_DOWNLOAD_FAILED', e));
+  });
+}
 
 /**
  * Move file to trash (Not used in internal storage)
@@ -1268,7 +1058,7 @@ export function trash(item, callback) {
     return;
   }
 
-  requestWrapper([item.path, 'trash', [item]], 'ERR_VFSMODULE_TRASH_FMT', callback);
+  performRequest('trash', [item], {}, item.path, null, 'ERR_VFSMODULE_TRASH_FMT', callback);
 }
 
 /**
@@ -1295,7 +1085,7 @@ export function untrash(item, callback) {
     return;
   }
 
-  requestWrapper([item.path, 'untrash', [item]], 'ERR_VFSMODULE_UNTRASH_FMT', callback);
+  performRequest('untrash', [item], {}, item.path, null, 'ERR_VFSMODULE_UNTRASH_FMT', callback);
 }
 
 /**
@@ -1314,7 +1104,7 @@ export function emptyTrash(callback) {
     return;
   }
 
-  requestWrapper([null, 'emptyTrash', []], 'ERR_VFSMODULE_EMPTYTRASH_FMT', callback);
+  performRequest('emptyTrash', [], {}, null, null, 'ERR_VFSMODULE_EMPTYTRASH_FMT', callback);
 }
 
 /**
@@ -1345,7 +1135,7 @@ export function freeSpace(item, callback) {
 
   const m = MountManager.getModuleFromPath(item.path, false, true);
 
-  requestWrapper([item.path, 'freeSpace', [m.root]], 'ERR_VFSMODULE_FREESPACE_FMT', callback);
+  performRequest('freeSpace', [m.root], {}, item.path, null, 'ERR_VFSMODULE_FREESPACE_FMT', callback);
 }
 
 /**

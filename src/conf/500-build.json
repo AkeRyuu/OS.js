@@ -8,6 +8,15 @@
       "src/templates/dist/windows-live-oauth.html",
       "src/templates/dist/dropbox-oauth.html"
     ],
+    "includes": {
+      "scripts": [
+        "settings.js",
+        "vendor.js"
+      ],
+      "styles": [
+        "vendor.css"
+      ]
+    },
     "webpack": {
       "output": {
         "publicPath": "/",

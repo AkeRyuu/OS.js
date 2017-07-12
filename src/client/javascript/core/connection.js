@@ -292,7 +292,6 @@ export default class Connection {
    * @return {Object}
    */
   createRequestOptions(method, args) {
-    const transport = OSjs.VFS.Transports.OSjs;
     const realMethod = method.replace(/^FS:/, '');
 
     let raw = true;
@@ -306,11 +305,11 @@ export default class Connection {
     if ( method.match(/^FS:/) ) {
       if ( realMethod === 'get' ) {
         requestOptions.responseType = 'arraybuffer';
-        requestOptions.url = args.url || transport.path(args.path);
+        requestOptions.url = args.url || this.getVFSPath({path: args.path});
         requestOptions.method = args.method || 'GET';
         raw = false;
       } else if ( realMethod === 'upload' ) {
-        requestOptions.url = transport.path();
+        requestOptions.url = this.getVFSPath();
       } else {
         requestOptions.url = getConfig('Connection.FSURI') + '/' + realMethod;
       }

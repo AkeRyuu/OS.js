@@ -129,13 +129,8 @@ module.exports = new Promise((resolve, reject) => {
         new HtmlWebpackPlugin({
           template: getTemplateFile(cfg.build.template, 'index.ejs'),
           osjs: {
-            scripts: [
-              'settings.js',
-              'vendor.js'
-            ],
-            styles: [
-              'vendor.css'
-            ]
+            scripts: cfg.build.includes.scripts,
+            styles: cfg.build.includes.styles
           }
         }),
 

@@ -115,12 +115,14 @@ module.exports = function() {
   OSjs.VFS.File = VFSFile.default;
   assignInto(FS, OSjs.VFS.Helpers);
 
+  /*
   OSjs.VFS.Transports.Applications = require('vfs/transports/applications.js').default;
   OSjs.VFS.Transports.Dist = require('vfs/transports/dist.js').default;
   OSjs.VFS.Transports.HTTP = require('vfs/transports/http.js').default;
   OSjs.VFS.Transports.OSjs = require('vfs/transports/osjs.js').default;
   OSjs.VFS.Transports.Web = require('vfs/transports/web.js').default;
   OSjs.VFS.Transports.WebDAV = require('vfs/transports/webdav.js').default;
+  */
 
   assignInto(FS, OSjs.Utils);
   assignInto(DOM, OSjs.Utils);
