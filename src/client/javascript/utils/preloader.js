@@ -106,6 +106,9 @@ const handlers = {
 
 };
 
+/**
+ * Asset preloading class
+ */
 class Preloader {
   constructor() {
     this.cache = {};
@@ -115,7 +118,16 @@ class Preloader {
     this.cache = {};
   }
 
-  /*
+  /**
+   * Preloads a given set of assets
+   *
+   * @param {Object[]}   preloads             The list
+   * @param {Object}     [args]               Arguments
+   * @param {Number}     [args.max=1]         Maximum number of parallel fetches
+   * @param {Boolean}    [args.cache=true]    Cache the result
+   * @param {Boolean}    [args.force=false]   Force loading even though in cache
+   * @return {Promise<Object, Error>}
+   *
    * @example
    * [
    *  {

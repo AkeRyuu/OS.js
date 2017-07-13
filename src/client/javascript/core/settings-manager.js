@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/settings-manager
- */
 import Promise from 'bluebird';
 import Storage from 'core/storage';
 import SettingsFragment from 'helpers/settings-fragment';
@@ -38,10 +35,7 @@ import SettingsFragment from 'helpers/settings-fragment';
 /**
  * Settings Manager Class
  *
- * @summary Used for managing Settings across all applications and modules.
- *
- * @see helpers/event-handler~EventHandler
- * @see core/settings-manager~SettingsManager
+ * @desc Used for managing Settings across all applications and modules.
  */
 class SettingsManager {
 
@@ -56,7 +50,7 @@ class SettingsManager {
    * This is run when a user logs in. It will give saved data here
    *
    * @param {Object}    settings      Entire settings tree
-   * @return {Promise}
+   * @return {Promise<undefined, Error>}
    */
   init(settings) {
     this.storage = settings || {};

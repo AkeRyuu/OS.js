@@ -170,15 +170,15 @@ function resolveExternalFragments(root, html, cb) {
 /**
  * The class for loading and parsing UI Schemes
  *
- * @summary Class for loading, parsing and manipulating Scheme files.
+ * @desc Class for loading, parsing and manipulating Scheme files.
  */
-export default class UIScheme {
+export default class GUIScheme {
 
   /**
    * @param {String}    url     Scheme URL
    */
   constructor(url) {
-    console.debug('UIScheme::construct()', url);
+    console.debug('GUIScheme::construct()', url);
 
     /**
      * The URL of the Scheme file
@@ -284,7 +284,7 @@ export default class UIScheme {
   load(cb, cbxhr) {
     cbxhr = cbxhr || function() {};
 
-    console.debug('UIScheme::load()', this.url);
+    console.debug('GUIScheme::load()', this.url);
 
     let src = this.url;
     if ( src.substr(0, 1) !== '/' && !src.match(/^(https?|ftp)/) ) {
@@ -349,10 +349,10 @@ export default class UIScheme {
   parse(id, type, win, onparse, args) {
     const content = this.getFragment(id, type);
 
-    console.debug('UIScheme::parse()', id);
+    console.debug('GUIScheme::parse()', id);
 
     if ( !content ) {
-      console.error('UIScheme::parse()', 'No fragment found', id + '@' + type);
+      console.error('GUIScheme::parse()', 'No fragment found', id + '@' + type);
       return null;
     }
 
@@ -411,7 +411,7 @@ export default class UIScheme {
       }
     }
 
-    console.debug('UIScheme::render()', id);
+    console.debug('GUIScheme::render()', id);
 
     const content = this.parse(id, type, win, onparse, args);
     addChildren(content, root);
@@ -442,7 +442,7 @@ export default class UIScheme {
    * @return GUIScheme
    */
   static fromString(str) {
-    const inst = new UIScheme(null);
+    const inst = new GUIScheme(null);
     const cleaned = cleanScheme(str);
     inst._load(cleaned, '<html>');
     return inst;

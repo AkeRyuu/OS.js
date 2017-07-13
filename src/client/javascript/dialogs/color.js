@@ -57,9 +57,8 @@ function getColor(rgb) {
 /**
  * An 'Color Chooser' dialog
  *
- * @example
- *
- * OSjs.API.createDialog('Color', {}, fn);
+ * @example DialogWindow.create('Color', {}, fn);
+ * @extends DialogWindow
  */
 export default class ColorDialog extends DialogWindow {
 

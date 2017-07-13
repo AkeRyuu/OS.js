@@ -35,27 +35,26 @@ let IFRAME_COUNT = 0;
 /**
  * IFrame Application Window constructor
  *
+ * @desc
  * <pre><b>
- * This class is a basic implementation of OSjs.Core.Window
+ * This class is a basic implementation of Window
  * that uses Iframe as window content. It's usefull for creating
  * applications that is not using OS.js API.
  *
  * You can use this in combination with 'IFrameApplication'
  * </b></pre>
  *
- * @summary Helper for making IFrame Applications.
- *
  * @link https://os-js.org/manual/package/iframe/
  */
 export default class IFrameApplicationWindow extends Window {
 
   /**
-   * @param  {String}                 name          Window name
-   * @param  {Object}                 opts          Window options
-   * @param  {String}                 opts.src      The Iframe source
-   * @param  {String}                 opts.icon     The Icon relative/absolute path (./ for app dir)
-   * @param  {String}                 opts.title    The Window title
-   * @param  {OSjs.Core.Application}  app           The Application reference
+   * @param  {String}       name          Window name
+   * @param  {Object}       opts          Window options
+   * @param  {String}       opts.src      The Iframe source
+   * @param  {String}       opts.icon     The Icon relative/absolute path (./ for app dir)
+   * @param  {String}       opts.title    The Window title
+   * @param  {Application}  app           The Application reference
    */
   constructor(name, opts, app) {
     opts = Object.assign({}, {

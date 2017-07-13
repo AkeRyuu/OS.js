@@ -34,10 +34,10 @@ let _CLIPBOARD;         // Current 'clipboard' data
  *
  * NOTE: This does not set the operating system clipboard (yet...)
  *
- * @param   {Mixed}       data      What data to set
+ * @param   {Object|String|Numer}       data      What data to set
  */
 export function setClipboard(data) {
-  console.debug('OSjs.module.exports.setClipboard()', data);
+  console.debug('setClipboard()', data);
   _CLIPBOARD = data;
 }
 
@@ -46,7 +46,7 @@ export function setClipboard(data) {
  *
  * NOTE: This does not the operating system clipboard (yet...)
  *
- * @return  {Mixed}
+ * @return  {Object|String|Number}
  */
 export function getClipboard() {
   return _CLIPBOARD;

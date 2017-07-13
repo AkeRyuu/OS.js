@@ -37,7 +37,7 @@ import PackageManager from 'core/package-manager';
 import SearchEngine from 'core/search-engine';
 import Authenticator from 'core/authenticator';
 import WindowManager from 'core/windowmanager';
-import Dialog from 'core/dialog';
+import DialogWindow from 'core/dialog';
 import Storage from 'core/storage';
 import Process from 'core/process';
 import Connection from 'core/connection';
@@ -729,7 +729,7 @@ export function logout() {
 
   if ( wm ) {
     const user = Authenticator.instance.getUser() || {name: Locales._('LBL_UNKNOWN')};
-    Dialog.create('Confirm', {
+    DialogWindow.create('Confirm', {
       title: Locales._('DIALOG_LOGOUT_TITLE'),
       message: Locales._('DIALOG_LOGOUT_MSG_FMT', user.name)
     }, function(ev, btn) {

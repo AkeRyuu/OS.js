@@ -31,6 +31,11 @@ import axios from 'axios';
 import Promise from 'bluebird';
 import {_} from 'core/locales';
 
+/**
+ * A VFS transport
+ *
+ * @desc Used via a Mountpoint
+ */
 export default class Transport {
 
   /**
@@ -40,7 +45,7 @@ export default class Transport {
    * @param {Array}       args      Method arguments
    * @param {Object}      options   Options
    * @param {Mountpoint}  mount     Requested from this mountpoint
-   * @return {Promise}
+   * @return {Promise<Object, Error>}
    */
   request(method, args, options, mount) {
     const readOnly = ['upload', 'unlink', 'write', 'mkdir', 'move', 'trash', 'untrash', 'emptyTrash'];

@@ -51,16 +51,9 @@ import Window from 'core/window';
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Application Class
+ * Application Base Class
  *
- * The 'Process arguments' is a JSON object with the arguments the
- * Applications was launched with. Just like 'argv'
- *
- * <pre><b>
- * YOU CANNOT CANNOT USE THIS VIA 'new' KEYWORD.
- * </b></pre>
- *
- * @summary Class used for basis as an Application.
+ * @desc The class used for creating Applications.
  *
  * @param   {String}            name        Process name
  * @param   {Object}            args        Process arguments
@@ -86,19 +79,19 @@ export default class Application extends Process {
 
     /**
      * Registered main window
-     * @type {OSjs.Core.Window}
+     * @type {Window}
      */
     this.__mainwindow = null;
 
     /**
      * Scheme reference
-     * @type {OSjs.GUI.Scheme}
+     * @type {GUIScheme}
      */
     this.__scheme     = null;
 
     /**
      * Registered Windows
-     * @type {OSjs.Core.Window[]}
+     * @type {Window[]}
      */
     this.__windows    = [];
 
@@ -128,9 +121,9 @@ export default class Application extends Process {
   /**
    * Initialize the Application
    *
-   * @param   {Object}            settings      Settings JSON
-   * @param   {Metadata}          metadata      Metadata JSON
-   * @param   {OSjs.GUI.Scheme}   [scheme]      GUI Scheme instance
+   * @param   {Object}      settings      Settings JSON
+   * @param   {Object}      metadata      Metadata JSON
+   * @param   {GUIScheme}   [scheme]      GUI Scheme instance
    */
   init(settings, metadata, scheme) {
 
@@ -212,6 +205,9 @@ export default class Application extends Process {
   /**
    * Application has received a message
    *
+   * @param {String}    msg     Message
+   * @param {Object}    obj     Message object
+   * @param {Object}    args    Arguments
    * @override
    */
   _onMessage(msg, obj, args) {
@@ -239,11 +235,11 @@ export default class Application extends Process {
    *
    * This will automatically add it to the WindowManager and show it to you
    *
-   * @param   {OSjs.Core.Window}  w           The Window
-   * @param   {Function}          [cb]        Callback for when window was successfully inited
-   * @param   {Boolean}           [setmain]   Set if this is the main window (First window always will be)
+   * @param   {Window}     w           The Window
+   * @param   {Function}   [cb]        Callback for when window was successfully inited
+   * @param   {Boolean}    [setmain]   Set if this is the main window (First window always will be)
    *
-   * @return  {OSjs.Core.Window}
+   * @return  {Window}
    */
   _addWindow(w, cb, setmain) {
     if ( !(w instanceof Window) ) {
@@ -278,7 +274,7 @@ export default class Application extends Process {
   /**
    * Removes given Window
    *
-   * @param   {OSjs.Core.Window}      w     The Windo
+   * @param   {Window}      w     The Windo
    *
    * @return  {Boolean}
    */
@@ -314,7 +310,7 @@ export default class Application extends Process {
    * @param   {String}    value      The value
    * @param   {Mixed}     key        The key to check for
    *
-   * @return  {OSjs.Core.Window} Or null on error or nothing
+   * @return  {Window} Or null on error or nothing
    */
   _getWindow(value, key) {
     key = key || 'name';
@@ -347,7 +343,7 @@ export default class Application extends Process {
    *
    * @param {String}  name      Window Name
    *
-   * @return {OSjs.Core.Window}
+   * @return {Window}
    */
   _getWindowByName(name) {
     return this._getWindow(name);
@@ -360,7 +356,7 @@ export default class Application extends Process {
    *
    * @param {String}  tag       Tag name
    *
-   * @return {OSjs.Core.Window[]}
+   * @return {Window[]}
    */
   _getWindowsByTag(tag) {
     return this._getWindow(tag, 'tag');
@@ -369,7 +365,7 @@ export default class Application extends Process {
   /**
    * Get a list of all windows
    *
-   * @return {OSjs.Core.Window[]}
+   * @return {Window[]}
    */
   _getWindows() {
     return this.__windows;
@@ -378,7 +374,7 @@ export default class Application extends Process {
   /**
    * Get the "main" window
    *
-   * @return {OSjs.Core.Window}
+   * @return {Window}
    */
   _getMainWindow() {
     return this._getWindow(this.__mainwindow, 'name');
@@ -420,15 +416,6 @@ export default class Application extends Process {
   }
 
   /**
-   * Gets the scheme instance
-   *
-   * @return OSjs.GUI.Scheme
-   */
-  _getScheme() {
-    return this.__scheme;
-  }
-
-  /**
    * Set a setting
    *
    * @param   {String}              k             Key
@@ -445,17 +432,6 @@ export default class Application extends Process {
     if ( this.__settings ) {
       this.__settings.set(k, v, save);
     }
-  }
-
-  /**
-   * Sets the scheme instance
-   *
-   * @see OSjs.GUI.Scheme
-   *
-   * @param   {OSjs.GUI.Scheme}      s       Scheme Ref
-   */
-  _setScheme(s) {
-    this.__scheme = s;
   }
 
 }

@@ -43,7 +43,7 @@ import {_} from 'core/locales';
  *
  * Use in combination with 'DefaultApplication'
  *
- * @summary Helper for making Applications with file interaction.
+ * @desc Helper for making Applications with file interaction.
  */
 export default class DefaultApplicationWindow extends Window {
 

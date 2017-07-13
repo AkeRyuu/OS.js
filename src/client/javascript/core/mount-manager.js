@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/mount-manager
- */
 import Promise from 'bluebird';
 
 import Mountpoint from 'vfs/mountpoint';
@@ -44,7 +41,8 @@ import {getConfig} from 'core/config';
 /**
  * Mount Manager Class
  *
- * @summary Class for maintaining mountpoints
+ * @desc Class for maintaining mountpoints and handling
+ *       requests over to VFS.
  */
 class MountManager {
 
@@ -63,7 +61,7 @@ class MountManager {
   /**
    * Initializes MountManager
    *
-   * @return {Promise}
+   * @return {Promise<Boolean, Error>}
    */
   init() {
     if ( this.inited ) {
@@ -97,7 +95,7 @@ class MountManager {
    * Adds a list of mountpoints
    *
    * @param {Mountpoint[]|Object[]} mountPoints Mountpoints
-   * @return {Promise}
+   * @return {Promise<Boolean, Error>}
    */
   addList(mountPoints) {
     return Promise.each(mountPoints, (iter) => this.add(iter));
@@ -106,10 +104,10 @@ class MountManager {
   /**
    * Adds a mountpoint
    *
-   * @param {MountPoint|Object} point   The mountpoint
+   * @param {Mountpoint|Object} point   The mountpoint
    * @param {Boolean}           mount   Mounts the mountpoint
    * @param {Object}            options Mount options
-   * @return {Promise}
+   * @return {Promise<Mountpoint, Error>}
    */
   add(point, mount, options) {
     //throw new Error(_('ERR_VFSMODULE_ALREADY_MOUNTED_FMT', name));
@@ -131,7 +129,15 @@ class MountManager {
 
     console.info('Mounting', point);
 
-    return mount ? point.mount(options) : Promise.resolve();
+    return new Promise((resolve, reject) => {
+      if ( mount ) {
+        point.mount().then(() => {
+          return resolve(point);
+        }).catch(reject);
+      } else {
+        resolve(point);
+      }
+    });
   }
 
   /**
@@ -139,7 +145,7 @@ class MountManager {
    *
    * @param {String}      moduleName      Name of the mountpoint
    * @param {Object}      options         Unmount options
-   * @return {Promise}
+   * @return {Promise<Boolean, Error>}
    */
   remove(moduleName, options) {
     const module = this.getModule(moduleName);

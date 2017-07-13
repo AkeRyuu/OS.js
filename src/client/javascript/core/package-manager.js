@@ -43,11 +43,6 @@ import * as FS from 'utils/fs';
 
 import Connection from 'core/connection';
 
-/**
- * This is the contents of a 'metadata.json' file for a package.
- * @typedef Metadata
- */
-
 const resolvePreloads = (metadata, pm) => {
   const packageURI = getConfig('Connection.PackageURI');
 
@@ -116,7 +111,9 @@ class PackageManager {
   }
 
   /**
-   * Load Metadata from server and set packages
+   * Initializes Package Manager
+   * @param {Object} [metadata] An initial set of packages
+   * @return {Promise<undefined, Error>}
    */
   init(metadata) {
     console.debug('PackageManager::load()', metadata);
@@ -136,6 +133,7 @@ class PackageManager {
 
   /**
    * Internal method for loading all package metadata
+   * @return {Promise<Boolean, Error>}
    */
   _loadMetadata() {
     if ( isStandalone() ) {
@@ -152,6 +150,7 @@ class PackageManager {
 
   /**
    * Generates user-installed package metadata (on runtime)
+   * @return {Promise<Boolean, Error>}
    */
   generateUserMetadata() {
     const paths = SettingsManager.instance('PackageManager').get('PackagePaths', []);
@@ -208,6 +207,7 @@ class PackageManager {
    *
    * @param {OSjs.VFS.File}   file        The ZIP file
    * @param {String}          root        Packge install root (defaults to first path)
+   * @return {Promise<Object, Error>}
    */
   install(file, root) {
     const paths = SettingsManager.instance('PackageManager').get('PackagePaths', []);
@@ -227,6 +227,7 @@ class PackageManager {
    * Uninstalls given package
    *
    * @param {OSjs.VFS.File}   file        The path
+   * @return {Promise<Boolean, Error>}
    */
   uninstall(file) {
     return new Promise((resolve, reject) => {
@@ -285,7 +286,7 @@ class PackageManager {
    *
    * @param {String}    name      Package name
    *
-   * @return {Metadata}
+   * @return {Object}
    */
   getPackage(name) {
     if ( typeof this.packages[name] !== 'undefined' ) {
@@ -299,7 +300,7 @@ class PackageManager {
    *
    * @param {Boolean}     [filtered=true]      Returns filtered list
    *
-   * @return {Metadata[]}
+   * @return {Object[]}
    */
   getPackages(filtered) {
     const hidden = SettingsManager.instance('PackageManager').get('Hidden', []);
@@ -342,7 +343,7 @@ class PackageManager {
    *
    * @param {String}    mime      MIME string
    *
-   * @return  {Metadata[]}
+   * @return  {Object[]}
    */
   getPackagesByMime(mime) {
     const list = [];
@@ -362,7 +363,7 @@ class PackageManager {
   }
 
   /**
-   * Sets the packages
+   * Sets the current list of packages
    * @param {Object} res Package map
    */
   setPackages(res) {

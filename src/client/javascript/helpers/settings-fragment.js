@@ -37,11 +37,11 @@ import {mergeObject} from 'utils/misc';
 /**
  * Settings Fragment Class
  *
+ * @desc
  * <pre><b>
  * This is the object returned when manipulating with SettingsManager.
  * </b></pre>
  *
- * @summary This is the class returned from SettingsManager getters.
  * @throws {Error} If an invalid object was given
  */
 export default class SettingsFragment {
@@ -87,7 +87,7 @@ export default class SettingsFragment {
    * @param   {Mixed}      save                  Saves the pool (either boolean or callback function)
    * @param   {Boolean}    [triggerWatch=true]   Trigger change event for watchers
    *
-   * @return  {OSjs.Helpers.SettingsFragment}  Itself `this`
+   * @return  {SettingsFragment}  Itself `this`
    */
   set(key, value, save, triggerWatch) {
     // Key here is actually the value
@@ -115,7 +115,7 @@ export default class SettingsFragment {
 
   /**
    * Saves the pool
-   * @see OSjs.Core.SettingsManager#save
+   * @see SettingsManager#save
    *
    * @param   {Function}      [callback]        Callback function
    *
@@ -144,7 +144,7 @@ export default class SettingsFragment {
    *
    * @param     {Object}        defaults        The tree
    *
-   * @return  {OSjs.Helpers.SettingsFragment}  Itself `this`
+   * @return  {SettingsFragment}  Itself `this`
    */
   mergeDefaults(defaults) {
     mergeObject(this._settings, defaults, {overwrite: false});
@@ -157,7 +157,7 @@ export default class SettingsFragment {
    *
    * @param     {String}        key     Key name
    *
-   * @return  {OSjs.Helpers.SettingsFragment}  New instance
+   * @return  {SettingsFragment}  New instance
    */
   instance(key) {
     if (typeof this._settings[key] === 'undefined') {

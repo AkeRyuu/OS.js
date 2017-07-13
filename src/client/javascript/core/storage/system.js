@@ -29,5 +29,9 @@
  */
 import Storage from 'core/storage';
 
+/**
+ * System Storage Handler
+ * @xtends Storage
+ */
 export default class SystemStorage extends Storage {
 }

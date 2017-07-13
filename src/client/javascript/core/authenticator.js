@@ -81,7 +81,7 @@ export default class Authenticator {
 
   /**
    * Initializes the Authenticator
-   * return {Promise}
+   * @return {Promise}
    */
   init() {
     return this.onCreateUI();
@@ -115,7 +115,8 @@ export default class Authenticator {
   /**
    * Log in user
    *
-   * @param   {Object}               data            Login form data
+   * @param  {Object}   data            Login form data
+   * @return {Promise<Object, Error>}
    */
   login(data) {
     return new Promise((resolve, reject) => {
@@ -129,6 +130,7 @@ export default class Authenticator {
 
   /**
    * Log out user
+   * @return {Promise<Boolean, Error>}
    */
   logout() {
     return new Promise((resolve, reject) => {
@@ -170,7 +172,8 @@ export default class Authenticator {
   /**
    * When login is requested
    *
-   * @param   {Object}               data            Login data
+   * @param  {Object}               data            Login data
+   * @return {Promise<Object>}
    */
   onLoginRequest(data) {
     return new Promise((resolve, reject) => {
@@ -228,6 +231,7 @@ export default class Authenticator {
 
   /**
    * When login UI is requested
+   * @return {Promise<Object, Error>}
    */
   onCreateUI() {
     const container = document.getElementById('Login');

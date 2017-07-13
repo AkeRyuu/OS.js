@@ -45,6 +45,7 @@ let SingletonInstance = null;
 /**
  * The WindowsLiveAPI wrapper class
  *
+ * @desc Helper for communicating with Windows Live API.
  * <pre><b>
  * This is a private class and can only be aquired through
  * OSjs.Helpers.WindowsLiveAPI.createInsatance()
@@ -52,8 +53,6 @@ let SingletonInstance = null;
  * Generally you want to create an instance of this helper
  * and when successfully created use `window.WL`.
  * </b></pre>
- *
- * @summary Helper for communicating with Windows Live API.
  *
  * @link http://msdn.microsoft.com/en-us/library/hh826547.aspx
  * @link http://msdn.microsoft.com/en-us/library/hh826538.aspx

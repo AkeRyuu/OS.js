@@ -33,8 +33,6 @@ import * as Keycodes from 'utils/keycodes';
 
 /**
  * The callback for browser events bound by OS.js
- * @see OSjs.Utils.$bind
- * @see OSjs.Utils.$unbind
  * @callback CallbackEvent
  * @param {Event} ev Browser event
  * @param {Object} pos Event pointer position in form of x and y

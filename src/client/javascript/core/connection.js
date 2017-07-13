@@ -69,7 +69,7 @@ let _instance;
 /**
  * Default Connection Implementation
  *
- * @summary Wrappers for communicating over HTTP, WS and NW
+ * @desc Wrappers for communicating over HTTP, WS and NW
  *
  * @mixes utils/event-handler~EventHandler
  */
@@ -103,6 +103,7 @@ export default class Connection {
 
   /**
    * Initializes the instance
+   * @return {Promise<undefined, Error>}
    */
   init() {
     if ( typeof navigator.onLine !== 'undefined' ) {
@@ -132,8 +133,8 @@ export default class Connection {
    *
    * This should return the URL for given resource.
    *
-   * @param   {OSjs.VFS.File}       item      The File Object
-   * @param   {Object}              [options] Options. These are added to the URL
+   * @param   {FileMetadata}       item      The File Object
+   * @param   {Object}             [options] Options. These are added to the URL
    *
    * @return  {String}
    */
@@ -256,7 +257,7 @@ export default class Connection {
    * @param {Object}    args        API method arguments
    * @param {Object}    [options]   Options passed on to the connection request method (ex: XHR.ajax)
    *
-   * @return {Boolean}
+   * @return {Promise<Object, Error>}
    */
   createRequest(method, args, options) {
     args = args || {};
@@ -328,7 +329,7 @@ export default class Connection {
    *
    * @return  {Number}
    *
-   * @see OSjs.Helpers.EventHandler#on
+   * @see EventHandler#on
    */
   subscribe(k, func) {
     return this._evHandler.on(k, func, this);
@@ -342,7 +343,7 @@ export default class Connection {
    *
    * @return {Boolean}
    *
-   * @see OSjs.Helpers.EventHandler#off
+   * @see EventHandler#off
    */
   unsubscribe(k, idx) {
     return this._evHandler.off(k, idx);
@@ -350,6 +351,13 @@ export default class Connection {
 
   /*
    * This is a wrapper for making a request
+   *
+   * @desc This method performs a request to the server
+   *
+   * @param {String}   m        Method name
+   * @param {Object}   a        Method arguments
+   * @param {Object}   options  Request options
+   * @return {Promise<Object, Error>}
    */
   static request(m, a, options) {
     a = a || {};

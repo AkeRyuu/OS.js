@@ -43,7 +43,6 @@ import * as Assets from 'core/assets';
 import {_} from 'core/locales';
 
 import FileMetadata from 'vfs/file';
-import Dialog from 'core/dialog';
 import GUIElement from 'gui/element';
 import Preloader from 'utils/preloader';
 import SettingsManager from 'core/settings-manager';
@@ -220,7 +219,7 @@ export function destroyLoading(name) {
  * @param   {String}      name          Application Name
  * @param   {Object}      [args]          Launch arguments
  * @param   {Function}    [onconstruct]   Callback on application init
- * @return  {Promise}
+ * @return  {Promise<Process, Error>}
  */
 export function launch(name, args, onconstruct) {
   args = args || {};
@@ -393,7 +392,7 @@ export function launch(name, args, onconstruct) {
  *
  * @param   {Array}         list        List of launch application arguments
  * @param   {Function}      onconstruct Callback on success => fn(app, metadata, appName, appArgs)
- * @return  {Promise}
+ * @return  {Promise<Process[], Error>}
  */
 export function launchList(list, onconstruct) {
   list = list || [];
@@ -424,7 +423,7 @@ export function launchList(list, onconstruct) {
  *
  * @param   {OSjs.VFS.File}   file    The File reference (can also be a tuple with 'path' and 'mime')
  * @param   {Object}          args    Arguments to send to process launch function
- * @return  {Promise}
+ * @return  {Promise<Process, Error>}
  */
 export function openFile(file, args) {
   file = new FileMetadata(file);
@@ -471,7 +470,7 @@ export function openFile(file, args) {
     } else if ( pack.length === 1 ) {
       launch(pack[1], args).then(resolve).catch(reject);
     } else {
-      Dialog.create('ApplicationChooser', {
+      DialogWindow.create('ApplicationChooser', {
         file: file,
         list: pack
       }, (ev, btn, result) => {

@@ -31,9 +31,8 @@
 /**
  * Event Handler Class
  *
+ * @desc
  * This class just holds a map of events that you can trigger.
- *
- * @summary Helper for handling events.
  */
 export default class EventHandler {
 

@@ -33,7 +33,7 @@ import * as Events from 'utils/events';
 import * as Clipboard from 'utils/clipboard';
 import * as Keycodes from 'utils/keycodes';
 import FileMetadata from 'vfs/file';
-import UIElement from 'gui/element';
+import GUIElement from 'gui/element';
 
 /////////////////////////////////////////////////////////////////////////////
 // ABSTRACTION HELPERS
@@ -255,6 +255,7 @@ function matchValueByKey(r, val, key, idx) {
 /**
  * Element: '_dataview'
  *
+ * @desc
  * This is an abstraction layer for Icon, Tree and List views.
  *
  * See `ev.detail` for data on events (like on 'change').
@@ -274,8 +275,9 @@ function matchValueByKey(r, val, key, idx) {
  * </code></pre>
  *
  * @abstract
+ * @extends GUIElement
  */
-export default class UIDataView extends UIElement {
+export default class UIDataView extends GUIElement {
 
   /**
    * Clears the view

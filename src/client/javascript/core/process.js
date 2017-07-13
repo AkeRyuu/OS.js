@@ -28,10 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/process
- */
-
 import Connection from 'core/connection';
 import EventHandler from 'helpers/event-handler';
 import * as Assets from 'core/assets';
@@ -82,13 +78,9 @@ function _kill(pid) {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Process Template Class
+ * Process Base Class
  *
- * <pre><b>
- * YOU CANNOT CANNOT USE THIS VIA 'new' KEYWORD.
- * </b></pre>
- *
- * @summary Class used for basis as a Process.
+ * @desc The basis for an Application or Service
  *
  * @abstract
  * @mixes EventHandler
@@ -96,9 +88,9 @@ function _kill(pid) {
 export default class Process {
 
   /**
-   * @param   {string}    name        Process Name
-   * @param   {Object}    args        Process Arguments
-   * @param   {Metadata}  metadata    Package Metadata
+   * @param   {string}  name        Process Name
+   * @param   {Object}  args        Process Arguments
+   * @param   {Object}  metadata    Package Metadata
    */
   constructor(name, args, metadata) {
     console.group('Process::constructor()', _PROCS.length, arguments);
@@ -222,8 +214,8 @@ export default class Process {
   /**
    * Fire a hook to internal event
    *
-   * @see OSjs.Core.Process#on
-   * @see OSjs.Helpers.EventHandler#emit
+   * @see Process#on
+   * @see EventHandler#emit
    *
    * @param   {ProcessEvent}    k       Event name
    * @param   {Array}           args    Send these arguments (fn.apply)
@@ -237,7 +229,7 @@ export default class Process {
   /**
    * Adds a hook to internal event
    *
-   * @see OSjs.Helpers.EventHandler#on
+   * @see EventHandler#on
    *
    * @param   {ProcessEvent}    k       Event name
    * @param   {Function}        func    Callback function
@@ -251,8 +243,8 @@ export default class Process {
   /**
    * Removes a hook to an internal even
    *
-   * @see OSjs.Core.Process#_on
-   * @see OSjs.Helpers.EventHandler#off
+   * @see Process#_on
+   * @see EventHandler#off
    *
    * @param   {ProcessEvent}    k       Event name
    * @param   {Number}          idx     The hook index returned from _on()
@@ -410,7 +402,7 @@ export default class Process {
    * @param   {Process|Window|Number}    [opts.source]    Source Process, Window or ID
    * @param   {String|Function}          [opts.filter]    Filter by string or fn(process)
    *
-   * @see OSjs.Core.Process#_onMessage
+   * @see Process#_onMessage
    */
   static message(msg, obj, opts) {
     opts = opts || {};
@@ -443,7 +435,7 @@ export default class Process {
    * @param   {String}    name    Process Name (or by number)
    * @param   {Boolean}   first   Return the first found
    *
-   * @return  {(OSjs.Core.Process[]|OSjs.Core.Process)}  Array of Processes or a Process depending on arguments
+   * @return  {(Process[]|Process)}  Array of Processes or a Process depending on arguments
    */
   static getProcess(name, first) {
     let result = first ? null : [];
@@ -472,7 +464,7 @@ export default class Process {
   /**
    * Get all processes
    *
-   * @return  {OSjs.Core.Process[]}
+   * @return  {Process[]}
    */
   static getProcesses() {
     return _PROCS;

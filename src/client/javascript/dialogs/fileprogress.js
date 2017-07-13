@@ -33,11 +33,10 @@ import {_} from 'core/locales';
 /**
  * An 'File Progress Indicator' dialog
  *
- * This is only used internally automatically.
+ * @desc This is only used internally automatically.
  *
- * @example
- *
- * OSjs.API.createDialog('FileProgress', {}, fn);
+ * @example DialogWindow.create('FileProgress', {}, fn);
+ * @extends DialogWindow
  */
 export default class FileProgressDialog extends DialogWindow {
 

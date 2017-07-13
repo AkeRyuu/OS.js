@@ -63,12 +63,11 @@ let _dialogScheme;
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Dialog Window
+ * Base Dialog Window Class
  *
- * A simple wrapper with some pre-defined options
+ * @desc Class used for basis as a Dialog.
  *
- * @summary Class used for basis as a Dialog.
- *
+ * @extends {Window}
  * @abstract
  */
 export default class DialogWindow extends Window {
@@ -238,14 +237,14 @@ export default class DialogWindow extends Window {
    *
    * You can also pass a function as `className` to return an instance of your own class
    *
-   * @param   {String}                                 className             Dialog Namespace Class Name
-   * @param   {Object}                                 args                  Arguments you want to send to dialog
-   * @param   {CallbackDialog}                         callback              Callback on dialog action (close/ok etc) => fn(ev, button, result)
-   * @param   {Mixed}                                  [options]             A window or app (to make it a child window) or a set of options:
-   * @param   {OSjs.Core.Window|OSjs.Core.Application} [options.parent]      Same as above argument (without options context)
-   * @param   {Boolean}                                [options.modal=false] If you provide a parent you can toggle "modal" mode.
+   * @param   {String}             className             Dialog Namespace Class Name
+   * @param   {Object}             args                  Arguments you want to send to dialog
+   * @param   {CallbackDialog}     callback              Callback on dialog action (close/ok etc) => fn(ev, button, result)
+   * @param   {Mixed}              [options]             A window or app (to make it a child window) or a set of options:
+   * @param   {Window|Application} [options.parent]      Same as above argument (without options context)
+   * @param   {Boolean}            [options.modal=false] If you provide a parent you can toggle "modal" mode.
    *
-   * @return  {OSjs.Core.Window}
+   * @return  {Window}
    */
   static create(className, args, callback, options) {
 

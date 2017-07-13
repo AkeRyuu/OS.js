@@ -122,6 +122,11 @@ export function setLocale(l) {
   console.info('API::setLocale()', CurrentLocale);
 }
 
+/**
+ * Creates a new translation function based on a map
+ * @param {Object} locales A localization map
+ * @return {Function}
+ */
 export function createLocalizer(locales) {
   return function() {
     var args = Array.prototype.slice.call(arguments, 0);
@@ -130,6 +135,13 @@ export function createLocalizer(locales) {
   };
 }
 
+/**
+ * Initializes locales
+ * @param {String}  locale         Locale name
+ * @param {Object}  options        Locale options
+ * @param {Array}   [options.RTL]  RTL Languages
+ * @param {Array}   languages      Available languages
+ */
 export function init(locale, options, languages) {
   options = options || {};
 

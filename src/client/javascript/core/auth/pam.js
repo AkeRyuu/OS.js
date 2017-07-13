@@ -29,5 +29,9 @@
  */
 import Authenticator from 'core/authenticator';
 
+/**
+ * PAM Authentication Handler
+ * @extends Authenticator
+ */
 export default class PAMAuthenticator extends Authenticator {
 }

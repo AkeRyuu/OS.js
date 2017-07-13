@@ -34,6 +34,10 @@ import FileMetadata from 'vfs/file';
 import Connection from 'core/connection';
 import Promise from 'bluebird';
 
+/**
+ * WebSocket Connection Handler
+ * @xtends Connection
+ */
 export default class WSConnection extends Connection {
   constructor() {
     super(...arguments);

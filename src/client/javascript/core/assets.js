@@ -186,9 +186,9 @@ export function getSound(name) {
 /**
  * Default method for getting a icon from theme
  *
- * @param   {String}              name          Resource filename
- * @param   {String}              [size=16x16]  Icon size
- * @param   {OSjs.Core.Process}   [app]         Application instance reference. Can also be String. For `name` starting with './'
+ * @param   {String}    name          Resource filename
+ * @param   {String}    [size=16x16]  Icon size
+ * @param   {Process}   [app]         Application instance reference. Can also be String. For `name` starting with './'
  *
  * @return  {String}            The absolute URL to the resource
  */
@@ -261,6 +261,14 @@ export function playSound(name, volume) {
   return a;
 }
 
+/**
+ * Get package resource
+ *
+ * @param {Process|String}    app       The application (or package name)
+ * @param {String}            name      Resource name
+ * @param {String}            vfspath   Return a VFS path
+ * @return {String}
+ */
 export function getPackageResource(app, name, vfspath) {
   if ( name.match(/^(https?:)?\//) ) {
     return name;

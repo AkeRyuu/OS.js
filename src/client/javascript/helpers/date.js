@@ -82,12 +82,13 @@ function _m(m, now) {
  *
  * Works just like 'Date', but has some extended methods
  *
- * @summary Class for date manipulation and formatting.
- *
- * @param {(Date|Ojs.Helpers.Date)} [date] Create new instance from this date
+ * @desc Class for date manipulation and formatting.
  */
 export default class ExtendedDate {
 
+  /**
+   * @param {(Date|ExtendedDate)} [date] Create new instance from this date
+   */
   constructor(date) {
     if ( date ) {
       if ( date instanceof Date ) {
@@ -135,7 +136,7 @@ export default class ExtendedDate {
   /**
    * Get the 'Date' Object
    *
-   * @return  {OSjs.Helpers.Date}
+   * @return  {DateExtended}
    */
   get() {
     return this.date;
@@ -187,7 +188,7 @@ export default class ExtendedDate {
   /**
    * Get First day in month
    *
-   * @see OSjs.Helpers.Date#format
+   * @see DateExtended#format
    *
    * @param   {String}    [fmt]     Date format
    *
@@ -200,7 +201,7 @@ export default class ExtendedDate {
   /**
    * Get Last day in month
    *
-   * @see OSjs.Helpers.Date#format
+   * @see DateExtended#format
    *
    * @param   {String}    [fmt]     Date format
    *
@@ -231,8 +232,8 @@ export default class ExtendedDate {
   /**
    * Check if given range is within Month
    *
-   * @param   {(Date|OSjs.Helpers.Date)}    from      From date (can be Date)
-   * @param   {(Date|OSjs.Helpers.Date)}    to        To date (can be Date)
+   * @param   {(Date|DateExtended)}    from      From date (can be Date)
+   * @param   {(Date|DateExtended)}    to        To date (can be Date)
    *
    * @return  {Boolean}
    */
@@ -254,14 +255,14 @@ export default class ExtendedDate {
   //
 
   /**
-   * @see OSjs.Helpers.Date#format
+   * @see DateExtended#format
    */
   static format(date, fmt) {
     return format(fmt, date);
   }
 
   /**
-   * @see OSjs.Helpers.Date#getPreviousMonth
+   * @see DateExtended#getPreviousMonth
    */
   static getPreviousMonth(now) {
     now = now ? (now instanceof ExtendedDate ? now.date : now) : new Date();
@@ -277,7 +278,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#getNextMonth
+   * @see DateExtended#getNextMonth
    */
   static getNextMonth(now) {
     now = now ? (now instanceof ExtendedDate ? now.date : now) : new Date();
@@ -293,7 +294,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#getFirstDayInMonth
+   * @see DateExtended#getFirstDayInMonth
    */
   static getFirstDayInMonth(fmt, y, m, now) {
     now = _now(now);
@@ -309,7 +310,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#getLastDayInMonth
+   * @see DateExtended#getLastDayInMonth
    */
   static getLastDayInMonth(fmt, y, m, now) {
     now = _now(now);
@@ -325,7 +326,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#getDaysInMonth
+   * @see DateExtended#getDaysInMonth
    */
   static getDaysInMonth(y, m, now) {
     now = _now(now);
@@ -338,7 +339,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#getWeekNumber
+   * @see DateExtended#getWeekNumber
    */
   static getWeekNumber(now) {
     now = now ? (now instanceof ExtendedDate ? now.date : now) : new Date();
@@ -350,7 +351,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#getDayName
+   * @see DateExtended#getDayName
    */
   static getDayName(index, shrt) {
     if ( index < 0 || index === null || typeof index === 'undefined' ) {
@@ -363,7 +364,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#getMonthName
+   * @see DateExtended#getMonthName
    */
   static getMonthName(index, shrt) {
     if ( index < 0 || index === null || typeof index === 'undefined' ) {
@@ -376,7 +377,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#isWithinMonth
+   * @see DateExtended#isWithinMonth
    */
   static isWithinMonth(now, from, to) {
     if ( now.getFullYear() >= from.getFullYear() && now.getMonth() >= from.getMonth() ) {
@@ -388,7 +389,7 @@ export default class ExtendedDate {
   }
 
   /**
-   * @see OSjs.Helpers.Date#getDayOfTheYear
+   * @see DateExtended#getDayOfTheYear
    */
   static getDayOfTheYear() {
     const now = new Date();

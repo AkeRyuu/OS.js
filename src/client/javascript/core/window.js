@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/window
- */
 import FileMetadata from 'vfs/file';
 import Application from 'core/application';
 import WindowManager from 'core/windowmanager';
@@ -108,7 +105,6 @@ const getNextZindex = (function() {
  * Get viewport (Wrapper)
  *
  * @return {Object}
- * @api OSjs.API.getWindowSpace()
  */
 function getWindowSpace() {
   const wm = WindowManager.instance;
@@ -211,9 +207,9 @@ let _DEFAULT_SND_VOLUME = 1.0;
 let _NAMES              = [];
 
 /**
- * Window Class
+ * Base Window Class
  *
- * @summary Class used for basis as a Window.
+ * @desc Class used for creating windows.
  *
  * @abstract
  * @mixes EventHandler
@@ -222,37 +218,37 @@ let _NAMES              = [];
 export default class Window {
 
   /**
-   * @param   {String}                    name                     Window name (unique)
-   * @param   {Object}                    opts                     List of options
-   * @param   {String}                    opts.title               Window Title
-   * @param   {String}                    opts.icon                Window Icon
-   * @param   {Number}                    [opts.x]                 X Position
-   * @param   {Number}                    [opts.y]                 Y Position
-   * @param   {Number}                    [opts.w]                 Width
-   * @param   {Number}                    [opts.h]                 Height
-   * @param   {String}                    [opts.tag]               Window Tag
-   * @param   {String}                    [opts.gravity]           Window Gravity
-   * @param   {boolean}                   [opts.allow_move]        Allow movment
-   * @param   {boolean}                   [opts.allow_resize]      Allow resize
-   * @param   {boolean}                   [opts.allow_minimize]    Allow minimize
-   * @param   {boolean}                   [opts.allow_maximize]    Allow maximize
-   * @param   {boolean}                   [opts.allow_close]       Allow closing
-   * @param   {boolean}                   [opts.allow_windowlist]  Allow appear in WindowList (Panel)
-   * @param   {boolean}                   [opts.allow_drop]        Allow DnD
-   * @param   {boolean}                   [opts.allow_iconmenu]    Allow Menu when click on Window Icon
-   * @param   {boolean}                   [opts.allow_ontop]       Allow ontop
-   * @param   {boolean}                   [opts.allow_hotkeys]     Allow usage of hotkeys
-   * @param   {boolean}                   [opts.allow_session]     Allow to store for session
-   * @param   {boolean}                   [opts.key_capture]       Allow key capture (UNSUSED ?!)
-   * @param   {boolean}                   [opts.min_width]         Minimum allowed width
-   * @param   {boolean}                   [opts.min_height]        Minimum allowed height
-   * @param   {boolean}                   [opts.max_width]         Maximum allowed width
-   * @param   {boolean}                   [opts.max_height]        Maximum allowed height
-   * @param   {Object}                    [opts.media_queries]     Media queries to apply CSS attribute => {name: fn(w,h,win) => Boolean }
-   * @param   {String}                    [opts.sound]             Sound name when window is displayed
-   * @param   {Number}                    [opts.sound_volume]      Sound volume
-   * @param   {Function}                  [opts.translator]        Translation method
-   * @param   {OSjs.Core.Application}     appRef                   Application Reference
+   * @param   {String}        name                     Window name (unique)
+   * @param   {Object}        opts                     List of options
+   * @param   {String}        opts.title               Window Title
+   * @param   {String}        opts.icon                Window Icon
+   * @param   {Number}        [opts.x]                 X Position
+   * @param   {Number}        [opts.y]                 Y Position
+   * @param   {Number}        [opts.w]                 Width
+   * @param   {Number}        [opts.h]                 Height
+   * @param   {String}        [opts.tag]               Window Tag
+   * @param   {String}        [opts.gravity]           Window Gravity
+   * @param   {boolean}       [opts.allow_move]        Allow movment
+   * @param   {boolean}       [opts.allow_resize]      Allow resize
+   * @param   {boolean}       [opts.allow_minimize]    Allow minimize
+   * @param   {boolean}       [opts.allow_maximize]    Allow maximize
+   * @param   {boolean}       [opts.allow_close]       Allow closing
+   * @param   {boolean}       [opts.allow_windowlist]  Allow appear in WindowList (Panel)
+   * @param   {boolean}       [opts.allow_drop]        Allow DnD
+   * @param   {boolean}       [opts.allow_iconmenu]    Allow Menu when click on Window Icon
+   * @param   {boolean}       [opts.allow_ontop]       Allow ontop
+   * @param   {boolean}       [opts.allow_hotkeys]     Allow usage of hotkeys
+   * @param   {boolean}       [opts.allow_session]     Allow to store for session
+   * @param   {boolean}       [opts.key_capture]       Allow key capture (UNSUSED ?!)
+   * @param   {boolean}       [opts.min_width]         Minimum allowed width
+   * @param   {boolean}       [opts.min_height]        Minimum allowed height
+   * @param   {boolean}       [opts.max_width]         Maximum allowed width
+   * @param   {boolean}       [opts.max_height]        Maximum allowed height
+   * @param   {Object}        [opts.media_queries]     Media queries to apply CSS attribute => {name: fn(w,h,win) => Boolean }
+   * @param   {String}        [opts.sound]             Sound name when window is displayed
+   * @param   {Number}        [opts.sound_volume]      Sound volume
+   * @param   {Function}      [opts.translator]        Translation method
+   * @param   {Application}   appRef                   Application Reference
    */
   constructor(name, opts, appRef) {
 
@@ -330,7 +326,7 @@ export default class Window {
 
     /**
      * Application reference
-     * @type {OSjs.Core.Application}
+     * @type {Application}
      */
     this._app = appRef || null;
 
@@ -414,13 +410,13 @@ export default class Window {
 
     /**
      * Children
-     * @return {OSjs.Core.Window[]}
+     * @return {Window[]}
      */
     this._children = [];
 
     /**
      * Parent
-     * @type {OSjs.Core.Window}
+     * @type {Window}
      */
     this._parent = null;
 
@@ -614,8 +610,8 @@ export default class Window {
    * If you are looking for move/resize events, they are located in
    * the WindowManager.
    *
-   * @param   {OSjs.Core.WindowManager}   _wm     Window Manager reference
-   * @param   {OSjs.Core.Application}     _app    Application reference
+   * @param   {WindowManager}   _wm     Window Manager reference
+   * @param   {Application}     _app    Application reference
    *
    * @return  {Node} The Window DOM element
    */
@@ -987,7 +983,7 @@ export default class Window {
    * @param   {String}                id        Element ID (data-id)
    * @param   {Node}                  [root]    Root Node
    *
-   * @return {OSjs.GUI.Element}
+   * @return {GUIElement}
    */
   _find(id, root) {
     const q = '[data-id="' + id + '"]';
@@ -1039,7 +1035,7 @@ export default class Window {
    * @param   {Node}                  [parentNode]  Parent Node
    * @param   {Object}                [applyArgs]   New element parameters
    *
-   * @return {OSjs.GUI.Element}
+   * @return {GUIElement}
    */
   _create(tagName, params, parentNode, applyArgs) {
     parentNode = parentNode || this._getRoot();
@@ -1053,7 +1049,7 @@ export default class Window {
    * @param   {Node}                  [root]    Root Node
    * @param   {Boolean}               [all]     Perform `querySelectorAll`
    *
-   * @return {(Array|OSjs.GUI.Element)}
+   * @return {(Array|GUIElement)}
    */
   _findByQuery(query, root, all) {
     root = root || this._getRoot();
@@ -1074,7 +1070,7 @@ export default class Window {
 
   /**
    * Fire a hook to internal event
-   * @see OSjs.Helpers.EventHandler#emit
+   * @see EventHandler#emit
    *
    * @param   {WindowEvent}    k       Event name
    * @param   {Array}          args    Send these arguments (fn.apply)
@@ -1092,7 +1088,7 @@ export default class Window {
 
   /**
    * Adds a hook to internal event
-   * @see OSjs.Helpers.EventHandler#on
+   * @see EventHandler#on
    *
    * @param   {WindowEvent}    k       Event name
    * @param   {Function}       func    Callback function
@@ -1109,7 +1105,7 @@ export default class Window {
   /**
    * Removes a hook to internal event
    *
-   * @see OSjs.Helpers.EventHandler#off
+   * @see EventHandler#off
    *
    * @param   {WindowEvent}    k       Event name
    * @param   {Number}         idx     The hook index returned from _on()
@@ -1130,13 +1126,13 @@ export default class Window {
   /**
    * Add a child-window
    *
-   * @param {OSjs.Core.Window}      w               Window
-   * @param {Boolean}               [wmAdd=false]   Add to window manager
-   * @param {Boolean}               [wmFocus=false] Focus window when added
+   * @param {Window}      w               Window
+   * @param {Boolean}     [wmAdd=false]   Add to window manager
+   * @param {Boolean}     [wmFocus=false] Focus window when added
    *
-   * @see OSjs.Helpers.EventHandler#off
+   * @see EventHandler#off
    *
-   * @return  {OSjs.Core.Window} The added instance
+   * @return  {Window} The added instance
    */
   _addChild(w, wmAdd, wmFocus) {
     console.debug('Window::_addChild()');
@@ -1154,7 +1150,7 @@ export default class Window {
   /**
    * Removes a child Window
    *
-   * @param   {OSjs.Core.Window}    w     Widow reference
+   * @param   {Window}    w     Widow reference
    *
    * @return  {Boolean}         On success
    */
@@ -1178,7 +1174,7 @@ export default class Window {
    * @param   {String}      value   Value to look for
    * @param   {String}      key     Key to look for
    *
-   * @return  {OSjs.Core.Window} Resulted Window or 'null'
+   * @return  {Window} Resulted Window or 'null'
    */
   _getChild(value, key) {
     key = key || 'wid';
@@ -1202,10 +1198,10 @@ export default class Window {
 
   /**
    * Get a Window child by ID
-   * @see OSjs.Core.Window#_getChild
+   * @see Window#_getChild
    *
    * @param {Number} id Window id
-   * @return {OSjs.Core.Window}
+   * @return {Window}
    */
   _getChildById(id) {
     return this._getChild(id, 'wid');
@@ -1213,10 +1209,10 @@ export default class Window {
 
   /**
    * Get a Window child by Name
-   * @see OSjs.Core.Window#_getChild
+   * @see Window#_getChild
    *
    * @param {String} name Window name
-   * @return {OSjs.Core.Window}
+   * @return {Window}
    */
   _getChildByName(name) {
     return this._getChild(name, 'name');
@@ -1224,11 +1220,11 @@ export default class Window {
 
   /**
    * Get Window(s) child by Tag
-   * @see OSjs.Core.Window#_getChild
+   * @see Window#_getChild
    *
    * @param {String} tag Tag name
    *
-   * @return {OSjs.Core.Window[]}
+   * @return {Window[]}
    */
   _getChildrenByTag(tag) {
     return this._getChild(tag, 'tag');
@@ -1237,7 +1233,7 @@ export default class Window {
   /**
    * Gets all children Windows
    *
-   * @return {OSjs.Core.Window[]}
+   * @return {Window[]}
    */
   _getChildren() {
     return this._children;
@@ -2051,7 +2047,6 @@ export default class Window {
 
   /**
    * Get Window position in DOM
-   * @see OSjs.Utils.position
    * @return {Object}
    */
   _getViewRect() {

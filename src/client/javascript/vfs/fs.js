@@ -40,7 +40,7 @@ let watches = [];
 
 /**
  * A supported file data type
- * @typedef {(window.File|window.Blob|OSjs.VFS.File|OSjs.VFS.FileDataURL)} File
+ * @typedef {(window.File|window.Blob|FileMetadata|FileDataURL)} File
  */
 
 /*@
@@ -386,13 +386,12 @@ export function broadcastMessage(msg, item, appRef) {
 /**
  * Find file(s)
  *
- * @param  {OSjs.VFS.File}   item              Root path
- * @param  {Object}          args              Search query
- * @param  {Object}          [options]         Set of options
- * @param  {String}          options.query     The search query string
- * @param  {Number}          [options.limit]   Limit results to this amount
- *
- * @api     OSjs.VFS.find()
+ * @param  {FileMetadata} item              Root path
+ * @param  {Object}       args              Search query
+ * @param  {Object}       [options]         Set of options
+ * @param  {String}       options.query     The search query string
+ * @param  {Number}       [options.limit]   Limit results to this amount
+ * @return {Promise<Array, Error>}
  */
 export function find(item, args, options) {
   options = options || {};
@@ -414,16 +413,17 @@ export function find(item, args, options) {
 /**
  * Scandir
  *
- * @summary Scans a directory for files and directories.
+ * @desc Scans a directory for files and directories.
  *
- * @param   {OSjs.VFS.File}   item                             File Metadata
- * @param   {Object}          [options]                        Set of options
- * @param   {String}          [options.typeFilter]             Filter by 'file' or 'dir'
- * @param   {Array}           [options.mimeFilter]             Array of mime regex matchers
- * @param   {Boolean}         [options.showHiddenFiles=true]   Show hidden files
- * @param   {Boolean}         [options.backlink=true]          Return '..' when applicable
- * @param   {String}          [options.sortBy=null]            Sort by this key
- * @param   {String}          [options.sortDir='asc']          Sort in this direction
+ * @param  {FileMetadata}    item                             File Metadata
+ * @param  {Object}          [options]                        Set of options
+ * @param  {String}          [options.typeFilter]             Filter by 'file' or 'dir'
+ * @param  {Array}           [options.mimeFilter]             Array of mime regex matchers
+ * @param  {Boolean}         [options.showHiddenFiles=true]   Show hidden files
+ * @param  {Boolean}         [options.backlink=true]          Return '..' when applicable
+ * @param  {String}          [options.sortBy=null]            Sort by this key
+ * @param  {String}          [options.sortDir='asc']          Sort in this direction
+ * @return {Promise<Array, Error>}
  */
 export function scandir(item, options) {
   const vfsSettings = SettingsManager.get('VFS');
@@ -480,12 +480,13 @@ export function scandir(item, options) {
 /**
  * Write File
  *
- * @summary Writes data to a file
+ * @desc Writes data to a file
  *
- * @param   {OSjs.VFS.File}             item          File Metadata (you can also provide a string)
- * @param   {File}                      data          File Data (see supported types)
- * @param   {Object}                    [options]     Set of options
- * @param   {OSjs.Core.Application}     [appRef]      Reference to an Application
+ * @param  {FileMetadata}           item          File Metadata (you can also provide a string)
+ * @param  {File}                   data          File Data (see supported types)
+ * @param  {Object}                 [options]     Set of options
+ * @param  {OSjs.Core.Application}  [appRef]      Reference to an Application
+ * @return {Promise<Boolean, Error>}
  */
 export function write(item, data, options, appRef) {
   options = options || {};
@@ -517,11 +518,12 @@ export function write(item, data, options, appRef) {
 /**
  * Read File
  *
- * @summary Reads data from a file
+ * @desc Reads data from a file
  *
- * @param   {OSjs.VFS.File}   item                File Metadata (you can also provide a string)
- * @param   {Object}          [options]           Set of options
- * @param   {String}          [options.type]      What to return, default: binary. Can also be: text, datasource, json
+ * @param  {FileMetadata} item                File Metadata (you can also provide a string)
+ * @param  {Object}       [options]           Set of options
+ * @param  {String}       [options.type]      What to return, default: binary. Can also be: text, datasource, json
+ * @return {Promise<ArrayBuffer, Error>}
  */
 export function read(item, options) {
   options = options || {};
@@ -588,13 +590,14 @@ export function read(item, options) {
 /**
  * Copy File
  *
- * @summary Copies a file to a destination
+ * @desc Copies a file to a destination
  *
- * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
- * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
- * @param   {Object}                    [options]             Set of options
- * @param   {Boolean}                   [options.overwrite]   If set to true it will not check if the destination exists
- * @param   {OSjs.Core.Application}     [appRef]              Seference to an Application
+ * @param  {FileMetadata}           src                   Source File Metadata (you can also provide a string)
+ * @param  {FileMetadata}           dest                  Destination File Metadata (you can also provide a string)
+ * @param  {Object}                 [options]             Set of options
+ * @param  {Boolean}                [options.overwrite]   If set to true it will not check if the destination exists
+ * @param  {OSjs.Core.Application}  [appRef]              Seference to an Application
+ * @return {Promise<Boolean, Error>}
  */
 export function copy(src, dest, options, appRef) {
   options = options || {};
@@ -657,13 +660,14 @@ export function copy(src, dest, options, appRef) {
 /**
  * Move File
  *
- * @summary Moves a file to a destination
+ * @desc Moves a file to a destination
  *
- * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
- * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
- * @param   {Object}                    [options]             Set of options
- * @param   {Boolean}                   [options.overwrite]   If set to true it will not check if the destination exists
- * @param   {OSjs.Core.Application}     [appRef]              Seference to an Application
+ * @param  {FileMetadata}           src                   Source File Metadata (you can also provide a string)
+ * @param  {FileMetadata}           dest                  Destination File Metadata (you can also provide a string)
+ * @param  {Object}                 [options]             Set of options
+ * @param  {Boolean}                [options.overwrite]   If set to true it will not check if the destination exists
+ * @param  {OSjs.Core.Application}  [appRef]              Seference to an Application
+ * @return {Promise<Boolean, Error>}
  */
 export function move(src, dest, options, appRef) {
   options = options || {};
@@ -716,11 +720,12 @@ export function move(src, dest, options, appRef) {
  * Alias of move
  * @alias move
  *
- * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
- * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
- * @param   {Object}                    [options]             Set of options
- * @param   {Boolean}                   [options.overwrite]   If set to true it will not check if the destination exists
- * @param   {OSjs.Core.Application}     [appRef]              Seference to an Application
+ * @param  {FileMetadata}           src                   Source File Metadata (you can also provide a string)
+ * @param  {FileMetadata}           dest                  Destination File Metadata (you can also provide a string)
+ * @param  {Object}                 [options]             Set of options
+ * @param  {Boolean}                [options.overwrite]   If set to true it will not check if the destination exists
+ * @param  {OSjs.Core.Application}  [appRef]              Seference to an Application
+ * @return {Promise<Boolean, Error>}
  */
 export function rename(src, dest) {
   return move(...arguments);
@@ -731,11 +736,12 @@ export function rename(src, dest) {
  *
  * This function currently have no options.
  *
- * @summary Deletes a file
+ * @desc Deletes a file
  *
- * @param   {OSjs.VFS.File}             item                  File Metadata (you can also provide a string)
- * @param   {Object}                    [options]             Set of options
- * @param   {OSjs.Core.Application}     [appRef]              Reference to an Application
+ * @param  {FileMetadata}           item                  File Metadata (you can also provide a string)
+ * @param  {Object}                 [options]             Set of options
+ * @param  {OSjs.Core.Application}  [appRef]              Reference to an Application
+ * @return {Promise<Boolean, Error>}
  */
 export function unlink(item, options, appRef) {
   options = options || {};
@@ -773,12 +779,13 @@ export function unlink(item, options, appRef) {
 /**
  * Create Directory
  *
- * @summary Creates a directory
+ * @desc Creates a directory
  *
- * @param   {OSjs.VFS.File}             item                  File Metadata (you can also provide a string)
- * @param   {Object}                    [options]             Set of options
- * @param   {Boolean}                   [options.overwrite]   If set to true it will not check if the destination exists
- * @param   {OSjs.Core.Application}     [appRef]              Reference to an Application
+ * @param  {FileMetadata}           item                  File Metadata (you can also provide a string)
+ * @param  {Object}                 [options]             Set of options
+ * @param  {Boolean}                [options.overwrite]   If set to true it will not check if the destination exists
+ * @param  {OSjs.Core.Application}  [appRef]              Reference to an Application
+ * @return {Promise<Boolean, Error>}
  */
 export function mkdir(item, options, appRef) {
   options = options || {};
@@ -800,9 +807,10 @@ export function mkdir(item, options, appRef) {
 /**
  * Check if file exists
  *
- * @summary Check if a target exists
+ * @desc Check if a target exists
  *
- * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
+ * @param  {FileMetadata} item      File Metadata (you can also provide a string)
+ * @return {Promise<Boolean, Error>}
  */
 export function exists(item) {
   console.debug('VFS::exists()', item);
@@ -822,9 +830,10 @@ export function exists(item) {
 /**
  * Get file info
  *
- * @summary Gets information about a file
+ * @desc Gets information about a file
  *
- * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
+ * @param  {FileMetadata} item      File Metadata (you can also provide a string)
+ * @return {Promise<Object, Error>}
  */
 export function fileinfo(item) {
   console.debug('VFS::fileinfo()', item);
@@ -844,10 +853,11 @@ export function fileinfo(item) {
 /**
  * Get file URL
  *
- * @summary Gets absolute HTTP URL to a file
+ * @desc Gets absolute HTTP URL to a file
  *
- * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
- * @param   {Object}          [options] Set of options
+ * @param  {FileMetadata} item      File Metadata (you can also provide a string)
+ * @param  {Object}       [options] Set of options
+ * @return {Promise<String, Error>}
  */
 export function url(item, options) {
   options = options || {};
@@ -869,14 +879,15 @@ export function url(item, options) {
 /**
  * Upload file(s)
  *
- * @summary Uploads a file to the target from browser
+ * @desc Uploads a file to the target from browser
  *
- * @param   {Object}                    args                      Function arguments (see below)
- * @param   {String}                    args.destination          Full path to destination
- * @param   {Array}                     args.files                Array of 'File'
- * @param   {Object}                    [options]                 Set of options
- * @param   {Boolean}                   [options.overwrite=false] If set to true it will not check if the destination exists
- * @param   {OSjs.Core.Application}     [appRef]                  Reference to an Application
+ * @param  {Object}                    args                      Function arguments (see below)
+ * @param  {String}                    args.destination          Full path to destination
+ * @param  {Array}                     args.files                Array of 'File'
+ * @param  {Object}                    [options]                 Set of options
+ * @param  {Boolean}                   [options.overwrite=false] If set to true it will not check if the destination exists
+ * @param  {OSjs.Core.Application}     [appRef]                  Reference to an Application
+ * @return {Promise<FileMetadata, Error>}
  */
 export function upload(args, options, appRef) {
   args = args || {};
@@ -922,9 +933,10 @@ export function upload(args, options, appRef) {
 /**
  * Download a file
  *
- * @summary Downloads a file to the computer
+ * @desc Downloads a file to the computer
  *
- * @param   {OSjs.VFS.File}   file      File Metadata (you can also provide a string)
+ * @param  {FileMetadata} file      File Metadata (you can also provide a string)
+ * @return {Promise<String, Error>}
  */
 export function download(file) {
   console.debug('VFS::download()', file);
@@ -966,9 +978,10 @@ export function download(file) {
 /**
  * Move file to trash (Not used in internal storage)
  *
- * @summary Trashes a file
+ * @desc Trashes a file
  *
- * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
+ * @param  {FileMetadata} item      File Metadata (you can also provide a string)
+ * @return {Promise<Boolean, Error>}
  */
 export function trash(item) {
   console.debug('VFS::trash()', item);
@@ -988,9 +1001,10 @@ export function trash(item) {
 /**
  * Restore file from trash
  *
- * @summary Removes a file from trash
+ * @desc Removes a file from trash
  *
- * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
+ * @param  {FileMetadata} item      File Metadata (you can also provide a string)
+ * @return {Promise<Boolean, Error>}
  */
 export function untrash(item) {
 
@@ -1011,7 +1025,8 @@ export function untrash(item) {
 /**
  * Permanently empty trash
  *
- * @summary Empties the trash
+ * @desc Empties the trash
+ * @return {Promise<Boolean, Error>}
  */
 export function emptyTrash() {
   console.debug('VFS::emptyTrash()');
@@ -1024,9 +1039,10 @@ export function emptyTrash() {
  *
  * Result is -1 when unavailable
  *
- * @summary Gets free space on target
+ * @desc Gets free space on target
  *
- * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
+ * @param  {FileMetadata} item      File Metadata (you can also provide a string)
+ * @return {Promise<Number, Error>}
  */
 export function freeSpace(item) {
   console.debug('VFS::freeSpace()', item);
@@ -1048,12 +1064,12 @@ export function freeSpace(item) {
 /**
  * Watches a file or directory for changes. Please note that this currently only works for
  * client-side APIs.
- * @summary Watches a file or directory for changes.
+ * @desc Watches a file or directory for changes.
  *
- * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
+ * @param   {FileMetadata} item      File Metadata (you can also provide a string)
  * @param   {Function}     callback  Callback function
  *
- * @return {Promise} The index of your watch (you can unwatch with this)
+ * @return {Promise<Object, Boolean>} The index of your watch (you can unwatch with this)
  */
 export function watch(item, callback) {
   callback = callback || noop;

@@ -112,8 +112,8 @@ export function getViewNodeValue(el) {
 /**
  * Internal for getting
  *
- * @param   {Node}                el      Element
- * @param   {OSjs.Core.Window}    [win]   Window Reference
+ * @param   {Node}      el      Element
+ * @param   {Window}    [win]   Window Reference
  *
  * @return  {String}
  */
@@ -153,7 +153,7 @@ export function getIcon(el, win) {
  * @param   {String}   param       Parameter name
  * @param   {String}   [tagName]   What tagname is in use? Automatic
  *
- * @return  {Mixed}
+ * @return  {Object|String}
  */
 export function getProperty(el, param, tagName) {
   tagName = tagName || el.tagName.toLowerCase();
@@ -182,7 +182,7 @@ export function getProperty(el, param, tagName) {
  *
  * @param   {Node}            el            Element
  * @param   {String}          param         Parameter name
- * @param   {Mixed}           value         Parameter value
+ * @param   {String}          value         Parameter value
  * @param   {String}          [tagName]     What tagname is in use? Automatic
  */
 export function setProperty(el, param, value, tagName) {
@@ -869,7 +869,7 @@ export function blurMenu(ev) {
  *
  * @param   {Array}                items             Array of items
  * @param   {(Event|Object)}       ev                DOM Event or dict with x/y
- * @param   {Mixed}                [customInstance]  Show a custom created menu
+ * @param   {Object}               [customInstance]  Show a custom created menu
  */
 export function createMenu(items, ev, customInstance) {
   items = items || [];

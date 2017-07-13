@@ -173,7 +173,7 @@ export default class FileMetadata {
    * @param     {String}      destination         Destination path
    * @param     {File}        f                   File
    *
-   * @return {OSjs.VFS.File}
+   * @return {FileMetadata}
    */
   static fromUpload(destination, f) {
     return new FileMetadata({

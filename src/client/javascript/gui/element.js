@@ -116,13 +116,13 @@ function createElementInstance(tagName, el, q, buildArgs) {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Base UIElement Class
+ * Base GUIElement Class
  *
- * @summary The Class used for all UI Elements.
+ * @desc The Class used for all UI Elements.
  *
  * @link https://os-js.org/manual/gui/elements/
  */
-export default class UIElement {
+export default class GUIElement {
 
   /**
    * @param {Node}      el      DOM Node
@@ -145,7 +145,7 @@ export default class UIElement {
     this.oldDisplay = null;
 
     if ( !el ) {
-      console.warn('UIElement() was constructed without a DOM element', q);
+      console.warn('GUIElement() was constructed without a DOM element', q);
     }
   }
 
@@ -333,7 +333,7 @@ export default class UIElement {
    * @return {OSjs.GUI.Element} The current instance (this)
    */
   append(el) {
-    if ( el instanceof UIElement ) {
+    if ( el instanceof GUIElement ) {
       el = el.$element;
     } else if ( typeof el === 'string' || typeof el === 'number' ) {
       el = document.createTextNode(String(el));
@@ -369,7 +369,7 @@ export default class UIElement {
    */
   _append(el, win, args) {
     if ( el instanceof Element ) {
-      UIElement.parseNode(win, el, null, args);
+      GUIElement.parseNode(win, el, null, args);
     }
 
     // Move elements over
@@ -393,7 +393,7 @@ export default class UIElement {
   querySelector(q, rui) {
     const el = this.$element.querySelector(q);
     if ( rui ) {
-      return UIElement.createFromNode(el, q);
+      return GUIElement.createFromNode(el, q);
     }
     return el;
   }
@@ -410,7 +410,7 @@ export default class UIElement {
     let el = this.$element.querySelectorAll(q);
     if ( rui ) {
       el = el.map((i) => {
-        return UIElement.createFromNode(i, q);
+        return GUIElement.createFromNode(i, q);
       });
     }
     return el;
@@ -481,11 +481,11 @@ export default class UIElement {
    * @return  {OSjs.GUI.Element}
    */
   static createInto(tagName, params, parentNode, applyArgs, win) {
-    if ( parentNode instanceof UIElement ) {
+    if ( parentNode instanceof GUIElement ) {
       parentNode = parentNode.$element;
     }
 
-    const gel = UIElement.create(tagName, params, applyArgs, win);
+    const gel = GUIElement.create(tagName, params, applyArgs, win);
     parentNode.appendChild(gel.$element);
     return gel;
   }
@@ -506,7 +506,7 @@ export default class UIElement {
         return instance;
       }
     }
-    return new UIElement(el, q);
+    return new GUIElement(el, q);
   }
 
   /**

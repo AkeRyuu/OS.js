@@ -36,9 +36,8 @@ import {_} from 'core/locales';
 /**
  * An 'Application Chooser' dialog
  *
- * @example
- *
- * OSjs.API.createDialog('ApplicationChooser', {}, fn);
+ * @example DialogWindow.create('ApplicationChooser', {}, fn);
+ * @extends DialogWindow
  */
 export default class ApplicationChooserDialog extends DialogWindow {
 

@@ -36,9 +36,8 @@ import {getConfig, getDefaultPath} from 'core/config';
 /**
  * An 'FileUpload' dialog
  *
- * @example
- *
- * OSjs.API.createDialog('FileUpload', {}, fn);
+ * @example DialogWindow.create('FileUpload', {}, fn);
+ * @extends DialogWindow
  */
 export default class FileUploadDialog extends DialogWindow {
 

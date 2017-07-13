@@ -284,7 +284,7 @@ export function getCompability() {
 /**
  * Check if browser is IE
  *
- * @return    boolean       If IE
+ * @return    {Boolean}       If IE
  */
 export function isIE() {
   const dm = parseInt(document.documentMode, 10);

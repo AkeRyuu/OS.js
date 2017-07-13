@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/service
- */
 import Process from 'core/process';
 
 /////////////////////////////////////////////////////////////////////////////
@@ -38,18 +35,15 @@ import Process from 'core/process';
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Service Class
+ * Service Base Class
  *
- * <pre><b>
- * YOU CANNOT CANNOT USE THIS VIA 'new' KEYWORD.
- * </b></pre>
- *
- * @summary Class used for basis as a Service.
+ * @desc Class used for making Services
  *
  * @param   {String}    name        Process name
  * @param   {Object}    args        Process arguments
  * @param   {Object}    metadata    Package metadata
  *
+ * @extends Process
  * @abstract
  */
 export default class Service extends Process {

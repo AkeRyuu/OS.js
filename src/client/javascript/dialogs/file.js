@@ -42,9 +42,8 @@ import {getDefaultPath} from 'core/config';
 /**
  * An 'File' dialog
  *
- * @example
- *
- * OSjs.API.createDialog('File', {}, fn);
+ * @example DialogWindow.create('File', {}, fn);
+ * @extends DialogWindow
  *
  * @param  {Object}           args                      An object with arguments
  * @param  {String}           args.title                Dialog title

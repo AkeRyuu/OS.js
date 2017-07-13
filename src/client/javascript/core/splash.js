@@ -28,6 +28,10 @@
  * @licence Simplified BSD License
  */
 
+/**
+ * Splash Screen Class
+ * @desc Builds the splash screen
+ */
 class SplashScreen {
 
   constructor() {
@@ -35,18 +39,29 @@ class SplashScreen {
     this.$progress = this.$el ? this.$el.querySelector('.progress') : null;
   }
 
+  /**
+   * Show the splash
+   */
   show() {
     if ( this.$el ) {
       this.$el.style.display = 'block';
     }
   }
 
+  /**
+   * Hide the splash
+   */
   hide() {
     if ( this.$el ) {
       this.$el.style.display = 'none';
     }
   }
 
+  /**
+   * Update the splash
+   * @param {Number}  p       Step x of...
+   * @param {Number}  c       ... y
+   */
   update(p, c) {
     if ( this.$progress ) {
       let per = c ? 0 : 100;

@@ -138,6 +138,8 @@ let SingletonInstance = null;
 /**
  * The GoogleAPI wrapper class
  *
+ * @desc Helper for handling ZIP files.
+ *
  * <pre><b>
  * This is a private class and can only be aquired through
  * OSjs.Helpers.ZipArchiver.createInsatance()
@@ -145,11 +147,6 @@ let SingletonInstance = null;
  * Generally you want to create an instance of this helper
  * and when successfully created use `window.zip` use the instance helpers.
  * </b></pre>
- *
- * @summary Helper for handling ZIP files.
- *
- * @example
- * OSjs.Helpers.ZipArchiver.createInstance({}, (err, instance) => {});
  */
 class ZipArchiver {
 

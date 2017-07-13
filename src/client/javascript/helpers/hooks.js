@@ -38,7 +38,9 @@ const _hooks = {
 };
 
 /**
- * TODO
+ * Get all hooks
+ * @param {String} name Hook name
+ * @return {Map<String, Array>}
  */
 export function getHooks(name) {
   return _hooks[name];

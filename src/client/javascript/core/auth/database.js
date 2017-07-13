@@ -29,6 +29,10 @@
  */
 import Authenticator from 'core/authenticator';
 
+/**
+ * Database Authentication Handler
+ * @extends Authenticator
+ */
 export default class DatabaseAuthenticator extends Authenticator {
 }
 

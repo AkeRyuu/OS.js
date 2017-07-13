@@ -31,6 +31,11 @@ import Promise from 'bluebird';
 import Process from 'core/process';
 import {_} from 'core/locales';
 
+/**
+ * A VFS mountpoint
+ *
+ * @desc Connects to a Transport
+ */
 export default class Mountpoint {
 
   /**
@@ -79,7 +84,7 @@ export default class Mountpoint {
   /**
    * Mounts given Mountpoint
    * @param {Object} [options] Mount options
-   * @return {Promise}
+   * @return {Promise<Boolean, Error>}
    */
   mount(options) {
     options = Object.assign({
@@ -99,7 +104,7 @@ export default class Mountpoint {
   /**
    * Unmount given Mountpoint
    * @param {Object} [options] Unmount options
-   * @return {Promise}
+   * @return {Promise<Boolean, Error>}
    */
   unmount(options) {
     options = Object.assign({
@@ -162,7 +167,7 @@ export default class Mountpoint {
    * @param {String}   method     VFS Method
    * @param {Array}    args       VFS Arguments
    * @param {Object}   [options]  Options
-   * @return {Promise}
+   * @return {Promise<Object, Error>}
    */
   request(method, args, options) {
     const transport = this.option('transport');

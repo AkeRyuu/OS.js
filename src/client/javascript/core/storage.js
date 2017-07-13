@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/storage
- */
 import Promise from 'bluebird';
 import Connection from 'core/connection';
 import Process from 'core/process';
@@ -59,6 +56,7 @@ export default class Storage {
 
   /**
    * Initializes the Storage
+   * @return {Promise<undefined, Error>}
    */
   init() {
     return Promise.resolve();
@@ -74,8 +72,9 @@ export default class Storage {
   /**
    * Default method to save given settings pool
    *
-   * @param   {String}           [pool]        Pool Name
-   * @param   {Mixed}            storage       Storage data
+   * @param  {String}           [pool]        Pool Name
+   * @param  {Mixed}            storage       Storage data
+   * @return {Promise<Boolean, Error>}
    */
   saveSettings(pool, storage) {
     clearTimeout(this.saveTimeout);
@@ -91,6 +90,7 @@ export default class Storage {
 
   /**
    * Default method for saving current sessions
+   * @return {Promise<Boolean, Error>}
    */
   saveSession() {
     return new Promise((resolve, reject) => {
@@ -109,6 +109,7 @@ export default class Storage {
 
   /**
    * Get last saved sessions
+   * @return {Promise<Object[], Error>}
    */
   getLastSession() {
     const res = SettingsManager.get('UserSession');

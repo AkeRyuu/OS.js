@@ -29,6 +29,10 @@
  */
 import Storage from 'core/storage';
 
+/**
+ * Database Storage Handler
+ * @xtends Storage
+ */
 export default class DatabaseStorage extends Storage {
 }
 

@@ -489,7 +489,7 @@ function _abToSomething(m, arrayBuffer, mime, callback) {
  * @param   {FormData}                        fd      FormData instance
  * @param   {String}                          key     FormData entry name
  * @param   {(window.File|window.Blob)}       data    File Data (see supported types)
- * @param   {OSjs.VFS.File}                   file    File Metadata
+ * @param   {FileMetadata}                    file    File Metadata
  */
 export function addFormFile(fd, key, data, file) {
   file = file || {mime: 'application/octet-stream', filename: 'filename'};

@@ -53,7 +53,7 @@ let SingletonInstance = null;
  * OSjs.Helpers.GoogleAPI.createInsatance()
  * </b></pre>
  *
- * @summary Helper for communicating with Google API.
+ * @desk Helper for communicating with Google API.
  *
  * @link https://developers.google.com/api-client-library/javascript/start/start-js
  * @link https://developers.google.com/api-client-library/javascript/

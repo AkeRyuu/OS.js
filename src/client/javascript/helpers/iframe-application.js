@@ -39,6 +39,7 @@ import * as Utils from 'utils/misc';
 /**
  * IFrame Application constructor
  *
+ * @desc
  * <pre><code>
  * Usage: Just apply the correct options and this should work
  * automatically.
@@ -47,8 +48,6 @@ import * as Utils from 'utils/misc';
  * iframe for contents. Look at the IFrameApplicationWindow
  * constructor for more options you can apply here.
  * </code></pre>
- *
- * @summary Helper for making IFrame Applications.
  */
 export default class IFrameApplication extends Application {
 
@@ -80,7 +79,7 @@ export default class IFrameApplication extends Application {
   /**
    * When Application receives a message from IFrame
    *
-   * @alias OSjs.Helpers.IframeApplicationWindow#onPostMessage
+   * @alias IFrameApplicationWindow#onPostMessage
    *
    * @param   {Mixed}       message     The message
    * @param   {Event}       ev          DOM Event
@@ -108,7 +107,7 @@ export default class IFrameApplication extends Application {
 
   /**
    * @param   {Mixed}       message     The message
-   * @alias OSjs.Helpers.IframeApplicationWindow#postMessage
+   * @alias IFrameApplicationWindow#postMessage
    */
   postMessage(message) {
     const win = this._getMainWindow();

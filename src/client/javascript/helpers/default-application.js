@@ -46,7 +46,7 @@ import {_} from 'core/locales';
  *
  * Handles opening, saving and creation of files.
  *
- * @summary Helper for making Applications with file interaction.
+ * @desc Helper for making Applications with file interaction.
  */
 export default class DefaultApplication extends Application {
 

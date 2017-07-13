@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/search-engine
- */
 import Promise from 'bluebird';
 import PackageManager from 'core/package-manager';
 import SettingsManager from 'core/settings-manager';
@@ -178,7 +175,7 @@ const FilesystemModule = {
 /**
  * Settings Manager Class
  *
- * @summary The Search Engine for location files and application.
+ * @desc The Search Engine for location files and application.
  */
 class SearchEngine {
 
@@ -194,7 +191,7 @@ class SearchEngine {
   /**
    * Initialize instance
    *
-   * @return {Promise}
+   * @return {Promise<undefined, Error>}
    */
   init() {
     console.debug('SearchEngine::init()');

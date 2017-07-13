@@ -31,6 +31,10 @@ import Promise from 'bluebird';
 import {getConfig} from 'core/config';
 import Storage from 'core/storage';
 
+/**
+ * Demo Storage Handler
+ * @xtends Storage
+ */
 export default class DemoStorage extends Storage {
 
   init() {

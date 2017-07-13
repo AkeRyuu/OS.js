@@ -34,9 +34,8 @@ import {getConfig} from 'core/config';
 /**
  * An 'Error' dialog
  *
- * @example
- *
- * OSjs.API.createDialog('Error', {}, fn);
+ * @example DialogWindow.create('Error', {}, fn);
+ * @extends DialogWindow
  */
 export default class ErrorDialog extends DialogWindow {
 

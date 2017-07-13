@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/windowmanager
- */
 import * as DOM from 'utils/dom';
 import * as GUI from 'utils/gui';
 import * as Events from 'utils/events';
@@ -131,10 +128,7 @@ let _instance;
 /**
  * WindowManager Process Class
  *
- * @example
- * require(...).instance
- *
- * @summary Class used for basis as a Window Manager.
+ * @desc Class used for basis as a Window Manager.
  *
  * @abstract
  */
@@ -145,11 +139,11 @@ export default class WindowManager extends Process {
   }
 
   /**
-   * @param   {String}                      name      Window Manager name
-   * @param   {OSjs.Core.WindowManager}     ref       Constructed instance ref
-   * @param   {Object}                      args      Constructed arguments
-   * @param   {Object}                      metadata  Package Metadata
-   * @param   {Object}                      settings  Restored settings
+   * @param   {String}            name      Window Manager name
+   * @param   {WindowManager}     ref       Constructed instance ref
+   * @param   {Object}            args      Constructed arguments
+   * @param   {Object}            metadata  Package Metadata
+   * @param   {Object}            settings  Restored settings
    */
   constructor(name, ref, args, metadata, settings) {
     console.group('WindowManager::constructor()');
@@ -298,7 +292,7 @@ export default class WindowManager extends Process {
    *
    * @param   {String}      name        Window name
    *
-   * @return  {OSjs.Core.Window}
+   * @return  {Window}
    */
   getWindow(name) {
     let result = null;
@@ -316,10 +310,10 @@ export default class WindowManager extends Process {
    *
    * @throws {Error} If invalid window is given
    *
-   * @param   {OSjs.Core.Window}      w         Window reference
-   * @param   {Boolean}               focus     Focus the window
+   * @param   {Window}      w         Window reference
+   * @param   {Boolean}     focus     Focus the window
    *
-   * @return  {OSjs.Core.Window}                The added window
+   * @return  {Window}                The added window
    */
   addWindow(w, focus) {
     if ( !(w instanceof Window) ) {
@@ -353,7 +347,7 @@ export default class WindowManager extends Process {
    *
    * @throws {Error} If invalid window is given
    *
-   * @param   {OSjs.Core.Window}      w         Window reference
+   * @param   {Window}      w         Window reference
    *
    * @return  {Boolean}               On success
    */
@@ -511,8 +505,8 @@ export default class WindowManager extends Process {
    *
    * THIS IS IMPLEMENTED IN COREWM
    *
-   * @param   {String}            ev      Event name
-   * @param   {OSjs.Core.Window}  win     Window ref
+   * @param   {String}  ev      Event name
+   * @param   {Window}  win     Window ref
    *
    * @return  {Boolean}
    */
@@ -556,8 +550,8 @@ export default class WindowManager extends Process {
   /**
    * When Key Down Event received
    *
-   * @param   {Event}                  ev      DOM Event
-   * @param   {OSjs.CoreWindow}        win     Active window
+   * @param   {Event}        ev      DOM Event
+   * @param   {Window}       win     Active window
    */
   onKeyDown(ev, win) {
     // Implement in your WM
@@ -978,7 +972,7 @@ export default class WindowManager extends Process {
   /**
    * Gets all Windows
    *
-   * @return    {OSjs.Core.Window[]}           List of all Windows
+   * @return    {Window[]}           List of all Windows
    */
   getWindows() {
     return this._windows;
@@ -987,7 +981,7 @@ export default class WindowManager extends Process {
   /**
    * Gets current Window
    *
-   * @return {OSjs.Core.Window}        Current Window or 'null'
+   * @return {Window}        Current Window or 'null'
    */
   getCurrentWindow() {
     return this._currentWin;
@@ -996,7 +990,7 @@ export default class WindowManager extends Process {
   /**
    * Sets the current Window
    *
-   * @param   {OSjs.Core.Window}    w       Window
+   * @param   {Window}    w       Window
    */
   setCurrentWindow(w) {
     this._currentWin = w || null;
@@ -1005,7 +999,7 @@ export default class WindowManager extends Process {
   /**
    * Gets previous Window
    *
-   * @return {OSjs.Core.Window}        Current Window or 'null'
+   * @return {Window}        Current Window or 'null'
    */
   getLastWindow() {
     return this._lastWin;
@@ -1014,7 +1008,7 @@ export default class WindowManager extends Process {
   /**
    * Sets the last Window
    *
-   * @param   {OSjs.Core.Window}    w       Window
+   * @param   {Window}    w       Window
    */
   setLastWindow(w) {
     this._lastWin = w || null;

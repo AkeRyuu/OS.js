@@ -34,9 +34,8 @@ import {getConfig} from 'core/config';
 /**
  * An 'Font Selection' dialog
  *
- * @example
- *
- * OSjs.API.createDialog('Font', {}, fn);
+ * @example DialogWindow.create('Font', {}, fn);
+ * @extends DialogWindow
  */
 export default class FontDialog extends DialogWindow {
 

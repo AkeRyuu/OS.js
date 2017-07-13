@@ -30,6 +30,10 @@
 import Authenticator from 'core/authenticator';
 import {isStandalone} from 'core/config';
 
+/**
+ * Demo Authentication Handler
+ * @extends Authenticator
+ */
 export default class DemoAuthenticator extends Authenticator {
 
   login(login) {

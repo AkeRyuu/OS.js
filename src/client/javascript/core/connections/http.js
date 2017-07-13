@@ -31,6 +31,10 @@ import * as VFS from 'vfs/fs';
 import FileMetadata from 'vfs/file';
 import Connection from 'core/connection';
 
+/**
+ * HTTP Connection Handler
+ * @xtends Connection
+ */
 export default class HttpConnection extends Connection {
 
   onVFSRequestCompleted(module, method, args, error, result, callback, appRef) {
