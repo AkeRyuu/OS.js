@@ -300,7 +300,6 @@ module.exports.destroy = (() => {
 
       _http.destroy((err) => {
         destroyed = true;
-
         cb(err);
       });
     }

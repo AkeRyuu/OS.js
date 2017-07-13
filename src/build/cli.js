@@ -33,6 +33,10 @@ const ygor = require('ygor');
 const promise = require('bluebird');
 const path = require('path');
 const fs = require('fs-extra');
+const Mocha = require('mocha');
+const glob = require('glob-promise');
+const eslint = require('eslint');
+
 const opkg = require('./packages.js');
 const ocfg = require('./configuration.js');
 const outils = require('./utils.js');
@@ -148,6 +152,82 @@ const tasks = {
     console.info('Starting', colors.blue('watch'));
 
     return outils.execWebpack(cli, ygor, ROOT, '--watch');
+  },
+
+  'eslint': () => {
+    return new Promise((resolve, reject) => {
+      const files = [
+        'Gruntfile.js',
+        'src/*.js',
+        'src/build/*.js',
+        'src/server/node/*.js',
+        'src/server/node/**/*.js',
+        'src/client/javascript/*.js',
+        'src/client/javascript/**/*.js',
+        'src/packages/default/**/*.js',
+        '!src/packages/default/**/locales.js'
+      ];
+
+      const formatter = eslint.CLIEngine.getFormatter();
+      const engine = new eslint.CLIEngine({
+        configFile: '.eslintrc'
+      });
+
+      let report;
+      try {
+        report = engine.executeOnFiles(files);
+      } catch ( e ) {
+        reject(e);
+        return;
+      }
+
+      const output = formatter(report.results);
+      console.log(output);
+      if ( report.errorCount > 0 ) {
+        reject(new Error('Errors was found'));
+        process.exit(1);
+      } else {
+        resolve();
+      }
+    });
+  },
+
+  'mocha': () => {
+    return new Promise((resolve, reject) => {
+      const mocha = new Mocha({
+        bail: true,
+        reporter: 'spec',
+        timeout: 2000
+      });
+
+      glob('src/server/test/node/*.js').then((files) => {
+        files.forEach(mocha.addFile.bind(mocha));
+
+        try {
+          mocha.run((failureCount) => {
+            let result = failureCount <= 0;
+            if ( result ) {
+              resolve();
+            } else {
+              reject(new Error('Mocha failed on ' + failureCount + ' file(s)'));
+            }
+
+            setTimeout(() => {
+              process.exit(result ? 0 : 1);
+            }, 500);
+          });
+        } catch ( e ) {
+          reject(e);
+        }
+      }).catch(reject);
+    });
+  },
+
+  'test': () => {
+    return promise.each([
+      'eslint',
+      'mocha'
+    ], ygor.run);
   },
 
   'run': () => {
