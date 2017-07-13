@@ -45,7 +45,6 @@ import {_} from 'core/locales';
 
 import FileMetadata from 'vfs/file';
 import Dialog from 'core/dialog';
-import GUIScheme from 'gui/scheme';
 import GUIElement from 'gui/element';
 import Preloader from 'utils/preloader';
 import SettingsManager from 'core/settings-manager';
@@ -385,19 +384,9 @@ export function launch(name, args, onconstruct) {
         }
 
         // Run
-        const preloadScheme = (result.data || []).find((iter) => {
-          return iter.item.type === 'scheme';
-        });
-
-        let scheme;
         let instance;
 
         try {
-          if ( preloadScheme ) {
-            scheme = new GUIScheme(preloadScheme.item.src);
-            scheme.loadString(preloadScheme.data);
-          }
-
           const ResolvedPackage = OSjs.Applications[name];
           if ( ResolvedPackage.Class ) {
             // FIXME: Backward compability
@@ -413,7 +402,7 @@ export function launch(name, args, onconstruct) {
 
         try {
           const settings = SettingsManager.get(instance.__pname) || {};
-          instance.init(settings, metadata, scheme);
+          instance.init(settings, metadata);
 
           triggerHook('onApplicationLaunched', [{
             application: instance,

@@ -40,14 +40,14 @@ const DefaultApplicationWindow = OSjs.require('helpers/default-application-windo
 
 class ApplicationPreviewWindow extends DefaultApplicationWindow {
 
-  constructor(app, metadata, scheme, file) {
+  constructor(app, metadata, file) {
     super('ApplicationPreviewWindow', {
       allow_drop: true,
       icon: metadata.icon,
       title: metadata.name,
       width: 400,
       height: 200
-    }, app, scheme, file);
+    }, app, file);
 
     this.zoomLevel = 0;
     this.isImage = true;
@@ -62,12 +62,12 @@ class ApplicationPreviewWindow extends DefaultApplicationWindow {
     return super.destroy(...arguments);
   }
 
-  init(wm, app, scheme) {
+  init(wm, app) {
     var self = this;
     const root = super.init(...arguments);
 
     // Load and set up scheme (GUI) here
-    this._render('PreviewWindow');
+    this._render('PreviewWindow', require('./scheme.html'));
 
     this._find('ZoomIn').son('click', this, this.onZoomIn);
     this._find('ZoomOut').son('click', this, this.onZoomOut);
@@ -218,11 +218,11 @@ class ApplicationPreview extends DefaultApplication {
     });
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
     const file = this._getArgument('file');
-    this._addWindow(new ApplicationPreviewWindow(this, metadata, scheme, file));
+    this._addWindow(new ApplicationPreviewWindow(this, metadata, file));
   }
 }
 

@@ -30,6 +30,7 @@
 
 import Translations from './locales';
 const Locales = OSjs.require('core/locales');
+const GUIScheme = OSjs.require('gui/scheme');
 
 /*eslint valid-jsdoc: "off"*/
 (function(WindowManager, GUI, Utils, API, VFS) {
@@ -78,6 +79,7 @@ const Locales = OSjs.require('core/locales');
     this.$themeScript     = null;
     this.$animationLink   = null;
     this.importedSettings = Utils.mergeObject(API.getConfig('SettingsManager.CoreWM'), importSettings);
+    this._scheme          = GUIScheme.fromString(require('./scheme.html'));
 
     this.generatedHotkeyMap = {};
 

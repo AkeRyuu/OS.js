@@ -47,7 +47,7 @@ const _ = Locales.createLocalizer(Translations);
 
 class ApplicationWriterWindow extends DefaultApplicationWindow {
   /*eslint dot-notation: "off"*/
-  constructor(app, metadata, scheme, file) {
+  constructor(app, metadata, file) {
     const config = Config.getConfig();
 
     super('ApplicationWriterWindow', {
@@ -57,7 +57,7 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
       width: 550,
       height: 400,
       translator: _
-    }, app, scheme, file);
+    }, app, file);
 
     this.checkChangeLength = -1;
     this.checkChangeInterval = null;
@@ -76,12 +76,12 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
     super.destroy(...arguments);
   }
 
-  init(wmRef, app, scheme) {
+  init(wmRef, app) {
     const root = super.init(...arguments);
     var self = this;
 
     // Load and set up scheme (GUI) here
-    this._render('WriterWindow');
+    this._render('WriterWindow', require('./scheme.html'));
 
     var text = this._find('Text');
 
@@ -348,11 +348,11 @@ class ApplicationWriter extends DefaultApplication {
     });
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
     const file = this._getArgument('file');
-    this._addWindow(new ApplicationWriterWindow(this, metadata, scheme, file));
+    this._addWindow(new ApplicationWriterWindow(this, metadata, file));
   }
 }
 

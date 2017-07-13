@@ -32,20 +32,20 @@ const Window = OSjs.require('core/window');
 
 class ApplicationEXAMPLEWindow extends Window {
 
-  constructor(app, metadata, scheme) {
+  constructor(app, metadata) {
     super('ApplicationEXAMPLEWindow', {
       icon: metadata.icon,
       title: metadata.name,
       width: 400,
       height: 200
-    }, app, scheme);
+    }, app);
   }
 
-  init(wmRef, app, scheme) {
+  init(wmRef, app) {
     const root = super.init(...arguments);
 
     // Render our Scheme file fragment into this Window
-    this._render('EXAMPLEWindow');
+    this._render('EXAMPLEWindow', require('./scheme.html'));
 
     // Put your GUI code here (or make a new prototype function and call it):
 
@@ -60,14 +60,14 @@ class ApplicationEXAMPLE extends Application {
     super('ApplicationEXAMPLE', args, metadata);
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
-    this._addWindow(new ApplicationEXAMPLEWindow(this, metadata, scheme));
+    this._addWindow(new ApplicationEXAMPLEWindow(this, metadata));
 
     // Example on how to call `api.js` methods
-    this._api('test', {}, function(err, res) {
-      console.log('Result from your server API method', err, res);
+    this._api('test', {}).then((res) => {
+      console.log('Result from your server API method', res);
     });
   };
 }

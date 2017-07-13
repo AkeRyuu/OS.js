@@ -86,7 +86,7 @@ var notificationWasDisplayed = {};
 /////////////////////////////////////////////////////////////////////////////
 
 class ApplicationFileManagerWindow extends Window {
-  constructor(app, metadata, scheme, path, settings) {
+  constructor(app, metadata, path, settings) {
     super('ApplicationFileManagerWindow', {
       icon: metadata.icon,
       title: metadata.name,
@@ -94,7 +94,7 @@ class ApplicationFileManagerWindow extends Window {
       width: 650,
       height: 420,
       translator: doTranslate
-    }, app, scheme);
+    }, app);
 
     this.wasFileDropped = false;
     this.currentPath = path;
@@ -148,7 +148,7 @@ class ApplicationFileManagerWindow extends Window {
     });
   }
 
-  init(wm, app, scheme) {
+  init(wm, app) {
     const root = super.init(...arguments);
     var self = this;
     var view;
@@ -164,7 +164,7 @@ class ApplicationFileManagerWindow extends Window {
     var viewExtension = scandirOptions.showFileExtensions === true;
 
     // Load and set up scheme (GUI) here
-    this._render('FileManagerWindow');
+    this._render('FileManagerWindow', require('./scheme.html'));
 
     if ( (Config.getConfig('Connection.Type') !== 'nw') && window.location.protocol.match(/^file/) ) { // FIXME: Translation
       this._setWarning('VFS does not work when in standalone mode');
@@ -722,7 +722,7 @@ class ApplicationFileManager extends Application {
     super('ApplicationFileManager', args, metadata);
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
     var self = this;
@@ -744,7 +744,7 @@ class ApplicationFileManager extends Application {
       }
     });
 
-    this._addWindow(new ApplicationFileManagerWindow(this, metadata, scheme, path, settings));
+    this._addWindow(new ApplicationFileManagerWindow(this, metadata, path, settings));
   }
 
   download(items) {

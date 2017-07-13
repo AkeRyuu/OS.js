@@ -172,7 +172,6 @@ export default class WindowManager extends Process {
     this._fullyLoaded    = false;
     this._isResponsive   = false;
     this._responsiveRes  = 800;
-    this._scheme         = null;
     this._dcTimeout      = null;
     this._resizeTimeout  = null;
     this._$fullscreen    = null;
@@ -230,14 +229,9 @@ export default class WindowManager extends Process {
       }
     });
 
-    if ( this._scheme ) {
-      this._scheme.destroy();
-    }
-
     this._windows = [];
     this._currentWin = null;
     this._lastWin = null;
-    this._scheme = null;
     this._$fullscreen = null;
 
     _instance = null;
@@ -250,12 +244,9 @@ export default class WindowManager extends Process {
    *
    * @param   {Object}            metadata      Package metadata
    * @param   {Object}            settings      Package settings
-   * @param   {OSjs.GUI.Scheme}   [scheme]      GUI Scheme instance
    */
-  init(metadata, settings, scheme) {
+  init(metadata, settings) {
     console.debug('WindowManager::init()');
-
-    this._scheme = scheme;
 
     Events.$bind(document, 'mouseout:windowmanager', (ev) => this._onMouseLeave(ev));
     Events.$bind(document, 'mouseenter:windowmanager', (ev) => this._onMouseLeave(ev));
@@ -338,7 +329,7 @@ export default class WindowManager extends Process {
     console.debug('WindowManager::addWindow()');
 
     try {
-      w.init(this, w._app, w._scheme);
+      w.init(this, w._app);
     } catch ( e ) {
       console.error('WindowManager::addWindow()', '=>', 'Window::init()', e, e.stack);
     }

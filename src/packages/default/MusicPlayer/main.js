@@ -61,7 +61,7 @@ function formatTime(secs) {
 
 class ApplicationMusicPlayerWindow extends DefaultApplicationWindow {
 
-  constructor(app, metadata, scheme, file) {
+  constructor(app, metadata, file) {
     super('ApplicationMusicPlayerWindow', {
       icon: metadata.icon,
       title: metadata.name,
@@ -71,18 +71,18 @@ class ApplicationMusicPlayerWindow extends DefaultApplicationWindow {
       width: 370,
       height: 260,
       translator: doTranslate
-    }, app, scheme, file);
+    }, app, file);
 
     this.updated = 0;
     this.seeking = false;
   }
 
-  init(wm, app, scheme) {
+  init(wm, app) {
     const root = super.init(...arguments);
     var self = this;
 
     // Load and set up scheme (GUI) here
-    this._render('MusicPlayerWindow');
+    this._render('MusicPlayerWindow', require('./scheme.html'));
 
     var label = this._find('LabelTime');
     var seeker = this._find('Seek');
@@ -266,11 +266,11 @@ class ApplicationMusicPlayer extends DefaultApplication {
     });
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
     const file = this._getArgument('file');
-    this._addWindow(new ApplicationMusicPlayerWindow(this, metadata, scheme, file));
+    this._addWindow(new ApplicationMusicPlayerWindow(this, metadata, file));
   }
 
   _onMessage(msg, obj, args) {

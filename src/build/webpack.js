@@ -30,10 +30,8 @@
 
 const Webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
-const fs = require('fs-extra');
 const qs = require('querystring');
 const path = require('path');
 const ocfg = require('./configuration.js');
@@ -109,7 +107,7 @@ function getPlugins(cfg, options) {
         'dist'
       ], {
         root: ROOT,
-        exclude: ['packages', 'vendor', '.htaccess']
+        exclude: ['packages', 'vendor', '.htaccess', '.gitignore']
       }));
     }
   }
@@ -124,27 +122,6 @@ function getPlugins(cfg, options) {
   }
 
   return plugins;
-}
-
-/**
- * Transforms scheme file into something client understands
- * @param {String} content HTML content
- * @return {String}
- */
-function transformScheme(content) {
-  const found = content.match(/<gui\-fragment\s+?data\-fragment\-external=\"(.*)\"\s+?\/>/g);
-  if ( found ) {
-    found.forEach((f) => {
-      let imp = f.split(/<gui\-fragment\s+?data\-fragment\-external=\"(.*)\"\s+?\/>/)[1];
-      imp = path.resolve(imp);
-
-      if ( imp && fs.existsSync(imp) ) {
-        const w = fs.readFileSync(imp, 'utf-8');
-        content = content.replace(f, w);
-      }
-    });
-  }
-  return content;
 }
 
 /**
@@ -237,6 +214,10 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
 
         module: {
           loaders: [
+            {
+              test: /(scheme|dialogs).html$/,
+              loader: 'osjs-scheme-loader'
+            },
             {
               test: /\.(png|jpe?g|ico)$/,
               loader: 'file-loader'
@@ -336,17 +317,6 @@ const createPackageConfiguration = (metadataFile, options) => new Promise((resol
         test: /((\w+)\.(eot|svg|ttf|woff|woff2))$/,
         loader: 'file-loader?name=[name].[ext]'
       });
-
-      wcfg.plugins.push(new CopyWebpackPlugin([ // FIXME
-        {
-          from: path.join(packageRoot, 'scheme.html'),
-          transform: (content, p) => transformScheme(String(content))
-        }
-      ], {
-        ignore: [
-          '*.less'
-        ]
-      }));
 
       resolve({
         cfg: result.cfg,

@@ -29,6 +29,7 @@
  */
 
 import Translations from './locales';
+const GUIScheme = OSjs.require('gui/scheme');
 const Locales = OSjs.require('core/locales');
 const _ = Locales.createLocalizer(Translations);
 
@@ -71,8 +72,9 @@ const _ = Locales.createLocalizer(Translations);
       width: 400,
       height: 300,
       translator: _
-    }, app, scheme]);
+    }, app]);
 
+    this._scheme = scheme;
     this.callback = callback;
     this.closed = false;
   }
@@ -85,7 +87,7 @@ const _ = Locales.createLocalizer(Translations);
     var root = Window.prototype.init.apply(this, arguments);
 
     // Load and set up scheme (GUI) here
-    this._render('SettingsItemWindow');
+    this._render('SettingsItemWindow', this._scheme);
 
     this._find('ButtonItemOK').on('click', function() {
       self.closed = true;
@@ -120,21 +122,22 @@ const _ = Locales.createLocalizer(Translations);
       height: 450,
       allow_resize: true,
       translator: _
-    }, app, scheme]);
+    }, app]);
 
+    this._scheme = scheme;
     this.initialCategory = initialCategory;
   }
 
   ApplicationSettingsWindow.prototype = Object.create(Window.prototype);
   ApplicationSettingsWindow.constructor = Window.prototype;
 
-  ApplicationSettingsWindow.prototype.init = function(wmRef, app, scheme) {
+  ApplicationSettingsWindow.prototype.init = function(wmRef, app) {
     var self = this;
     var root = Window.prototype.init.apply(this, arguments);
     var wm = OSjs.Core.getWindowManager();
 
     // Load and render `scheme.html` file
-    this._render('SettingsWindow');
+    this._render('SettingsWindow', this._scheme);
 
     this._find('ButtonOK').son('click', this, this.onButtonOK);
     this._find('ButtonCancel').son('click', this, this.onButtonCancel);
@@ -184,18 +187,23 @@ const _ = Locales.createLocalizer(Translations);
 
         containers[m.group].appendChild(c);
 
-        root.querySelector('[data-module="' + m.name +  '"]').className  = 'gui-generic-padded';
+        const found = root.querySelector('[data-module="' + m.name +  '"]');
+        if ( found ) {
+          found.className  = 'gui-generic-padded';
+        } else {
+          console.warn('Not found', m.name);
+        }
 
         var settings = Utils.cloneObject(wm.getSettings());
 
         try {
-          m.render(self, scheme, tmpcontent, settings, wm);
+          m.render(self, self._scheme, tmpcontent, settings, wm);
         } catch ( e ) {
           console.warn(e, e.stack);
         }
 
         try {
-          m.update(self, scheme, settings, wm);
+          m.update(self, self._scheme, settings, wm);
         } catch ( e ) {
           console.warn(e, e.stack);
         }
@@ -414,9 +422,10 @@ const _ = Locales.createLocalizer(Translations);
     return false;
   };
 
-  ApplicationSettings.prototype.init = function(settings, metadata, scheme) {
+  ApplicationSettings.prototype.init = function(settings, metadata) {
     Application.prototype.init.apply(this, arguments);
 
+    const scheme = GUIScheme.fromString(require('osjs-scheme-loader!./scheme.html'));
     var category = this._getArgument('category') || settings.category;
     var win = this._addWindow(new ApplicationSettingsWindow(this, metadata, scheme, category));
 

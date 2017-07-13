@@ -276,20 +276,6 @@ export default class UIScheme {
   }
 
   /**
-   * Load Scheme from given String
-   *
-   * @param   {String}      html    HTML data
-   * @param   {Function}    cb      callback => fn(error, scheme)
-   */
-  loadString(html, cb) {
-    console.debug('UIScheme::loadString()');
-    this._load(cleanScheme(html), '<html>');
-    if ( cb ) {
-      cb(false, this.scheme);
-    }
-  }
-
-  /**
    * Load Scheme from URL
    *
    * @param   {Function}    cb      callback => fn(error, DocumentFragment)
@@ -441,29 +427,6 @@ export default class UIScheme {
     this._trigger('render', [root]);
   }
 
-  create(win, tagName, params, parentNode, applyArgs) {
-    console.warn('UIScheme::create() is deprecated, use Window::_create() or Element::createInto() instead');
-    if ( win ) {
-      return win._create(tagName, params, parentNode, applyArgs);
-    }
-    return GUIElement.createInto(tagName, params, parentNode, applyArgs);
-  }
-
-  find(win, id, root) {
-    console.warn('UIScheme::find() is deprecated, use Window::_find() instead');
-    return win._find(id, root);
-  }
-
-  findByQyery(win, query, root, all) {
-    console.warn('UIScheme::findByQuery() is deprecated, use Window::_findByQuery() instead');
-    return win._findByQuery(query, root, all);
-  }
-
-  findDOM(win, id, root) {
-    console.warn('UIScheme::findDOM() is deprecated, use Window::_findDOM() instead');
-    return win._findDOM(id, root);
-  }
-
   /**
    * Get HTML from Scheme
    *
@@ -471,6 +434,18 @@ export default class UIScheme {
    */
   getHTML() {
     return this.scheme.firstChild.innerHTML;
+  }
+
+  /**
+   * Creates a new Scheme from a string
+   * @param {String} str The string (HTML)
+   * @return GUIScheme
+   */
+  static fromString(str) {
+    const inst = new UIScheme(null);
+    const cleaned = cleanScheme(str);
+    inst._load(cleaned, '<html>');
+    return inst;
   }
 
 }

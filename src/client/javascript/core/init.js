@@ -49,7 +49,6 @@ import * as Utils from 'utils/misc';
 import Preloader from 'utils/preloader';
 import Broadway from 'broadway/broadway';
 import BroadwayConnection from 'broadway/connection';
-import DialogScheme from 'gui/dialogscheme';
 import ServiceNotificationIcon from 'helpers/service-notification-icon';
 
 let hasBooted = false;
@@ -467,7 +466,7 @@ const initGUI = (config) => new Promise((resolve, reject) => {
     tagName: 'gui-menu-entry'
   }, GUIMenus.GUIMenuEntry);
 
-  DialogScheme.init().then(resolve).catch(reject);
+  resolve();
 });
 
 /**
@@ -671,7 +670,6 @@ export function stop(restart = false) {
   Preloader.clear();
   GUI.blurMenu();
   Process.killAll();
-  DialogScheme.destroy();
   ServiceNotificationIcon.destroy();
   SearchEngine.destroy();
   PackageManager.destroy();

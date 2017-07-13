@@ -35,7 +35,6 @@ import Process from 'core/process';
 import SettingsManager from 'core/settings-manager';
 import WindowManager from 'core/windowmanager';
 import Window from 'core/window';
-import Scheme from 'gui/scheme';
 
 /**
  * Look at the 'ProcessEvent' for more.
@@ -233,26 +232,6 @@ export default class Application extends Process {
     }
 
     return super._onMessage(...arguments);
-  }
-
-  /**
-   * Default method for loading a Scheme file
-   *
-   * @TODO DEPRECATED This is kept for backward compability
-   *
-   * @param   {String}        str     Scheme filename
-   * @param   {Function}      cb      Callback => fn(scheme)
-   */
-  _loadScheme(str, cb) {
-    const s = new Scheme(this._getResource(str));
-    s.load(function __onApplicationLoadScheme(error, result) {
-      if ( error ) {
-        console.error('Application::_loadScheme()', error);
-      }
-      cb(s);
-    });
-
-    this._setScheme(s);
   }
 
   /**

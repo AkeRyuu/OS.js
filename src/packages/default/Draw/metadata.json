@@ -35,7 +35,6 @@
   "compability":["canvas"],
   "preload":    [
     {"src": "main.js", "type": "javascript"},
-    {"src": "main.css", "type": "stylesheet"},
-    {"src": "scheme.html", "type": "scheme"}
+    {"src": "main.css", "type": "stylesheet"}
   ]
 }

@@ -175,15 +175,14 @@ class Preloader {
         args.progress(index, total);
       }
 
-      const type = item.type === 'scheme' ? 'html' : item.type;
-      if ( handlers[type] ) {
+      if ( handlers[item.type] ) {
         return new Promise((yes, no) => {
           if ( !args.force && this.cache[item.src] ) {
             done(item, this.cache[item.src], yes);
             return;
           }
 
-          handlers[type](item.src).then((preloadData) => {
+          handlers[item.type](item.src).then((preloadData) => {
             return done(item, preloadData, yes);
           }).catch((e) => {
             console.warn('Failed loading', item.src, e);

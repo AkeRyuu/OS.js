@@ -33,8 +33,7 @@ import Window from 'core/window';
 import Process from 'core/process';
 import Application from 'core/application';
 import WindowManager from 'core/windowmanager';
-import Scheme from 'gui/scheme';
-import DialogScheme from 'gui/dialogscheme';
+import GUIScheme from 'gui/scheme';
 import {_} from 'core/locales';
 
 /**
@@ -56,6 +55,8 @@ import {_} from 'core/locales';
  * @param {String}  button  Which button that was clicked
  * @param {Mixed}   result  Result from dialog input
  */
+
+let _dialogScheme;
 
 /////////////////////////////////////////////////////////////////////////////
 // DIALOG
@@ -100,11 +101,22 @@ export default class DialogWindow extends Window {
     this._state.ontop                 = true;
     this._tag                         = 'DialogWindow';
 
-    if ( args.scheme && args.scheme instanceof Scheme ) {
+    if ( args.scheme && args.scheme instanceof GUIScheme ) {
       this.scheme = args.scheme;
       delete args.scheme;
     } else {
-      this.scheme = DialogScheme.get();
+      try {
+        if ( !_dialogScheme ) {
+          const cachedHtml = require('dialogs.html');
+          if ( cachedHtml ) {
+            _dialogScheme = GUIScheme.fromString(cachedHtml);
+          }
+        }
+      } catch ( e ) {
+        console.warn(e);
+      }
+
+      this.scheme = _dialogScheme;
     }
 
     this.args = args;

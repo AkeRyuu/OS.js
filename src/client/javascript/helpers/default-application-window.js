@@ -30,7 +30,6 @@
 
 /*eslint valid-jsdoc: "off"*/
 import FileMetadata from 'vfs/file';
-import Scheme from 'gui/scheme';
 import Window from 'core/window';
 import DialogWindow from 'core/dialog';
 import {_} from 'core/locales';
@@ -48,7 +47,7 @@ import {_} from 'core/locales';
  */
 export default class DefaultApplicationWindow extends Window {
 
-  constructor(name, args, app, scheme, file) {
+  constructor(name, args, app, file) {
     super(...arguments);
     this.hasClosingDialog = false;
     this.currentFile = file ? new FileMetadata(file) : null;
@@ -66,7 +65,7 @@ export default class DefaultApplicationWindow extends Window {
   /*
    * Initialize
    */
-  init(wm, app, scheme) {
+  init(wm, app) {
     const root = super.init(...arguments);
     return root;
   }
@@ -193,7 +192,7 @@ export default class DefaultApplicationWindow extends Window {
     this.currentFile = file || null;
     this.hasChanged = false;
 
-    if ( this._scheme && (this._scheme instanceof Scheme) ) {
+    if ( this._scheme ) {
       this._find('MenuSave').set('disabled', !file);
     }
 

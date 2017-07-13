@@ -32,7 +32,7 @@ const Window = OSjs.require('core/window');
 const Application = OSjs.require('core/application');
 
 class ApplicationAboutWindow extends Window {
-  constructor(app, metadata, scheme) {
+  constructor(app, metadata) {
     super('ApplicationAboutWindow', {
       icon: metadata.icon,
       title: metadata.name,
@@ -43,13 +43,13 @@ class ApplicationAboutWindow extends Window {
       height: 320,
       min_width: 320,
       min_height: 320
-    }, app, scheme);
+    }, app);
   }
 
-  init(wm, app, scheme) {
+  init(wm, app) {
     const root = super.init(...arguments);
 
-    this._render('AboutWindow');
+    this._render('AboutWindow', require('./scheme.html'));
 
     root.getElementsByTagName('img')[0].src = app._getResource('about.png');
 
@@ -62,9 +62,9 @@ class ApplicationAbout extends Application {
     super('ApplicationAbout', args, metadata);
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
-    this._addWindow(new ApplicationAboutWindow(this, metadata, scheme));
+    this._addWindow(new ApplicationAboutWindow(this, metadata));
   }
 }
 

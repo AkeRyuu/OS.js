@@ -228,7 +228,7 @@ var toolEvents = {
 
 class ApplicationDrawWindow extends DefaultApplicationWindow {
 
-  constructor(app, metadata, scheme, file) {
+  constructor(app, metadata, file) {
     super('ApplicationDrawWindow', {
       icon: metadata.icon,
       title: metadata.name,
@@ -238,7 +238,7 @@ class ApplicationDrawWindow extends DefaultApplicationWindow {
       width: 800,
       height: 450,
       translator: doTranslate
-    }, app, scheme, file);
+    }, app, file);
 
     this.tool = {
       name: 'pointer',
@@ -250,12 +250,12 @@ class ApplicationDrawWindow extends DefaultApplicationWindow {
     };
   }
 
-  init(wm, app, scheme) {
+  init(wm, app) {
     const root = super.init(...arguments);
     var self = this;
 
     // Load and set up scheme (GUI) here
-    this._render('DrawWindow');
+    this._render('DrawWindow', require('./scheme.html'));
 
     var statusbar = this._find('Statusbar');
 
@@ -503,11 +503,11 @@ class ApplicationDraw extends DefaultApplication {
     });
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
     const file = this._getArgument('file');
-    this._addWindow(new ApplicationDrawWindow(this, metadata, scheme, file));
+    this._addWindow(new ApplicationDrawWindow(this, metadata, file));
   }
 }
 

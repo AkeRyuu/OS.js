@@ -129,16 +129,6 @@ function registerPackages(servers) {
   const path = _path.join(ENV.SERVERDIR, 'packages.json');
   _logger.lognt('INFO', 'Loading:', _logger.colored('Configuration', 'bold'), path.replace(ENV.ROOTDIR, ''));
 
-  function _createOldInstance(env) {
-    return {
-      request: null,
-      response: null,
-      config: CONFIG,
-      handler: null,
-      logger: _logger
-    };
-  }
-
   function _launchSpawners(pn, module, metadata) {
     if ( metadata.spawn && metadata.spawn.enabled ) {
       const rpath = _path.resolve(ENV.ROOTDIR, metadata._src);

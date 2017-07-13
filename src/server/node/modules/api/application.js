@@ -36,7 +36,6 @@ const _fs = require('fs');
 const _path = require('path');
 const _env = require('./../../core/env.js');
 const _metadata = require('./../../core/metadata.js');
-const _settings = require('./../../core/settings.js');
 const _logger = require('./../../lib/logger.js');
 const _utils = require('./../../lib/utils.js');
 
@@ -56,7 +55,6 @@ const _utils = require('./../../lib/utils.js');
  */
 module.exports.application = function(http, data) {
   const env = _env.get();
-  const config = _settings.get();
 
   /*eslint dot-notation: "off"*/
   const apath = data.path || null;

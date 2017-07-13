@@ -29,7 +29,6 @@
  */
 
 const _env = require('./env.js');
-const _settings = require('./settings.js');
 const _logger = require('./../lib/logger.js');
 const _utils = require('./../lib/utils.js');
 

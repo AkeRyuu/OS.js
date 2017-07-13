@@ -34,18 +34,18 @@ const DefaultApplicationWindow = OSjs.require('helpers/default-application-windo
 
 class ApplicationHTMLViewerWindow extends DefaultApplicationWindow {
 
-  constructor(app, metadata, scheme, file) {
+  constructor(app, metadata, file) {
     super('ApplicationHTMLViewerWindow', {
       icon: metadata.icon,
       title: metadata.name,
       width: 400,
       height: 200
-    }, app, scheme, file);
+    }, app, file);
   }
 
-  init(wmRef, app, scheme) {
+  init(wmRef, app) {
     const root = super.init(...arguments);
-    this._render('HTMLViewerWindow');
+    this._render('HTMLViewerWindow', require('./scheme.html'));
     return root;
   }
 
@@ -69,11 +69,11 @@ class ApplicationHTMLViewer extends DefaultApplication {
     });
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
     const file = this._getArgument('file');
-    this._addWindow(new ApplicationHTMLViewerWindow(this, metadata, scheme, file));
+    this._addWindow(new ApplicationHTMLViewerWindow(this, metadata, file));
   }
 }
 

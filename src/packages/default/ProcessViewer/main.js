@@ -35,22 +35,22 @@ const Application = OSjs.require('core/application');
 
 class ApplicationProcessViewerWindow extends Window {
 
-  constructor(app, metadata, scheme) {
+  constructor(app, metadata) {
     super('ApplicationProcessViewerWindow', {
       icon: metadata.icon,
       title: metadata.name,
       width: 400,
       height: 300
-    }, app, scheme);
+    }, app);
 
     this.interval = null;
   }
 
-  init(wm, app, scheme) {
+  init(wm, app) {
     const root = super.init(...arguments);
 
     // Load and set up scheme (GUI) here
-    this._render('ProcessViewerWindow');
+    this._render('ProcessViewerWindow', require('./scheme.html'));
 
     var view = this._find('View');
 
@@ -112,9 +112,9 @@ class ApplicationProcessViewer extends Application {
     super('ApplicationProcessViewer', args, metadata);
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
-    this._addWindow(new ApplicationProcessViewerWindow(this, metadata, scheme));
+    this._addWindow(new ApplicationProcessViewerWindow(this, metadata));
   }
 
 }

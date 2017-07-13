@@ -2,7 +2,6 @@
   "build": {
     "template": "default",
     "static": [
-      "src/client/dialogs.html",
       "src/templates/dist/%build.template%/api.php",
       "src/templates/dist/%build.template%/blank.css",
       "src/templates/dist/windows-live-oauth.html",

@@ -34,21 +34,21 @@ const DefaultApplicationWindow = OSjs.require('helpers/default-application-windo
 
 class ApplicationTextpadWindow extends DefaultApplicationWindow {
 
-  constructor(app, metadata, scheme, file) {
+  constructor(app, metadata, file) {
     super('ApplicationTextpadWindow', {
       allow_drop: true,
       icon: metadata.icon,
       title: metadata.name,
       width: 450,
       height: 300
-    }, app, scheme, file);
+    }, app, file);
   }
 
-  init(wmRef, app, scheme) {
+  init(wmRef, app) {
     const root = super.init(...arguments);
 
     // Load and set up scheme (GUI) here
-    this._render('TextpadWindow');
+    this._render('TextpadWindow', require('./scheme.html'));
 
     this._find('Text').on('change', () => {
       this.hasChanged = true;
@@ -104,12 +104,12 @@ class ApplicationTextpad extends DefaultApplication {
     });
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
     const file = this._getArgument('file');
 
-    this._addWindow(new ApplicationTextpadWindow(this, metadata, scheme, file));
+    this._addWindow(new ApplicationTextpadWindow(this, metadata, file));
   }
 
 }

@@ -35,7 +35,7 @@ import FileMetadata from 'vfs/file';
 import Application from 'core/application';
 import WindowManager from 'core/windowmanager';
 import Element from 'gui/element';
-import Scheme from 'gui/scheme';
+import GUIScheme from 'gui/scheme';
 import EventHandler from 'helpers/event-handler';
 import * as Assets from 'core/assets';
 import * as DOM from 'utils/dom';
@@ -253,9 +253,8 @@ export default class Window {
    * @param   {Number}                    [opts.sound_volume]      Sound volume
    * @param   {Function}                  [opts.translator]        Translation method
    * @param   {OSjs.Core.Application}     appRef                   Application Reference
-   * @param   {OSjs.GUI.Scheme}           schemeRef                GUI Scheme Reference
    */
-  constructor(name, opts, appRef, schemeRef) {
+  constructor(name, opts, appRef) {
 
     if ( _NAMES.indexOf(name) >= 0 ) {
       throw new Error(_('ERR_WIN_DUPLICATE_FMT', name));
@@ -263,10 +262,6 @@ export default class Window {
 
     if ( appRef && !(appRef instanceof Application) ) {
       throw new TypeError('appRef given was not instance of Application');
-    }
-
-    if ( schemeRef && !(schemeRef instanceof Scheme) ) {
-      throw new TypeError('schemeRef given was not instance of GUI.Scheme');
     }
 
     opts = Object.assign({}, {
@@ -338,12 +333,6 @@ export default class Window {
      * @type {OSjs.Core.Application}
      */
     this._app = appRef || null;
-
-    /**
-     * Scheme reference
-     * @type {OSjs.GUI.Scheme}
-     */
-    this._scheme = schemeRef || null;
 
     /**
      * If Window has been destroyed
@@ -464,6 +453,12 @@ export default class Window {
      * @type {Number} Between 0.0 and 1.0
      */
     this._soundVolume   = _DEFAULT_SND_VOLUME;
+
+    /**
+     * The active GUI Scheme
+     * @type {GUIScheme}
+     */
+    this._scheme = null;
 
     /**
      * Window Properties
@@ -621,11 +616,10 @@ export default class Window {
    *
    * @param   {OSjs.Core.WindowManager}   _wm     Window Manager reference
    * @param   {OSjs.Core.Application}     _app    Application reference
-   * @param   {OSjs.GUI.Scheme}           _scheme UIScheme reference
    *
    * @return  {Node} The Window DOM element
    */
-  init(_wm, _app, _scheme) {
+  init(_wm, _app) {
     if ( this._initialized || this._loaded ) {
       return this._$root;
     }
@@ -823,7 +817,7 @@ export default class Window {
     }
 
     this._initialized = true;
-    this._emit('init', [this._$root, _scheme]);
+    this._emit('init', [this._$root]);
 
     return this._$root;
   }
@@ -849,7 +843,7 @@ export default class Window {
     }
 
     let inittimeout = setTimeout(() => {
-      this._emit('inited', [this._scheme]);
+      this._emit('inited', []);
       inittimeout = clearTimeout(inittimeout);
     }, 10);
 
@@ -972,11 +966,11 @@ export default class Window {
       this._evHandler.destroy();
     }
 
-    this._scheme = null;
     this._app = null;
     this._evHandler = null;
     this._args = {};
     this._queryTimer = clearTimeout(this._queryTimer);
+    this._scheme = this._scheme ? this._scheme.destroy() : null;
 
     console.groupEnd();
 
@@ -1006,12 +1000,13 @@ export default class Window {
    * By default uses the internally assigned scheme file from preload (if any)
    *
    * @param {String}           id           Scheme fragment ID
-   * @param {OSjs.GUI.Scheme}  [scheme]     Scheme reference (defaults to internal)
+   * @param {String|GUIScheme} scheme       Scheme or HTML
    * @param {Node}             [root]       Root element (defaults to internal Node)
    * @param {Object}           [args]       Arguments to pass to parser
    */
   _render(id, scheme, root, args) {
-    scheme = scheme || this._scheme;
+    this._scheme = typeof scheme === 'string' ? GUIScheme.fromString(scheme) : scheme;
+
     root = root || this._getRoot();
     args = args || {};
 
@@ -1019,7 +1014,7 @@ export default class Window {
       args._ = this._translator;
     }
 
-    scheme.render(this, id, root, null, null, args);
+    this._scheme.render(this, id, root, null, null, args);
   }
 
   /**

@@ -81,7 +81,7 @@ var buttons = [
 /////////////////////////////////////////////////////////////////////////////
 
 class ApplicationCalculatorWindow extends Window {
-  constructor(app, metadata, scheme) {
+  constructor(app, metadata) {
     super('ApplicationCalculatorWindow', {
       icon: metadata.icon,
       title: metadata.name,
@@ -89,20 +89,20 @@ class ApplicationCalculatorWindow extends Window {
       allow_maximize: false,
       width: 220,
       height: 340
-    }, app, scheme);
+    }, app);
 
     this.total = 0;
     this.entries = [];
     this.temp = '';
   }
 
-  init(wm, app, scheme) {
+  init(wm, app) {
     const root = super.init(...arguments);
 
     var self = this;
 
     // Load and gel.set up scheme (GUI) here
-    this._render('CalculatorWindow');
+    this._render('CalculatorWindow', require('./scheme.html'));
 
     this._find('Output').on('keypress', function(ev) {
       ev.stopPropagation();
@@ -235,10 +235,10 @@ class ApplicationCalculator extends Application {
     super('ApplicationCalculator', args, metadata);
   }
 
-  init(settings, metadata, scheme) {
+  init(settings, metadata) {
     super.init(...arguments);
 
-    this._addWindow(new ApplicationCalculatorWindow(this, metadata, scheme));
+    this._addWindow(new ApplicationCalculatorWindow(this, metadata));
   }
 }
 
