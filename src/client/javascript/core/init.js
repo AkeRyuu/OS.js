@@ -595,6 +595,7 @@ export function start() {
 
   Locales.init(config.Locale, config.LocaleOptions, config.Languages);
 
+  SplashScreen.watermark(config);
   SplashScreen.show();
 
   setConfig(config);

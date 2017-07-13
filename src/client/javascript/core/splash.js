@@ -40,6 +40,24 @@ class SplashScreen {
   }
 
   /**
+   * Applies the watermark
+   * @param {Object} config Configuration tree
+   */
+  watermark(config) {
+    if ( config.Watermark.enabled ) {
+      var ver = config.Version || 'unknown version';
+      var html = config.Watermark.lines || [];
+
+      var el = document.createElement('div');
+      el.id = 'DebugNotice';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = html.join('<br />').replace(/%VERSION%/, ver);
+
+      document.body.appendChild(el);
+    }
+  }
+
+  /**
    * Show the splash
    */
   show() {
