@@ -104,7 +104,7 @@ function getPlugins(cfg, options) {
       }));
     } else {
       plugins.unshift(new CleanWebpackPlugin([
-        'dist'
+        path.join(ROOT, 'dist', '*')
       ], {
         root: ROOT,
         exclude: ['packages', 'vendor', '.htaccess', '.gitignore']
