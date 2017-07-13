@@ -35,8 +35,7 @@
     "Watermark": {
       "enabled": true,
       "lines": [
-        "OS.js %VERSION%",
-        "Copyright &copy; 2011-2016 <a href=\"mailto:andersevenrud@gmail.com\">Anders Evenrud</a>"
+        "OS.js %VERSION%"
       ]
     },
 

@@ -48,8 +48,7 @@ class SplashScreen {
       var ver = config.Version || 'unknown version';
       var html = config.Watermark.lines || [];
 
-      var el = document.createElement('div');
-      el.id = 'DebugNotice';
+      var el = document.createElement('osjs-watermark');
       el.setAttribute('aria-hidden', 'true');
       el.innerHTML = html.join('<br />').replace(/%VERSION%/, ver);
 

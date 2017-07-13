@@ -34,6 +34,7 @@
 import axios from 'axios';
 import Promise from 'bluebird';
 import EventHandler from 'helpers/event-handler';
+import {createLoading, destroyLoading} from 'core/main';
 import {getConfig} from 'core/config';
 
 //let _CALL_INDEX = 1;
@@ -364,16 +365,10 @@ export default class Connection {
     options = options || {};
 
     if ( options && typeof options !== 'object' ) {
-      throw new TypeError('call() expects an object as options');
+      return Promise.reject(new TypeError('call() expects an object as options'));
     }
 
-    /* FIXME FIXME FIXME
-    const lname = 'APICall_' + _CALL_INDEX;
-    if ( options.indicator !== false ) {
-      Main.createLoading(lname, {className: 'BusyNotification', tooltip: 'API Call'});
-    }
-    _CALL_INDEX++;
-    */
+    createLoading('Connection.request');
 
     if ( typeof options.indicator !== 'undefined' ) {
       delete options.indicator;
@@ -381,11 +376,15 @@ export default class Connection {
 
     return new Promise((resolve, reject) => {
       this.instance.createRequest(m, a, options).then((response) => {
+        destroyLoading('Connection.request');
         if ( response.error ) {
           return reject(new Error(response.error));
         }
         return resolve(response.result);
-      }).catch(reject);
+      }).catch(((err) => {
+        destroyLoading('Connection.request');
+        reject(err);
+      }));
     });
   }
 }

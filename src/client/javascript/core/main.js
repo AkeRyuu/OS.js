@@ -49,6 +49,9 @@ import SettingsManager from 'core/settings-manager';
 import PackageManager from 'core/package-manager';
 import Process from 'core/process';
 
+let loaders = [];
+let loaderGraze;
+
 function createSplash(name, icon, label, parentEl) {
   label = label || _('LBL_STARTING');
   parentEl = parentEl || document.body;
@@ -195,22 +198,44 @@ export function error(title, message, error, exception, bugreport) {
  *
  * @param   {String}    name          Name of notification (unique)
  * @param   {Object}    opts          Options
- *
- * @return  {String}                Or false on error
  */
 export function createLoading(name, opts) {
-  return false; // TODO: From Webpack changes
+  if ( loaders.indexOf(name) === -1 ) {
+    loaders.push(name);
+  }
+
+  if ( loaders.length ) {
+    let el = document.querySelector('osjs-loading');
+    if ( !el ) {
+      el = document.createElement('osjs-loading');
+      document.body.appendChild(el);
+    }
+
+    loaderGraze = setTimeout(() => {
+      el.style.display = 'block';
+    }, 100);
+  }
 }
 
 /**
  * Destroy (or hide) loading indicator
  *
  * @param   {String}    name          Name of notification (unique)
- *
- * @return  {Boolean}
  */
 export function destroyLoading(name) {
-  return false; // TODO: From Webpack changes
+  const index = loaders.indexOf(name);
+  if ( index  !== -1 ) {
+    loaders.splice(index, 1);
+  }
+
+  clearTimeout(loaderGraze);
+
+  if ( !loaders.length ) {
+    let el = document.querySelector('osjs-loading');
+    if ( el ) {
+      el.style.display = 'none';
+    }
+  }
 }
 
 /**
@@ -270,16 +295,15 @@ export function launch(name, args, onconstruct) {
     // Create splash
     //
     let splash = null;
-
     removeSplash = () => {
-      destroyLoading(name);
+      destroyLoading('Main.launch');
       if ( splash ) {
         splash.destroy();
         splash = null;
       }
     };
 
-    createLoading(name, {className: 'StartupNotification', tooltip: _('LBL_STARTING') + ' ' + name});
+    createLoading('Main.launch');
 
     if ( !OSjs.Applications[name] ) {
       if ( metadata.splash !== false ) {
@@ -468,7 +492,7 @@ export function openFile(file, args) {
 
       reject(new Error(_('ERR_APP_MIME_NOT_FOUND_FMT', file.mime)));
     } else if ( pack.length === 1 ) {
-      launch(pack[1], args).then(resolve).catch(reject);
+      launch(pack[0], args).then(resolve).catch(reject);
     } else {
       DialogWindow.create('ApplicationChooser', {
         file: file,
