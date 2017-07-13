@@ -240,17 +240,6 @@ const buildClientConfiguration = (cfg, cli) => new Promise((resolve, reject) => 
 
   if ( cli.option('standalone') ) {
     settings.Connection.Type = 'standalone';
-    settings.VFS.GoogleDrive.Enabled = false;
-    settings.VFS.OneDrive.Enabled = false;
-    settings.VFS.Dropbox.Enabled = false;
-    settings.VFS.LocalStorage.Enabled = false;
-
-    const valid = ['applications', 'home', 'osjs'];
-    Object.keys(settings.VFS.Mountpoints).forEach((k) => {
-      if ( valid.indexOf(k) === -1 ) {
-        delete settings.VFS.Mountpoints[k];
-      }
-    });
   }
 
   settings.Debug = cli.option('debug') === true;

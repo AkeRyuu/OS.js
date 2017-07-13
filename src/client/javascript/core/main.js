@@ -40,7 +40,6 @@ import * as DOM from 'utils/dom';
 import * as Config from 'core/config';
 import * as Compability from 'utils/compability';
 import * as Assets from 'core/assets';
-import * as VFS from 'vfs/fs';
 import {_} from 'core/locales';
 
 import FileMetadata from 'vfs/file';
@@ -170,9 +169,7 @@ export function error(title, message, error, exception, bugreport) {
 
   GUI.blurMenu();
 
-  console.error(exception || error);
-
-  if ( exception && (exception.message.match(/^Script Error/i) && String(exception.lineNumber).match(/^0/)) ) {
+  if ( (exception instanceof Error) && (exception.message.match(/^Script Error/i) && String(exception.lineNumber).match(/^0/)) ) {
     console.error('VENDOR ERROR', {
       title: title,
       message: message,
@@ -241,60 +238,6 @@ export function launch(name, args, onconstruct) {
     const compability = Compability.getCompability();
     const metadata = PackageManager.getPackage(name);
     const alreadyRunning = Process.getProcess(name, true);
-
-    const preloads = (() => {
-      let list = (metadata.preload || []).slice(0);
-      let additions = [];
-
-      function _add(chk) {
-        if ( chk && chk.preload ) {
-          chk.preload.forEach((p) => {
-            additions.push(p);
-          });
-        }
-      }
-
-      // If this package depends on another package, make sure
-      // to load the resources for the related one as well
-      if ( metadata.depends instanceof Array ) {
-        metadata.depends.forEach((k) => {
-          if ( !OSjs.Applications[k] ) {
-            console.info('Using dependency', k);
-            _add(PackageManager.getPackage(k));
-          }
-        });
-      }
-
-      // ... same goes for packages that uses this package
-      // as a dependency.
-      const pkgs = PackageManager.getPackages(false);
-      Object.keys(pkgs).forEach((pn) => {
-        const p = pkgs[pn];
-        if ( p.type === 'extension' && p.uses === name ) {
-          console.info('Using extension', pn);
-          _add(p);
-        }
-      });
-
-      list = additions.concat(list);
-      additions = [];
-
-      // For user packages, make sure to load the correct URL
-      if ( metadata.scope === 'user' ) {
-        list = list.map((p) => {
-          if ( p.src.substr(0, 1) !== '/' && !p.src.match(/^(https?|ftp)/) ) {
-            VFS.url(p.src).then((url) => {
-              p.src = url;
-              return true;
-            });
-          }
-
-          return p;
-        });
-      }
-
-      return list;
-    })();
 
     //
     // Pre-checks
@@ -369,7 +312,7 @@ export function launch(name, args, onconstruct) {
         return reject(e);
       };
 
-      Preloader.preload(preloads, pargs).then((result) => {
+      Preloader.preload(metadata.preload, pargs).then((result) => {
         if ( result.failed.length ) {
           return onerror(_('ERR_APP_PRELOAD_FAILED_FMT', name, result.failed.join(',')));
         }

@@ -37,8 +37,8 @@ import Authenticator from 'core/authenticator';
 import SettingsManager from 'core/settings-manager';
 import {cloneObject} from 'utils/misc';
 import {_, getLocale} from 'core/locales';
-import {getConfig, getBrowserPath, isStandalone} from 'core/config';
-
+import {getConfig, isStandalone} from 'core/config';
+import * as VFS from 'vfs/fs';
 import * as FS from 'utils/fs';
 
 import Connection from 'core/connection';
@@ -47,6 +47,57 @@ import Connection from 'core/connection';
  * This is the contents of a 'metadata.json' file for a package.
  * @typedef Metadata
  */
+
+const resolvePreloads = (metadata, pm) => {
+  const packageURI = getConfig('Connection.PackageURI');
+
+  const mapIter = (s) => (typeof s === 'string' ? {src: s} : s);
+
+  let additions = [];
+  let list = (metadata.preload || []).slice(0).map(mapIter);
+
+  // If this package depends on another package, make sure
+  // to load the resources for the related one as well
+  if ( metadata.depends instanceof Array ) {
+    metadata.depends.forEach((k) => {
+      if ( !OSjs.Applications[k] ) {
+        const pkg = pm.getPackage(k);
+        if ( pkg ) {
+          console.info('Using dependency', k);
+          additions = additions.concat(pkg.preload.map(mapIter));
+        }
+      }
+    });
+  }
+
+  // ... same goes for packages that uses this package
+  // as a dependency.
+  const pkgs = pm.getPackages(false);
+  Object.keys(pkgs).forEach((pn) => {
+    const p = pkgs[pn];
+    if ( p.type === 'extension' && p.uses === name ) {
+      if ( p ) {
+        console.info('Using extension', pn);
+        additions = additions.concat(p.preload.map(mapIter));
+      }
+    }
+  });
+
+  return additions.concat(list).map((p) => {
+    if ( !p.src.match(/^(\/|https?|ftp)/) ) {
+      if ( metadata.scope === 'user' ) {
+        // For user packages, make sure to load the correct URL
+        VFS.url(FS.pathJoin(metadata.path, p.src)).then((url) => {
+          p.src = url;
+        });
+      } else {
+        p.src = FS.pathJoin(packageURI, metadata.path, p.src);
+      }
+    }
+
+    return p;
+  });
+};
 
 /////////////////////////////////////////////////////////////////////////////
 // PACKAGE MANAGER
@@ -68,9 +119,9 @@ class PackageManager {
    * Load Metadata from server and set packages
    */
   init(metadata) {
-    console.debug('PackageManager::load()');
+    console.debug('PackageManager::load()', metadata);
 
-    this.packages = metadata || {};
+    this.setPackages(metadata);
 
     return new Promise((resolve, reject) => {
       this._loadMetadata().then(() => {
@@ -78,7 +129,7 @@ class PackageManager {
         if ( len ) {
           return resolve();
         }
-        return reject(_('ERR_PACKAGE_ENUM_FAILED'));
+        return reject(new Error(_('ERR_PACKAGE_ENUM_FAILED')));
       }).catch(reject);
     });
   }
@@ -87,33 +138,6 @@ class PackageManager {
    * Internal method for loading all package metadata
    */
   _loadMetadata() {
-    const packageURI = getConfig('Connection.PackageURI').replace(/\/?$/, '/');
-    const rootURI = getBrowserPath().replace(/\/$/, packageURI);
-
-    function checkEntry(key, iter, scope) {
-      iter = cloneObject(iter);
-
-      iter.type = iter.type || 'application';
-
-      if ( scope ) {
-        iter.scope = scope;
-      }
-
-      if ( iter.preload ) {
-        iter.preload.forEach((it) => {
-          if ( it.src && !it.src.match(/^(\/)|(http)|(ftp)/) ) {
-            if ( iter.scope === 'user' ) {
-              it.src = FS.pathJoin(iter.path, it.src);
-            } else {
-              it.src = FS.pathJoin(rootURI, key, it.src);
-            }
-          }
-        });
-      }
-
-      return iter;
-    }
-
     if ( isStandalone() ) {
       return Promise.resolve(true);
     }
@@ -121,17 +145,7 @@ class PackageManager {
     const paths = SettingsManager.instance('PackageManager').get('PackagePaths', []);
     return new Promise((resolve, reject) => {
       Connection.request('packages', {command: 'list', args: {paths: paths}}).then((res) => {
-        const packages = {};
-
-        Object.keys(res).forEach((key) => {
-          const iter = res[key];
-          if ( iter && !packages[iter.className] ) {
-            packages[iter.className] = checkEntry(key, iter);
-          }
-        });
-
-        this.packages = packages;
-        return resolve();
+        return resolve(this.setPackages(res));
       }).catch(reject);
     });
   }
@@ -345,6 +359,35 @@ class PackageManager {
       }
     });
     return list;
+  }
+
+  /**
+   * Sets the packages
+   * @param {Object} res Package map
+   */
+  setPackages(res) {
+    const packages = {};
+
+    const checkEntry = (key, iter, scope) => {
+      iter = Object.assign({}, iter);
+      iter.type = iter.type || 'application';
+
+      if ( scope ) {
+        iter.scope = scope;
+      }
+
+      iter.preload = resolvePreloads(iter, this);
+      return iter;
+    };
+
+    Object.keys(res || {}).forEach((key) => {
+      const iter = res[key];
+      if ( iter && !packages[iter.className] ) {
+        packages[iter.className] = checkEntry(key, iter);
+      }
+    });
+
+    this.packages = packages;
   }
 
 }

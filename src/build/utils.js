@@ -171,6 +171,7 @@ const execWebpack = (cli, ygor, cwd, params) => {
     env: {
       OSJS_OPTIONS: qs.stringify(cli),
       OSJS_DEBUG: String(cli.debug === true),
+      OSJS_STANDALONE: String(cli.standalone === true),
       OSJS_ROOT: ROOT
     }
   });

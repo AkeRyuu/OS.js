@@ -19,7 +19,7 @@
     },
     "webpack": {
       "output": {
-        "publicPath": "/",
+        "publicPath": "",
         "path": "%ROOT%/dist"
       },
       "resolve": {
