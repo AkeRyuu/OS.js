@@ -276,7 +276,9 @@ const buildClientConfiguration = (cfg, cli) => new Promise((resolve, reject) => 
       const dest = path.join(ROOT, 'dist', 'settings.js');
       const data = tpl.replace('%CONFIG%', JSON.stringify(settings, null, 4));
 
-      fs.writeFile(dest, data).then(resolve).catch(reject);
+      const cont = () => fs.writeFile(dest, data).then(resolve).catch(reject);
+
+      fs.mkdir(path.dirname(dest)).then(cont).catch(cont);
     }).catch(reject);
   }).catch(reject);
 });
