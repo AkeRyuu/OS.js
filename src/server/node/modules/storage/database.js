@@ -29,49 +29,46 @@
  */
 
 const _db = require('./../../lib/database.js');
-const _logger = require('./../../lib/logger.js');
 
-module.exports.setSettings = function(http, username, settings) {
-  return new Promise((resolve, reject) => {
-    function done() {
-      resolve(true);
-    }
+const Storage = require('./../../modules/storage.js');
 
-    _db.instance('authstorage').then((db) => {
-      db.query('UPDATE `users` SET `settings` = ? WHERE `username` = ?;', [JSON.stringify(settings), username])
-        .then(done).catch(reject);
-    }).catch(reject);
-  });
-};
+class DatabaseStorage extends Storage {
 
-module.exports.getSettings = function(http, username) {
-  return new Promise((resolve, reject) => {
-    function done(row) {
-      row = row || {};
-      let json = {};
-      try {
-        json = JSON.parse(row.settings);
-      } catch (e) {}
-      resolve(json);
-    }
+  setSettings(http, username, settings) {
+    return new Promise((resolve, reject) => {
+      function done() {
+        resolve(true);
+      }
 
-    _db.instance('authstorage').then((db) => {
-      db.query('SELECT `settings` FROM `users` WHERE `username` = ? LIMIT 1;', [username])
-        .then(done).catch(reject);
-    }).catch(reject);
-  });
-};
+      _db.instance('authstorage').then((db) => {
+        db.query('UPDATE `users` SET `settings` = ? WHERE `username` = ?;', [JSON.stringify(settings), username])
+          .then(done).catch(reject);
+      }).catch(reject);
+    });
+  }
 
-module.exports.register = function(config) {
-  const type = config.driver;
-  const settings = config[type];
+  getSettings(http, username) {
+    return new Promise((resolve, reject) => {
+      function done(row) {
+        row = row || {};
+        let json = {};
+        try {
+          json = JSON.parse(row.settings);
+        } catch (e) {}
+        resolve(json);
+      }
 
-  const str = type === 'sqlite' ? require('path').basename(settings.database) : settings.user + '@' + settings.host + ':/' + settings.database;
-  _logger.lognt('INFO', 'Module:', _logger.colored('Storage', 'bold'), 'using', _logger.colored(type, 'green'), '->', _logger.colored(str, 'green'));
+      _db.instance('authstorage').then((db) => {
+        db.query('SELECT `settings` FROM `users` WHERE `username` = ? LIMIT 1;', [username])
+          .then(done).catch(reject);
+      }).catch(reject);
+    });
+  }
 
-  return _db.instance('authstorage', type, settings);
-};
+  destroy() {
+    return _db.destroy('authstorage');
+  }
 
-module.exports.destroy = function() {
-  return _db.destroy('authstorage');
-};
+}
+
+module.exports = new DatabaseStorage();

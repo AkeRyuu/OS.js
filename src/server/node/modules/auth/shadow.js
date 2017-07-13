@@ -33,86 +33,46 @@ const _userid = require('userid');
 const _settings = require('./../../core/settings.js');
 const _utils = require('./../../lib/utils.js');
 
-module.exports.login = function(http, data) {
-  return new Promise((resolve, reject) => {
-    _passwd.checkPass(data.username, data.password, (err, res) => {
-      if ( !err && res !== 'passwordCorrect' ) {
-        err = 'Invalid credentials';
-      }
+const Authenticator = require('../authenticator.js');
 
-      if ( err ) {
-        reject(err);
-      } else {
-        resolve({
-          id: _userid.uid(data.username),
-          username: data.username,
-          name: data.username
-        });
-      }
+class ShadowAuthenticator extends Authenticator {
+
+  login(http, data) {
+    return new Promise((resolve, reject) => {
+      _passwd.checkPass(data.username, data.password, (err, res) => {
+        if ( !err && res !== 'passwordCorrect' ) {
+          err = 'Invalid credentials';
+        }
+
+        if ( err ) {
+          reject(err);
+        } else {
+          resolve({
+            id: _userid.uid(data.username),
+            username: data.username,
+            name: data.username
+          });
+        }
+      });
     });
-  });
-};
+  }
 
-module.exports.logout = function(http) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+  getGroups(http, username) {
+    const config = _settings.get();
+    const path = config.modules.auth.shadow.groups;
+    return new Promise((resolve) => {
+      _utils.readUserMap(username, path, resolve);
+    });
+  }
 
-module.exports.manage = function(http) {
-  return new Promise((resolve, reject) => {
-    reject('Not available');
-  });
-};
+  getBlacklist(http, username) {
+    const config = _settings.get();
+    const path = config.modules.auth.shadow.blacklist;
+    return new Promise((resolve) => {
+      _utils.readUserMap(username, path, resolve);
+    });
+  }
+}
 
-module.exports.initSession = function(http) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+module.exports = new ShadowAuthenticator();
 
-module.exports.checkPermission = function(http, type, options) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
-
-module.exports.checkSession = function(http) {
-  return new Promise((resolve, reject) => {
-    if ( http.session.get('username') ) {
-      resolve();
-    } else {
-      reject('You have no OS.js Session, please log in!');
-    }
-  });
-};
-
-module.exports.getGroups = function(http, username) {
-  const config = _settings.get();
-  const path = config.modules.auth.shadow.groups;
-  return new Promise((resolve) => {
-    _utils.readUserMap(username, path, resolve);
-  });
-};
-
-module.exports.getBlacklist = function(http, username) {
-  const config = _settings.get();
-  const path = config.modules.auth.shadow.blacklist;
-  return new Promise((resolve) => {
-    _utils.readUserMap(username, path, resolve);
-  });
-};
-
-module.exports.setBlacklist = function(http, username, list) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
-
-module.exports.register = function(config) {
-  return Promise.resolve();
-};
-
-module.exports.destroy = function() {
-  return Promise.resolve();
-};

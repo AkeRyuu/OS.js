@@ -32,7 +32,7 @@
  * @namespace modules.api
  */
 
-const _auth = require('./../../core/auth.js');
+const _auth = require('./../../modules/authenticator.js');
 
 /**
  * Manage Users

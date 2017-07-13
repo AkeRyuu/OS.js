@@ -29,6 +29,7 @@
     "run": "node osjs run"
   },
   "dependencies": {
+    "bluebird": "^3.5.0",
     "chokidar": "^1.7.0",
     "colors": "^1.1.2",
     "compression": "^1.6.2",
@@ -43,12 +44,12 @@
     "glob-promise": "^3.1.0",
     "http-proxy": "^1.16.2",
     "minimist": "^1.2.0",
+    "osjs-scheme-loader": "^1.0.2",
     "request": "^2.81.0",
     "simplejsonconf": "^1.0.5",
     "unzip-stream": "^0.1.2",
     "ws": "^3.0.0",
     "ygor": "^4.0.4",
-    "bluebird": "^3.5.0",
     "zlibjs": "^0.3.0"
   },
   "devDependencies": {

@@ -59,14 +59,15 @@ const _glob = require('glob-promise');
 
 const _env = require('./env.js');
 const _api = require('./api.js');
-const _auth = require('./auth.js');
 const _vfs = require('./vfs.js');
 const _http = require('./http.js');
 const _settings = require('./settings.js');
-const _storage = require('./storage.js');
 const _session = require('./session.js');
 const _metadata = require('./metadata.js');
 const _middleware = require('./middleware.js');
+
+const _storage = require('./../modules/storage.js');
+const _auth = require('./../modules/authenticator.js');
 
 const _logger = require('./../lib/logger.js');
 const _utils = require('./../lib/utils.js');

@@ -32,8 +32,8 @@
  * @namespace modules.api
  */
 
-const _storage = require('./../../core/storage.js');
-const _auth = require('./../../core/auth.js');
+const _storage = require('./../../modules/storage.js');
+const _auth = require('./../../modules/authenticator.js');
 
 /**
  * Send a login attempt

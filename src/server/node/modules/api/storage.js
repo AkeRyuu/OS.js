@@ -32,7 +32,7 @@
  * @namespace modules.api
  */
 
-const _storage = require('./../../core/storage.js');
+const _storage = require('./../../modules/storage.js');
 
 /**
  * Attempt to store settings
@@ -47,5 +47,10 @@ const _storage = require('./../../core/storage.js');
 module.exports.settings = function(http, data) {
   const username = http.session.get('username');
   const settings = data.settings;
-  return _storage.get().setSettings(http, username, settings);
+
+  try {
+    return _storage.get().setSettings(http, username, settings);
+  } catch ( e ) {
+    return Promise.reject(e);
+  }
 };

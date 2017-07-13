@@ -32,6 +32,8 @@ const _bcrypt = require('bcrypt');
 const _db = require('./../../lib/database.js');
 const _logger = require('./../../lib/logger.js');
 
+const Authenticator = require('../authenticator.js');
+
 const manager = {
 
   add: function(db, user, callback) {
@@ -83,127 +85,91 @@ const manager = {
   }
 };
 
-module.exports.login = function(http, data) {
-  const q = 'SELECT `id`, `username`, `name`, `password` FROM `users` WHERE `username` = ? LIMIT 1;';
-  const a = [data.username];
+class DatabaseAuthenticator extends Authenticator {
 
-  return new Promise((resolve, reject) => {
-    function _invalid() {
-      reject('Invalid credentials');
-    }
+  login(http, data) {
+    const q = 'SELECT `id`, `username`, `name`, `password` FROM `users` WHERE `username` = ? LIMIT 1;';
+    const a = [data.username];
 
-    function _auth(row) {
-      const hash = row.password.replace(/^\$2y(.+)$/i, '\$2a$1');
-      _bcrypt.compare(data.password, hash, (err, res) => {
-        if ( err ) {
-          reject(err);
-        } else if ( res === true ) {
-          resolve({
-            id: parseInt(row.id, 10),
-            username: row.username,
-            name: row.name
-          });
-        } else {
-          _invalid();
-        }
+    return new Promise((resolve, reject) => {
+      function _invalid() {
+        reject('Invalid credentials');
+      }
+
+      function _auth(row) {
+        const hash = row.password.replace(/^\$2y(.+)$/i, '\$2a$1');
+        _bcrypt.compare(data.password, hash, (err, res) => {
+          if ( err ) {
+            reject(err);
+          } else if ( res === true ) {
+            resolve({
+              id: parseInt(row.id, 10),
+              username: row.username,
+              name: row.name
+            });
+          } else {
+            _invalid();
+          }
+        });
+      }
+
+      _db.instance('authstorage').then((db) => {
+        db.query(q, a).then((row) => {
+          if ( row ) {
+            _auth(row);
+          } else {
+            _invalid();
+          }
+        }).catch(reject);
       });
-    }
+    });
+  }
+  getGroups(http, username) {
+    return new Promise((resolve, reject) => {
+      function done(row) {
+        row = row || {};
+        let json = [];
+        try {
+          json = JSON.parse(row.groups);
+        } catch (e) {}
+        resolve(json);
+      }
 
-    _db.instance('authstorage').then((db) => {
-      db.query(q, a).then((row) => {
-        if ( row ) {
-          _auth(row);
-        } else {
-          _invalid();
-        }
+      _db.instance('authstorage').then((db) => {
+        db.query('SELECT `groups` FROM `users` WHERE `username` = ? LIMIT 1;', [username])
+          .then(done).catch(reject);
       }).catch(reject);
     });
-  });
-};
+  }
 
-module.exports.logout = function(http) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+  manage(http, command, args) {
+    return new Promise((resolve, reject) => {
+      if ( manager[command] ) {
+        _db.instance('authstorage').then((db) => {
+          manager[command](db, args)
+            .then(resolve)
+            .catch(reject);
+        }).catch(reject);
+      } else {
+        reject('Not available');
+      }
+    });
+  }
 
-module.exports.initSession = function(http) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+  register(config) {
+    const type = config.driver;
+    const settings = config[type];
 
-module.exports.checkPermission = function(http, type, options) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+    const str = type === 'sqlite' ? require('path').basename(settings.database) : settings.user + '@' + settings.host + ':/' + settings.database;
+    _logger.lognt('INFO', 'Module:', _logger.colored('Authenticator', 'bold'), 'using', _logger.colored(type, 'green'), '->', _logger.colored(str, 'green'));
 
-module.exports.checkSession = function(http) {
-  return new Promise((resolve, reject) => {
-    if ( http.session.get('username') ) {
-      resolve();
-    } else {
-      reject('You have no OS.js Session, please log in!');
-    }
-  });
-};
+    return _db.instance('authstorage', type, settings);
+  }
 
-module.exports.getGroups = function(http, username) {
-  return new Promise((resolve, reject) => {
-    function done(row) {
-      row = row || {};
-      let json = [];
-      try {
-        json = JSON.parse(row.groups);
-      } catch (e) {}
-      resolve(json);
-    }
+  destroy() {
+    return _db.destroy('authstorage');
+  }
 
-    _db.instance('authstorage').then((db) => {
-      db.query('SELECT `groups` FROM `users` WHERE `username` = ? LIMIT 1;', [username])
-        .then(done).catch(reject);
-    }).catch(reject);
-  });
-};
+}
 
-module.exports.getBlacklist = function(http, username) {
-  return new Promise((resolve) => {
-    resolve([]);
-  });
-};
-
-module.exports.setBlacklist = function(http, username, list) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
-
-module.exports.manage = function(http, command, args) {
-  return new Promise((resolve, reject) => {
-    if ( manager[command] ) {
-      _db.instance('authstorage').then((db) => {
-        manager[command](db, args)
-          .then(resolve)
-          .catch(reject);
-      }).catch(reject);
-    } else {
-      reject('Not available');
-    }
-  });
-};
-
-module.exports.register = function(config) {
-  const type = config.driver;
-  const settings = config[type];
-
-  const str = type === 'sqlite' ? require('path').basename(settings.database) : settings.user + '@' + settings.host + ':/' + settings.database;
-  _logger.lognt('INFO', 'Module:', _logger.colored('Authenticator', 'bold'), 'using', _logger.colored(type, 'green'), '->', _logger.colored(str, 'green'));
-
-  return _db.instance('authstorage', type, settings);
-};
-
-module.exports.destroy = function() {
-  return _db.destroy('authstorage');
-};
-
+module.exports = new DatabaseAuthenticator();

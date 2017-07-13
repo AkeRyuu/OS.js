@@ -28,97 +28,56 @@
  * @licence Simplified BSD License
  */
 
-module.exports.login = function(http, data) {
-  return new Promise((resolve, reject) => {
-    if ( data.username === 'normal' ) {
-      resolve({
-        id: 0,
-        username: 'normal',
-        name: 'Normal User'
-      });
-    } else if ( data.username === 'demo' ) {
-      resolve({
-        id: 1,
-        username: 'demo',
-        name: 'Admin User'
-      });
-    } else if ( data.username === 'restricted' ) {
-      resolve({
-        id: 1,
-        username: 'restricted',
-        name: 'Restricted User'
-      });
-    } else {
-      reject('Invalid credentials');
-    }
-  });
-};
+const Authenticator = require('../authenticator.js');
 
-module.exports.logout = function(http) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+class TestAuthenticator extends Authenticator {
+  login(http, data) {
+    return new Promise((resolve, reject) => {
+      if ( data.username === 'normal' ) {
+        resolve({
+          id: 0,
+          username: 'normal',
+          name: 'Normal User'
+        });
+      } else if ( data.username === 'demo' ) {
+        resolve({
+          id: 1,
+          username: 'demo',
+          name: 'Admin User'
+        });
+      } else if ( data.username === 'restricted' ) {
+        resolve({
+          id: 1,
+          username: 'restricted',
+          name: 'Restricted User'
+        });
+      } else {
+        reject('Invalid credentials');
+      }
+    });
+  }
 
-module.exports.manage = function(http) {
-  return new Promise((resolve, reject) => {
-    reject('Not available');
-  });
-};
+  getGroups(http, username) {
+    return new Promise((resolve) => {
+      let groups = ({
+        normal: ['admin'],
+        demo: ['admin'],
+        restricted: ['application']
+      })[username] || [];
+      resolve(groups);
+    });
+  }
 
-module.exports.initSession = function(http, resolve, reject) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
+  getBlacklist(http, username) {
+    return new Promise((resolve) => {
+      if ( username === 'restricted' ) {
+        resolve(['default/CoreWM']);
+      } else {
+        resolve([]);
+      }
+    });
+  }
 
-module.exports.checkPermission = function(http, resolve, reject, type, options) {
-  return new Promise((resolve) => {
-    resolve(true); // Return false to ignore internal group checking
-  });
-};
+}
 
-module.exports.checkSession = function(http) {
-  return new Promise((resolve, reject) => {
-    if ( http.session.get('username') ) {
-      resolve();
-    } else {
-      reject('You have no OS.js Session, please log in!');
-    }
-  });
-};
-
-module.exports.getGroups = function(http, username) {
-  return new Promise((resolve) => {
-    let groups = ({
-      normal: ['admin'],
-      demo: ['admin'],
-      restricted: ['application']
-    })[username] || [];
-    resolve(groups);
-  });
-};
-
-module.exports.getBlacklist = function(http, username) {
-  return new Promise((resolve) => {
-    if ( username === 'restricted' ) {
-      resolve(['default/CoreWM']);
-    } else {
-      resolve([]);
-    }
-  });
-};
-
-module.exports.setBlacklist = function(http, username, list) {
-  return new Promise((resolve) => {
-    resolve(true);
-  });
-};
-
-module.exports.register = function(config) {
-  return Promise.resolve();
-};
-
-module.exports.destroy = function() {
-  return Promise.resolve();
-};
+module.exports = new TestAuthenticator();

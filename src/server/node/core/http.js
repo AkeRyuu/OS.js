@@ -41,7 +41,7 @@ const _middleware = require('./middleware.js');
 const _responder = require('./responder.js');
 const _settings = require('./settings.js');
 const _session = require('./session.js');
-const _auth = require('./auth.js');
+const _auth = require('./../modules/authenticator.js');
 const _api = require('./api.js');
 const _vfs = require('./vfs.js');
 const _env = require('./env.js');
@@ -191,14 +191,14 @@ function handleRequest(http, onend) {
       if ( skip ) {
         resolve();
       } else {
-        _auth.checkSession(http).then(resolve).catch(_rejectResponse);
+        _auth.checkModuleSession(http).then(resolve).catch(_rejectResponse);
       }
     }).then(() => {
       return new Promise((resolve, reject) => {
         if ( skip ) {
           resolve();
         } else {
-          _auth.checkPermission(http, type, options).then(resolve).catch(_rejectResponse);
+          _auth.checkModulePermission(http, type, options).then(resolve).catch(_rejectResponse);
         }
       });
     }).catch(_rejectResponse);
@@ -227,7 +227,7 @@ function handleRequest(http, onend) {
       const pmatch = http.path.match(/^\/?packages\/(.*\/.*)\/(.*)/);
       if ( pmatch && pmatch.length === 3 ) {
         _checkPermission('package', {path: pmatch[1]}).then(() => {
-          _auth.checkSession(http)
+          _auth.checkModuleSession(http)
             .then(_serve).catch(_deny);
         }).catch(_deny);
       } else {
@@ -244,7 +244,7 @@ function handleRequest(http, onend) {
   // Take on the HTTP request
   _evhandler.emit('request:start', []);
 
-  _auth.initSession(http).then(() => {
+  _auth.initModuleSession(http).then(() => {
     const method = http.request.method;
     const session_id = http.session.id;
 
