@@ -130,7 +130,7 @@ export default class OSjsTransport extends Transport {
   }
 
   unlink(src) {
-    return this._request('delete', {path: src.path});
+    return this._request('unlink', {path: src.path});
   }
 
   copy(src, dest, options) {

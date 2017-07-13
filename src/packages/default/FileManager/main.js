@@ -784,7 +784,7 @@ class ApplicationFileManager extends Application {
 
       items.forEach(function(item) {
         item = new FileMetadata(item);
-        self._action('delete', [item], function() {
+        self._action('unlink', [item], function() {
           win.changePath(null);
         });
       });
@@ -1004,19 +1004,12 @@ class ApplicationFileManager extends Application {
 
   _action(name, args, callback) {
     callback = callback || function() {};
-    var self = this;
-    var _onError = function(error) {
-      Main.error(Locales._('ERR_GENERIC_APP_FMT', self.__label), Locales._('ERR_GENERIC_APP_REQUEST'), error);
-      callback(false);
-    };
-
-    VFS[name].apply(VFS, args.concat(function(error, result) {
-      if ( error ) {
-        _onError(error);
-        return;
-      }
-      callback(error, result);
-    }, null, this));
+    VFS[name].apply(VFS, args.concat(null, this)).then((res) => {
+      return callback(false, res);
+    }).catch((error) => {
+      Main.error(Locales._('ERR_GENERIC_APP_FMT', this.__label), Locales._('ERR_GENERIC_APP_REQUEST'), error);
+      callback(error);
+    });
   }
 }
 

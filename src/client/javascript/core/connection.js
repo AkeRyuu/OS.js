@@ -187,39 +187,18 @@ export default class Connection {
   }
 
   /**
-   * Called upon a VFS request
-   *
-   * You can use this to interrupt/hijack operations.
-   *
-   * It is what gets called 'before' a VFS request takes place
-   *
-   * @param   {String}    vfsModule     VFS Module Name
-   * @param   {String}    vfsMethod     VFS Method Name
-   * @param   {Object}    vfsArguments  VFS Method Arguments
-   * @param   {Function}  callback      Callback function
-   */
-  onVFSRequest(vfsModule, vfsMethod, vfsArguments, callback) {
-    // If you want to interrupt/hijack or modify somehow, just send the two arguments to the
-    // callback: (error, result)
-    callback(/* continue normal behaviour */);
-  }
-
-  /**
    * Called upon a VFS request completion
    *
    * It is what gets called 'after' a VFS request has taken place
    *
-   * @param   {String}    vfsModule     VFS Module Name
-   * @param   {String}    vfsMethod     VFS Method Name
-   * @param   {Object}    vfsArguments  VFS Method Arguments
-   * @param   {String}    vfsError      VFS Response Error
-   * @param   {Mixed}     vfsResult     VFS Response Result
-   * @param   {Function}  callback      Callback function
+   * @param   {Mountpoint} mount     VFS Module Name
+   * @param   {String}     method    VFS Method Name
+   * @param   {Object}     args      VFS Method Arguments
+   * @param   {Mixed}      response  VFS Response Result
+   * @return  {Promise<Boolean, Error>}
    */
-  onVFSRequestCompleted(vfsModule, vfsMethod, vfsArguments, vfsError, vfsResult, callback) {
-    // If you want to interrupt/hijack or modify somehow, just send the two arguments to the
-    // callback: (error, result)
-    callback(/* continue normal behaviour */);
+  onVFSRequestCompleted(mount, method, args, response) {
+    return Promise.resolve(true);
   }
 
   /**

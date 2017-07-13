@@ -34,6 +34,7 @@ import Process from 'core/process';
 import MountManager from 'core/mount-manager';
 import PackageManager from 'core/package-manager';
 import SettingsManager from 'core/settings-manager';
+import Connection from 'core/connection';
 import {_} from 'core/locales';
 
 let watches = [];
@@ -312,6 +313,15 @@ function convertWriteData(data, mime) {
   });
 }
 
+function requestWrapper(mountpoint, method, args, options, appRef) {
+  return new Promise((resolve, reject) => {
+    mountpoint.request(method, args, options).then((response) => {
+      Connection.instance.onVFSRequestCompleted(mountpoint, method, args, response)
+        .then(() => resolve(response)).catch(reject);
+    }).catch(reject);
+  });
+}
+
 function performRequest(method, args, options, test, appRef, errorStr) {
   return new Promise((resolve, reject) => {
     if ( options && !(options instanceof Object) ) {
@@ -325,7 +335,7 @@ function performRequest(method, args, options, test, appRef, errorStr) {
       return;
     }
 
-    mountpoint.request(method, args, options).then(resolve).catch(reject);
+    requestWrapper(mountpoint, method, args, options, appRef).then(resolve).catch(reject);
   });
 }
 
