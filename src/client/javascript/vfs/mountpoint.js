@@ -31,6 +31,16 @@ import Promise from 'bluebird';
 import Process from 'core/process';
 import {_} from 'core/locales';
 
+function createMatch(m, sname) {
+  if ( typeof m === 'string' ) {
+    return new RegExp(m);
+  } else if ( !m ) {
+    return new RegExp('^' + (sname + '://').replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'));
+  }
+
+  return m;
+}
+
 /**
  * A VFS mountpoint
  *
@@ -44,11 +54,8 @@ export default class Mountpoint {
    */
   constructor(options) {
     this.options = Object.assign({
-      name: 'undefined',
-      title: 'Undefined',
-      description: 'An undefined mountpoint',
+      name: null,
       root: null,
-      icon: 'devices/drive-harddisk.png',
       match: null,
 
       enabled: true,
@@ -67,18 +74,29 @@ export default class Mountpoint {
       throw new Error('No transport was defined for mountpoint ' + this.options.name);
     }
 
+    if ( !this.options.name ) {
+      throw new Error(_('ERR_VFSMODULE_INVALID_CONFIG_FMT'));
+    }
+
     const sname = this.options.name.replace(/\s/g, '-').toLowerCase();
 
-    if ( typeof this.options.match === 'string' ) {
-      this.options.match = new RegExp(this.options.match);
-    } else if ( !this.options.match ) {
-      this.options.match = new RegExp('^' + (sname + '://').replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'));
-    }
+    const defaults = {
+      icon: 'devices/drive-harddisk.png',
+      name: sname,
+      title: this.options.name,
+      description: this.options.description || this.options.name,
+      root: sname + ':///',
+      match: createMatch(this.options.match, sname)
+    };
+
+    Object.keys(defaults).forEach((k) => {
+      if ( !this.options[k] ) {
+        this.options[k] = defaults[k];
+      }
+    });
 
     this.name = sname;
     this.isMounted = false;
-    this.options.root = this.options.root || (sname + ':///');
-    //throw new Error(_('ERR_VFSMODULE_INVALID_CONFIG_FMT', validModule));
   }
 
   /**

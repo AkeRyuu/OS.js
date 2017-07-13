@@ -18,6 +18,7 @@
         "applications": {
           "transport": "applications",
           "icon": "places/user-bookmarks.png",
+          "title": "Applications",
           "description": "Applications"
         },
 
@@ -34,7 +35,8 @@
         "osjs": {
           "transport": "dist",
           "icon": "devices/drive-harddisk.png",
-          "description": "OS.js",
+          "title": "OS.js",
+          "description": "OS.js build",
           "readOnly": true
         },
 

@@ -71,8 +71,11 @@ export default class FileProgressDialog extends DialogWindow {
     this.closeCallback(ev, button, null);
   }
 
-  setProgress(p) {
+  setProgress(p, close = true) {
     this._find('Progress').set('progress', p);
+    if ( close && p >= 100 ) {
+      this._close(true);
+    }
   }
 
   _close(force) {

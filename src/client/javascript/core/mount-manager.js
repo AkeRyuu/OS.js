@@ -53,7 +53,8 @@ class MountManager {
     this.inited = false;
     this.transports = { // FIXME
       osjs: require('vfs/transports/osjs').default,
-      dist: require('vfs/transports/dist').default
+      dist: require('vfs/transports/dist').default,
+      applications: require('vfs/transports/applications').default
     };
     this.mountpoints = [];
   }
@@ -73,14 +74,12 @@ class MountManager {
     const config = getConfig('VFS.Mountpoints', {});
 
     return Promise.each(Object.keys(config), (name) => {
-      const iter = Object.assign(config[name], {
-        name: name,
-        title: name,
-        description: name,
-        dynamic: false
-      });
-
       return new Promise((resolve) => {
+        const iter = Object.assign({
+          name: name,
+          dynamic: false
+        }, config[name]);
+
         this.add(iter, true, {
           notify: false
         }).then(resolve).catch((e) => {

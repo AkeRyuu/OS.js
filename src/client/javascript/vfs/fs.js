@@ -316,7 +316,7 @@ function convertWriteData(data, mime) {
 function requestWrapper(mountpoint, method, args, options, appRef) {
   return new Promise((resolve, reject) => {
     mountpoint.request(method, args, options).then((response) => {
-      Connection.instance.onVFSRequestCompleted(mountpoint, method, args, response)
+      return Connection.instance.onVFSRequestCompleted(mountpoint, method, args, response)
         .then(() => resolve(response)).catch(reject);
     }).catch(reject);
   });
@@ -515,7 +515,8 @@ export function write(item, data, options, appRef) {
   return new Promise((resolve, reject) => {
     const mountpoint = MountManager.getModuleFromPath(item.path);
     convertWriteData(data, item.mime).then((ab) => {
-      mountpoint.request('write', [item, ab], options).then(resolve).catch((e) => {
+
+      requestWrapper(mountpoint, 'write', [item, ab], options, appRef).then(resolve).catch((e) => {
         reject(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));
       });
       return true;
@@ -551,7 +552,7 @@ export function read(item, options) {
 
   return new Promise((resolve, reject) => {
     const mountpoint = MountManager.getModuleFromPath(item.path);
-    mountpoint.request('read', [item], options).then((response) => {
+    requestWrapper(mountpoint, 'read', [item], options).then((response) => {
       if ( options.type ) {
         const types = {
           datasource: () => new Promise((yes, no) => {
@@ -642,16 +643,18 @@ export function copy(src, dest, options, appRef) {
       const sourceMountpoint  = MountManager.getModuleFromPath(src.path);
       const destMountpoint = MountManager.getModuleFromPath(dest.path);
       if ( hasSameTransport(src, dest) ) {
-        sourceMountpoint.request('copy', [src, dest], options).then(() => {
+        requestWrapper(sourceMountpoint, 'copy', [src, dest], options, appRef).then(() => {
           dialogProgress(100);
+
           return resolve(true);
         }).catch(reject);
       } else {
-        sourceMountpoint.request('read', [src], options).then((data) => {
+        requestWrapper(sourceMountpoint, 'read', [src], options, appRef).then((data) => {
           dialogProgress(50);
 
-          return destMountpoint.request('write', [dest, data], options).then((res) => {
+          return requestWrapper(destMountpoint, 'write', [dest, data], options, appRef).then((res) => {
             dialogProgress(100);
+
             return resolve(res);
           }).catch(reject);
         }).catch(reject);
@@ -662,6 +665,7 @@ export function copy(src, dest, options, appRef) {
 
   return new Promise((resolve, reject) => {
     promise.then(resolve).catch((e) => {
+      dialogProgress(100);
       reject(_('ERR_VFSMODULE_COPY_FMT', e));
     });
   });
@@ -698,18 +702,19 @@ export function move(src, dest, options, appRef) {
       const sourceMountpoint  = MountManager.getModuleFromPath(src.path);
       const destMountpoint = MountManager.getModuleFromPath(dest.path);
       if ( hasSameTransport(src, dest) ) {
-        sourceMountpoint.request('move', [src, dest], options).then(() => {
+        requestWrapper(sourceMountpoint, 'move', [src, dest], options, appRef).then(() => {
           dialogProgress(100);
+
           return resolve(true);
         }).catch(reject);
       } else {
-        sourceMountpoint.request('read', [src], options).then((data) => {
+        requestWrapper(sourceMountpoint, 'read', [src], options, appRef).then((data) => {
           dialogProgress(50);
 
-          return destMountpoint.request('write', [dest, data], options).then((res) => {
-            dialogProgress(100);
+          return requestWrapper(destMountpoint, 'write', [dest, data], options, appRef).then((res) => {
+            return requestWrapper(sourceMountpoint, 'unlink', [src], options, appRef).then((res) => {
+              dialogProgress(100);
 
-            return sourceMountpoint.request('unlink', [src], options).then((res) => {
               return resolve(res);
             }).catch(reject);
           }).catch(reject);
@@ -721,6 +726,8 @@ export function move(src, dest, options, appRef) {
 
   return new Promise((resolve, reject) => {
     promise.then(resolve).catch((e) => {
+      dialogProgress(100);
+
       reject(_('ERR_VFSMODULE_MOVE_FMT', e));
     });
   });
@@ -924,11 +931,9 @@ export function upload(args, options, appRef) {
 
       return new Promise((resolve, reject) => {
         existsWrapper(fileDest, options).then(() => {
-          return mountpoint.request('upload', [dest, f], options).then((res) => {
+          return requestWrapper(mountpoint, 'upload', [dest, f], options, appRef).then((res) => {
             let file = FileMetadata.fromUpload(args.destination, f);
             file = checkMetadataArgument(file);
-
-            broadcastMessage('vfs:upload', file, args.app, appRef);
 
             return resolve(res);
           }).catch(reject);
@@ -966,7 +971,7 @@ export function download(file) {
 
   const promise = new Promise((resolve, reject) => {
     const mountpoint = MountManager.getModuleFromPath(file);
-    mountpoint.request('download', [file], {}).then(() => {
+    requestWrapper(mountpoint, 'download', [file], {}).then(() => {
 
       if ( mountpoint.option('internal') ) {
         mountpoint.download(file).then(resolve).catch(reject);

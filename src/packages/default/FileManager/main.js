@@ -463,7 +463,7 @@ class ApplicationFileManagerWindow extends Window {
         className: classNames.join(' '),
         columns: [
           {
-            label: m.option('description'),
+            label: m.option('title'),
             icon: Assets.getIcon(m.option('icon'))
           }
         ],
@@ -860,9 +860,9 @@ class ApplicationFileManager extends Application {
       win._toggleDisabled(false);
 
       if ( item ) {
-        VFS.write(item, '', function() {
-          win.changePath(null, item);
-        }, {}, self);
+        VFS.write(item, '', {}, self).then(() => {
+          return win.changePath(null, item);
+        });
       }
     }
 
@@ -876,7 +876,7 @@ class ApplicationFileManager extends Application {
       }
 
       var item = new FileMetadata(dir + '/' + result);
-      VFS.exists(item, function(error, result) {
+      const done = (error, result) => {
         if ( result ) {
           win._toggleDisabled(true);
 
@@ -889,7 +889,11 @@ class ApplicationFileManager extends Application {
         } else {
           finished(true, item);
         }
-      });
+      };
+
+      VFS.exists(item).then((done) => {
+        done(false, result);
+      }).catch(done);
     }, win);
   }
 
@@ -922,7 +926,7 @@ class ApplicationFileManager extends Application {
 
     win._toggleLoading(true);
 
-    VFS.copy(src, dest, function(error, result) {
+    const done = (error) => {
       win._toggleLoading(false);
 
       try {
@@ -933,7 +937,11 @@ class ApplicationFileManager extends Application {
         Main.error(Locales._('ERR_GENERIC_APP_FMT', self.__label), Locales._('ERR_GENERIC_APP_REQUEST'), error);
         return;
       }
-    }, {dialog: dialog}, this._app);
+    };
+
+    VFS.copy(src, dest, {dialog: dialog}, this._app)
+      .then(() => done(false))
+      .catch(done);
   }
 
   upload(dest, files, win) {
