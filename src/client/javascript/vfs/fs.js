@@ -114,11 +114,14 @@ function noop(err, res) {
  * and return the real path
  */
 function hasAlias(item, retm) {
-  const mm = MountManager;
-  const module = mm.getModuleFromPath(item.path, false, true);
+  const module = MountManager.getModuleFromPath(item.path);
 
-  if ( module && module.options && module.options.alias ) {
-    return retm ? module : item.path.replace(module.match, module.options.alias);
+  if ( module ) {
+    const match = module.option('match');
+    const options = module.option('options');
+    if ( options && options.alias ) {
+      return retm ? module : item.path.replace(match, options.alias);
+    }
   }
 
   return false;
@@ -465,8 +468,10 @@ export function scandir(item, options) {
             const isShortcut = iter.shortcut === true;
             const niter = new FileMetadata(iter);
             if ( !isShortcut ) {
+
               const str = iter.path.replace(/\/?$/, '');
-              const tmp = alias.options.alias.replace(/\/?$/, '');
+              const opt = alias.option('options') || {};
+              const tmp = opt.alias.replace(/\/?$/, '');
               niter.path = FS.pathJoin(alias.root, str.replace(tmp, ''));
             }
 

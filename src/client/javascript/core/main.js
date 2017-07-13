@@ -184,12 +184,12 @@ export function error(title, message, error, exception, bugreport) {
   if ( getConfig('MOCHAMODE') ) {
     console.error(title, message, error, exception);
   } else {
+    console.warn(title, message, error, exception);
     if ( _dialog() ) {
       return;
     }
 
     window.alert(title + '\n\n' + message + '\n\n' + error);
-    console.warn(title, message, error, exception);
   }
 }
 
