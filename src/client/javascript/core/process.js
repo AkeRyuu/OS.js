@@ -272,11 +272,10 @@ export default class Process {
    *
    * @param   {String}      method                      Name of method
    * @param   {Object}      args                        Arguments in JSON
-   * @param   {Function}    callback                    Callback method => fn(error, result)
    * @param   {Object}      [options]                   Options (See API::call)
-   * @return  {Boolean}
+   * @return  {Promise}
    */
-  _api(method, args, callback, options) {
+  _api(method, args, options) {
 
     // NOTE: Backward compability
     if ( typeof options === 'boolean' ) {
@@ -287,22 +286,27 @@ export default class Process {
       options = {};
     }
 
-    const cb = (err, res) => {
-      if ( this.__destroyed ) {
-        console.warn('Process::_api()', 'INGORED RESPONSE: Process was closed');
-        return;
-      }
-      callback(err, res);
-    };
-
     this._emit('api', [method]);
 
-    return Connection.request('application', {
-      application: this.__iter,
-      path: this.__path,
-      method: method,
-      args: args
-    }, cb, options);
+    return new Promise((resolve, reject) => {
+      Connection.request('application', {
+        application: this.__iter,
+        path: this.__path,
+        method: method,
+        args: args
+      }, options).then((res) => {
+        if ( !this.__destroyed ) {
+          resolve(res);
+          return true;
+        }
+        console.warn('Process::_api()', 'INGORED RESPONSE: Process was closed');
+        return false;
+      }).catch((err) => {
+        if ( !this.__destroyed ) {
+          reject(err);
+        }
+      });
+    });
   }
 
   /**

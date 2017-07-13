@@ -37,11 +37,6 @@ module.exports = function() {
   const Storage = require('core/storage.js');
   const Assets = require('core/assets.js');
 
-  const BroadwayKeytable = require('broadway/unicode.js');
-  const BroadwayConnection = require('broadway/connection.js');
-  const BroadwayWindow = require('broadway/window.js');
-  const Broadway = require('broadway/broadway.js');
-
   const ExtendedDate = require('helpers/date.js');
   const DefaultApplicationWindow = require('helpers/default-application-window.js');
   const DefaultApplication = require('helpers/default-application.js');
@@ -110,19 +105,9 @@ module.exports = function() {
   OSjs.GUI.Helpers = Object.seal(GUIHelpers);
 
   assignInto(Hooks, OSjs.API);
-  assignInto(VFS, OSjs.VFS);
   OSjs.VFS.FileDataURL = VFSFileData.default;
   OSjs.VFS.File = VFSFile.default;
   assignInto(FS, OSjs.VFS.Helpers);
-
-  /*
-  OSjs.VFS.Transports.Applications = require('vfs/transports/applications.js').default;
-  OSjs.VFS.Transports.Dist = require('vfs/transports/dist.js').default;
-  OSjs.VFS.Transports.HTTP = require('vfs/transports/http.js').default;
-  OSjs.VFS.Transports.OSjs = require('vfs/transports/osjs.js').default;
-  OSjs.VFS.Transports.Web = require('vfs/transports/web.js').default;
-  OSjs.VFS.Transports.WebDAV = require('vfs/transports/webdav.js').default;
-  */
 
   assignInto(FS, OSjs.Utils);
   assignInto(DOM, OSjs.Utils);
@@ -169,14 +154,78 @@ module.exports = function() {
   assignInto(Main, OSjs.API);
   assignInto(Clipboard, OSjs.API);
 
-  /**
-   * @namespace Connection
-   * @memberof OSjs.Broadway
-   */
-  OSjs.Broadway.Keytable = BroadwayKeytable;
-  OSjs.Broadway.Connection = BroadwayConnection;
-  OSjs.Broadway.Window = BroadwayWindow;
-  OSjs.Broadway.GTK = Broadway;
+  OSjs.VFS.find = function(item, args, callback, options) {
+    VFS.find(item, args, options).then((res) => callback(false, res)).catch(callback);
+  };
+  OSjs.VFS.scandir =  function(item, callback, options) {
+    VFS.scandir(item, options).then((res) => callback(false, res)).catch(callback);
+  };
+  OSjs.VFS.write = function(item, data, callback, options, appRef) {
+    VFS.write(item, data, options, appRef).then((res) => callback(false, res)).catch(callback);
+  };
+  OSjs.VFS.read = function(item, callback, options) {
+    VFS.read(item, options).then((res) => callback(false, res)).catch(callback);
+  };
+  OSjs.VFS.copy = function(src, dest, callback, options, appRef) {
+    VFS.copy(src, dest, options, appRef).then((res) => callback(false, res)).catch(callback);
+  };
+  OSjs.VFS.move = function(src, dest, callback, options, appRef) {
+    VFS.move(src, dest, options, appRef).then((res) => callback(false, res)).catch(callback);
+  };
+  OSjs.VFS.rename = OSjs.VFS.move;
+
+  OSjs.VFS.unlink = function(item, callback, options, appRef) {
+    VFS.unlink(item, options, appRef).then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.mkdir = function(item, callback, options, appRef) {
+    VFS.mkdir(item, options, appRef).then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.exists = function(item, callback) {
+    VFS.exists(item).then((res) => callback(false, res)).catch(callback);
+  };
+  OSjs.VFS.fileinfo = function(item, callback) {
+    VFS.fileinfo(item).then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.url = function(item, callback, options) {
+    VFS.url(item, options).then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.upload = function(args, callback, options, appRef) {
+
+  };
+
+  OSjs.VFS.download = function(item, callback) {
+    VFS.download(item).then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.transh = function(item, callback) {
+    VFS.trash(item).then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.untransh = function(item, callback) {
+    VFS.untrash(item).then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.emptyTrash = function(callback) {
+    VFS.emptyTrash().then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.freeSpace = function(item, callback) {
+    VFS.freeSpace(item).then((res) => callback(false, res)).catch(callback);
+  };
+
+  OSjs.VFS.watch = function(item, cb) {
+    VFS.watch(item, cb);
+  };
+
+  OSjs.VFS.unwatch = VFS.unwatch;
+
+  OSjs.VFS.triggerWatch = VFS.triggerWatch;
+
+  OSjs.VFS['delete'] = OSjs.VFS.unlink;
 
   /**
    * Returns an instance of ServiceNotificationIcon
@@ -280,7 +329,9 @@ module.exports = function() {
    * @param   {Boolean}   [options.indicator=true]    Show loading indicator
    */
   OSjs.API.call = function(m, a, cb, options) {
-    Connection.request(m, a, cb, options);
+    Connection.request(m, a, options).then((res) => {
+      cb(false, res);
+    }).catch(cb);
   };
 
   /**
@@ -323,7 +374,7 @@ module.exports = function() {
       opts = args;
     }
 
-    return Connection.request('curl', opts, callback, args.options);
+    return OSjs.API.call('curl', opts, callback, args.options);
   };
 
   /**
@@ -425,7 +476,7 @@ module.exports = function() {
    * @return  {Object}
    */
   OSjs.Core.getConfig = OSjs.Core.getConfig || function() {
-    return {};
+    return OSjs.getConfig ? OSjs.getConfig() : {};
   };
 
   /**
@@ -439,7 +490,7 @@ module.exports = function() {
    * @return  {Metadata[]}
    */
   OSjs.Core.getMetadata = OSjs.Core.getMetadata || function() {
-    return {};
+    return OSjs.getManifest ? OSjs.getManifest() : {};
   };
 
   /**
@@ -537,35 +588,6 @@ module.exports = function() {
   };
 
   /**
-   * Create a new Upload dialog
-   *
-   * @function createUploadDialog
-   * @memberof OSjs.VFS.Helpers
-   *
-   * @param   {Object}                                     opts                 Options
-   * @param   {String}                                     opts.destination     Destination for upload
-   * @param   {File}                                       [opts.file]          Uploads this file immediately
-   * @param   {Function}                                   cb                   Callback function => fn(error, file, event)
-   * @param   {OSjs.Core.Window|OSjs.Core.Application}     [ref]                Set reference in new window
-   */
-  OSjs.VFS.Helpers.createUploadDialog = function(opts, cb, ref) {
-    var destination = opts.destination;
-    var upload = opts.file;
-
-    OSjs.API.createDialog('FileUpload', {
-      dest: destination,
-      file: upload
-    }, function(ev, btn, ufile) {
-      if ( btn !== 'ok' && btn !== 'complete' ) {
-        cb(false, false);
-      } else {
-        var file = VFSFile.default.fromUpload(destination, ufile);
-        cb(false, file);
-      }
-    }, ref);
-  };
-
-  /**
    * Gets the currently running instance
    *
    * @function getInstance
@@ -648,19 +670,5 @@ module.exports = function() {
   OSjs.Helpers.ZipArchiver.createInstance = function(args, callback) {
     ZipArchiver.create(args, callback);
   };
-
-  /**
-   * Alias of unlink
-   *
-   * @function delete
-   * @memberof OSjs.VFS
-   * @alias OSjs.VFS.unlink
-   */
-  (function() {
-    /*eslint dot-notation: "off"*/
-    OSjs.VFS['delete'] = function VFS_delete(item, callback) {
-      OSjs.VFS.unlink.apply(this, arguments);
-    };
-  })();
 
 };

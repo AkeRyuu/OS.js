@@ -29,12 +29,14 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-const {API, VFS, Utils} = OSjs;
-const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
-
-/////////////////////////////////////////////////////////////////////////////
-// WINDOWS
-/////////////////////////////////////////////////////////////////////////////
+const DOM = OSjs.require('utils/dom');
+const Events = OSjs.require('utils/events');
+const Dialog = OSjs.require('core/dialog');
+const Locales = OSjs.require('core/locales');
+const Connection = OSjs.require('core/connection');
+const FileMetadata = OSjs.require('vfs/file');
+const DefaultApplication = OSjs.require('helpers/default-application');
+const DefaultApplicationWindow = OSjs.require('helpers/default-application-window');
 
 class ApplicationPreviewWindow extends DefaultApplicationWindow {
 
@@ -74,28 +76,28 @@ class ApplicationPreviewWindow extends DefaultApplicationWindow {
 
     this._find('SubmenuFile').on('select', function(ev) {
       if ( ev.detail.id === 'MenuOpenLocation' ) {
-        API.createDialog('Input', {
+        Dialog.create('Input', {
           value: 'http://'
         }, function(ev, btn, value) {
           if ( btn === 'ok' ) {
             if ( !value.match(/^http/) ) {
-              self._setWarning(API._('ERR_OPEN_LOCATION_FMT', API._('ERR_INVALID_LOCATION')));
+              self._setWarning(Locales._('ERR_OPEN_LOCATION_FMT', Locales._('ERR_INVALID_LOCATION')));
               return;
             }
 
-            API.curl({
+            Connection.request('curl', {
               method: 'HEAD',
               url: value
             }, function(err, res) {
               var contentType = res.headers['content-type'];
               if ( !contentType ) {
-                err = API._('ERR_VFS_NO_MIME_DETECT');
+                err = Locales._('ERR_VFS_NO_MIME_DETECT');
               }
 
               if ( err ) {
-                self._setWarning(API._('ERR_OPEN_LOCATION_FMT', err));
+                self._setWarning(Locales._('ERR_OPEN_LOCATION_FMT', err));
               } else {
-                self.showFile(new VFS.File(value, contentType), value);
+                self.showFile(new FileMetadata(value, contentType), value);
               }
             });
           }
@@ -104,7 +106,7 @@ class ApplicationPreviewWindow extends DefaultApplicationWindow {
     });
 
     var c = this._find('Content').$element;
-    Utils.$bind(c, 'mousewheel', function(ev, pos) {
+    Events.$bind(c, 'mousewheel', function(ev, pos) {
       if ( pos.z === 1 ) {
         self.onZoomOut();
       } else if ( pos.z === -1 ) {
@@ -118,7 +120,7 @@ class ApplicationPreviewWindow extends DefaultApplicationWindow {
   showFile(file, result) {
     var self = this;
     var root = this._find('Content').$element;
-    Utils.$empty(root);
+    DOM.$empty(root);
 
     if ( result ) {
       this.zoomLevel = 0;
@@ -208,10 +210,6 @@ class ApplicationPreviewWindow extends DefaultApplicationWindow {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
-
 class ApplicationPreview extends DefaultApplication {
 
   constructor(args, metadata) {
@@ -228,10 +226,4 @@ class ApplicationPreview extends DefaultApplication {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationPreview = OSjs.Applications.ApplicationPreview || {};
-OSjs.Applications.ApplicationPreview.Class = Object.seal(ApplicationPreview);
+OSjs.Applications.ApplicationPreview = ApplicationPreview;

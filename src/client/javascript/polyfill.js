@@ -27,7 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-'use strict';
 
 module.exports = function() {
 

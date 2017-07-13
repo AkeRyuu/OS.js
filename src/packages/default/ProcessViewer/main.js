@@ -29,12 +29,9 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-const {API} = OSjs;
-const {Window, Application} = OSjs.Core;
 
-/////////////////////////////////////////////////////////////////////////////
-// WINDOWS
-/////////////////////////////////////////////////////////////////////////////
+const Window = OSjs.require('core/window');
+const Application = OSjs.require('core/application');
 
 class ApplicationProcessViewerWindow extends Window {
 
@@ -60,7 +57,7 @@ class ApplicationProcessViewerWindow extends Window {
     function update() {
       var now = new Date();
       var rows = [];
-      API.getProcesses().forEach(function(p) {
+      Application.getProcesses().forEach(function(p) {
         if ( p ) {
           var alive = now - p.__started;
           var iter = {
@@ -89,7 +86,7 @@ class ApplicationProcessViewerWindow extends Window {
     this._find('ButtonKill').on('click', function() {
       var selected = view.get('selected');
       if ( selected && selected[0] && typeof selected[0].data !== 'undefined' ) {
-        API.kill(selected[0].data);
+        Application.kill(selected[0].data);
       }
     });
 
@@ -109,10 +106,6 @@ class ApplicationProcessViewerWindow extends Window {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
-
 class ApplicationProcessViewer extends Application {
 
   constructor(args, metadata) {
@@ -126,11 +119,4 @@ class ApplicationProcessViewer extends Application {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationProcessViewer = OSjs.Applications.ApplicationProcessViewer || {};
-OSjs.Applications.ApplicationProcessViewer.Class = Object.seal(ApplicationProcessViewer);
-
+OSjs.Applications.ApplicationProcessViewer = ApplicationProcessViewer;

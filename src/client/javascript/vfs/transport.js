@@ -97,7 +97,7 @@ export default class Transport {
   download(item) {
     return new Promise((resolve, reject) => {
       this.url(item).then((url) => {
-        axios({
+        return axios({
           responseType: 'arraybuffer',
           url: url,
           method: 'GET'

@@ -32,7 +32,7 @@ import {isStandalone} from 'core/config';
 
 export default class DemoAuthenticator extends Authenticator {
 
-  login(login, callback) {
+  login(login) {
     let settings = {};
     let key;
 
@@ -48,7 +48,7 @@ export default class DemoAuthenticator extends Authenticator {
     }
 
     if ( isStandalone() ) {
-      return callback(false, {
+      return Promise.resolve({
         userData: {
           id: 0,
           username: 'demo',
@@ -60,21 +60,19 @@ export default class DemoAuthenticator extends Authenticator {
       });
     }
 
-    return super.login(login, (error, result) => {
-      if ( error ) {
-        callback(error);
-      } else {
+    return new Promise((resolve, reject) => {
+      super.login(login).then((result) => {
         result.userSettings = settings;
-        callback(null, result);
-      }
+        return resolve(result);
+      }).catch(reject);
     });
   }
 
-  onCreateUI(callback) {
-    this.onLoginRequest({
+  onCreateUI() {
+    return this.onLoginRequest({
       username: 'demo',
       password: 'demo'
-    }, callback);
+    });
   }
 
 }

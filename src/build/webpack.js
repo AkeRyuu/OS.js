@@ -315,6 +315,7 @@ const createPackageConfiguration = (metadataFile, options) => new Promise((resol
         resolve: {
           modules: [
             path.join(ROOT, 'src/client/javascript'),
+            path.join(ROOT, 'node_modules'),
             packageRoot
           ]
         },

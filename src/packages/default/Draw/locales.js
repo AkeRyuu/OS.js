@@ -28,13 +28,8 @@
  * @licence Simplified BSD License
  */
 // jscs:disable validateQuoteMarks
-const {API} = OSjs;
 
-/////////////////////////////////////////////////////////////////////////////
-// LOCALES
-/////////////////////////////////////////////////////////////////////////////
-
-var _Locales = {
+export default {
   bg_BG: {
     'Toggle tools toolbar': 'Бар с инструменти',
     'Toggle layers toolbar': 'Бар с слоеве',
@@ -704,8 +699,3 @@ var _Locales = {
   }
 };
 
-module.exports = function() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift(_Locales);
-  return API.__.apply(this, args);
-};

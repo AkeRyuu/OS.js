@@ -29,11 +29,8 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
-
-/////////////////////////////////////////////////////////////////////////////
-// WINDOWS
-/////////////////////////////////////////////////////////////////////////////
+const DefaultApplication = OSjs.require('helpers/default-application');
+const DefaultApplicationWindow = OSjs.require('helpers/default-application-window');
 
 class ApplicationTextpadWindow extends DefaultApplicationWindow {
 
@@ -97,10 +94,6 @@ class ApplicationTextpadWindow extends DefaultApplicationWindow {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
-
 class ApplicationTextpad extends DefaultApplication {
 
   constructor(args, metadata) {
@@ -121,10 +114,4 @@ class ApplicationTextpad extends DefaultApplication {
 
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationTextpad = OSjs.Applications.ApplicationTextpad || {};
-OSjs.Applications.ApplicationTextpad.Class = Object.seal(ApplicationTextpad);
+OSjs.Applications.ApplicationTextpad = ApplicationTextpad;

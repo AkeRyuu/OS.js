@@ -29,7 +29,9 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-const _ = require('./locale.js');
+import Translations from './locales';
+const Locales = OSjs.require('core/locales');
+const _ = Locales.createLocalizer(Translations);
 
 (function(Application, Window, Utils, API, VFS, GUI) {
 

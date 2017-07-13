@@ -143,11 +143,7 @@ const FilesystemModule = {
     let found = [];
     Promise.each(settings.paths, (e) => {
       return new Promise((n) => {
-        VFS.find(e, {query: q, limit: (args.limit ? args.dlimit : 0), recursive: args.recursive}, (error, result) => {
-          if ( error ) {
-            console.warn(error);
-          }
-
+        VFS.find(e, {query: q, limit: (args.limit ? args.dlimit : 0), recursive: args.recursive}).then((result) => {
           if ( result ) {
             const list = result.map((iter) => {
               return {
@@ -160,7 +156,9 @@ const FilesystemModule = {
 
             found = found.concat(list);
           }
-
+          return n();
+        }).catch((error) => {
+          console.warn(error);
           n();
         });
       });

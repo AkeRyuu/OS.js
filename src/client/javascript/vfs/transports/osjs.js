@@ -29,7 +29,7 @@
  */
 import Promise from 'bluebird';
 import FileMetadata from 'vfs/file';
-import FS from 'utils/fs';
+import * as FS from 'utils/fs';
 import Connection from 'core/connection';
 import Transport from 'vfs/transport';
 import {getConfig} from 'core/config';
@@ -37,17 +37,8 @@ import {_} from 'core/locales';
 
 export default class OSjsTransport extends Transport {
 
-  _request(method, args) {
-    return new Promise((resolve, reject) => {
-      Connection.request('FS:' + method, args, (err, res) => {
-        if ( !err && typeof res === 'undefined' ) {
-          err = _('ERR_VFS_FATAL');
-          reject(err);
-        } else {
-          resolve(res);
-        }
-      });
-    });
+  _request(method, args, options) {
+    return Connection.request('FS:' + method, args, options);
   }
 
   _requestUpload(dest, file, options) {
@@ -85,16 +76,7 @@ export default class OSjsTransport extends Transport {
 
     FS.addFormFile(fd, 'upload', file, options.meta);
 
-    return new Promise((resolve, reject) => {
-      Connection.request('FS:upload', fd, (err, res) => {
-        if ( err ) {
-          reject(err);
-        } else {
-
-          resolve(res);
-        }
-      }, null, options);
-    });
+    return this._request('upload', fd, options);
   }
 
   scandir(item, options) {
@@ -108,7 +90,7 @@ export default class OSjsTransport extends Transport {
     };
 
     return new Promise((resolve, reject) => {
-      this._request('scandir', args).then((result) => {
+      this._request('scandir', args, options).then((result) => {
         return resolve(result.map((i) => new FileMetadata(i)));
       }).catch(reject);
     });
@@ -125,6 +107,7 @@ export default class OSjsTransport extends Transport {
     options.onprogress = options.onprogress || function() {};
 
     // Backward compability
+    // FIXME: Deprecate
     if ( options.upload === false ) {
       if ( typeof data === 'string' && !data.length ) {
         return this._request('write', {path: file.path, data: data}, options);
@@ -143,19 +126,19 @@ export default class OSjsTransport extends Transport {
     }
 
     const parentfile = new FileMetadata(FS.dirname(file.path), file.mime);
-    return this._requestUpload(parentfile, file, options);
+    return this._requestUpload(parentfile, data, options);
   }
 
   unlink(src) {
     return this._request('delete', {path: src.path});
   }
 
-  copy(src, dest) {
-    return this._request('copy', {src: src.path, dest: dest.path});
+  copy(src, dest, options) {
+    return this._request('copy', {src: src.path, dest: dest.path}, options);
   }
 
-  move(src, dest) {
-    return this._request('move', {src: src.path, dest: dest.path});
+  move(src, dest, options) {
+    return this._request('move', {src: src.path, dest: dest.path}, options);
   }
 
   exists(item) {

@@ -28,14 +28,7 @@
  * @licence Simplified BSD License
  */
 
-/*eslint valid-jsdoc: "off"*/
-'use strict';
-
-const {IFrameApplication} = OSjs.Helpers;
-
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
+const IFrameApplication = OSjs.require('helpers/iframe-application');
 
 class ApplicationEXAMPLE extends IFrameApplication {
   constructor(args, metadata) {
@@ -53,10 +46,4 @@ class ApplicationEXAMPLE extends IFrameApplication {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationEXAMPLE = OSjs.Applications.ApplicationEXAMPLE || {};
-OSjs.Applications.ApplicationEXAMPLE.Class = Object.seal(ApplicationEXAMPLE);
+OSjs.Applications.ApplicationEXAMPLE = ApplicationEXAMPLE;

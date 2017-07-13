@@ -29,11 +29,18 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
+import Translations from './locales';
 
-const {API, GUI, VFS, Utils} = OSjs;
-const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
+const Locales = OSjs.require('core/locales');
+const Dialog = OSjs.require('core/dialog');
+const GUI = OSjs.require('utils/gui');
+const DOM = OSjs.require('utils/dom');
+const Utils = OSjs.require('utils/misc');
+const FileDataURL = OSjs.require('vfs/filedataurl');
+const DefaultApplication = OSjs.require('helpers/default-application');
+const DefaultApplicationWindow = OSjs.require('helpers/default-application-window');
 
-const doTranslate = require('./locales.js');
+const doTranslate = Locales.createLocalizer(Translations);
 
 var DEFAULT_WIDTH = 1024;
 var DEFAULT_HEIGHT = 768;
@@ -216,7 +223,7 @@ var toolEvents = {
 };
 
 /////////////////////////////////////////////////////////////////////////////
-// WINDOWS
+// APPLICATION
 /////////////////////////////////////////////////////////////////////////////
 
 class ApplicationDrawWindow extends DefaultApplicationWindow {
@@ -286,7 +293,7 @@ class ApplicationDrawWindow extends DefaultApplicationWindow {
     }
 
     function removeTempCanvas() {
-      Utils.$remove(tmpCanvas);
+      DOM.$remove(tmpCanvas);
       tmpContext = null;
       tmpCanvas = null;
     }
@@ -297,7 +304,7 @@ class ApplicationDrawWindow extends DefaultApplicationWindow {
 
         removeTempCanvas();
 
-        var elpos = Utils.$position(canvas);
+        var elpos = DOM.$position(canvas);
         startPos.x = pos.x - elpos.left;
         startPos.y = pos.y - elpos.top;
         cpos = {x: startPos.x, y: startPos.y};
@@ -334,7 +341,7 @@ class ApplicationDrawWindow extends DefaultApplicationWindow {
       }
     }
 
-    GUI.Helpers.createDrag(canvas, function(ev, pos) {
+    GUI.createDrag(canvas, function(ev, pos) {
       toolAction('down', ev, pos);
     }, function(ev, diff, pos) {
       toolAction('move', ev, pos, diff);
@@ -400,7 +407,7 @@ class ApplicationDrawWindow extends DefaultApplicationWindow {
       colorParam = doTranslate('Set foreground color');
     }
 
-    API.createDialog('Color', {
+    Dialog.create('Color', {
       title: colorParam,
       color: self.tool[param]
     }, function(ev, button, result) {
@@ -474,15 +481,11 @@ class ApplicationDrawWindow extends DefaultApplicationWindow {
   getFileData() {
     var canvas = this._find('Canvas').querySelector('canvas');
     if ( canvas ) {
-      return new VFS.FileDataURL(canvas.toDataURL('image/png'));
+      return new FileDataURL(canvas.toDataURL('image/png'));
     }
     return null;
   }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
 
 class ApplicationDraw extends DefaultApplication {
 
@@ -508,10 +511,4 @@ class ApplicationDraw extends DefaultApplication {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationDraw = OSjs.Applications.ApplicationDraw || {};
-OSjs.Applications.ApplicationDraw.Class = Object.seal(ApplicationDraw);
+OSjs.Applications.ApplicationDraw = ApplicationDraw;

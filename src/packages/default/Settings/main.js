@@ -28,7 +28,9 @@
  * @licence Simplified BSD License
  */
 
-const _ = require('./locale.js');
+import Translations from './locales';
+const Locales = OSjs.require('core/locales');
+const _ = Locales.createLocalizer(Translations);
 
 /*eslint valid-jsdoc: "off"*/
 (function(Application, Window, Utils, API, VFS, GUI) {
@@ -68,7 +70,7 @@ const _ = require('./locale.js');
       title: metadata.name,
       width: 400,
       height: 300,
-      translator: OSjs.Applications.ApplicationSettings._
+      translator: _
     }, app, scheme]);
 
     this.callback = callback;
@@ -117,7 +119,7 @@ const _ = require('./locale.js');
       width: 500,
       height: 450,
       allow_resize: true,
-      translator: OSjs.Applications.ApplicationSettings._
+      translator: _
     }, app, scheme]);
 
     this.initialCategory = initialCategory;

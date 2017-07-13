@@ -122,6 +122,14 @@ export function setLocale(l) {
   console.info('API::setLocale()', CurrentLocale);
 }
 
+export function createLocalizer(locales) {
+  return function() {
+    var args = Array.prototype.slice.call(arguments, 0);
+    args.unshift(locales);
+    return __(...args);
+  };
+}
+
 export function init(locale, options, languages) {
   options = options || {};
 

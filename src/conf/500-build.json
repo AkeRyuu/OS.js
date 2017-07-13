@@ -10,6 +10,7 @@
     ],
     "includes": {
       "scripts": [
+        "standalone:packages.js",
         "settings.js",
         "vendor.js"
       ],

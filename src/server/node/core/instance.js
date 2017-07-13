@@ -139,29 +139,6 @@ function registerPackages(servers) {
     };
   }
 
-  function _registerApplication(name, packages, module) {
-    if ( typeof module.api === 'object' ) {
-      if ( typeof module.register === 'function' ) {
-        module.register(ENV, packages[name], {
-          http: servers.httpServer,
-          ws: servers.websocketServer,
-          proxy: servers.proxyServer
-        });
-      }
-      return false;
-    } else if ( typeof module._onServerStart === 'function' ) {
-      // Backward compatible with old API
-      module._onServerStart(servers.httpServer, _createOldInstance(ENV), packages[path]);
-      return true;
-    }
-
-    return typeof module.api === 'undefined';
-  }
-
-  function _registerExtension(module) {
-    return _api.register(module);
-  }
-
   function _launchSpawners(pn, module, metadata) {
     if ( metadata.spawn && metadata.spawn.enabled ) {
       const rpath = _path.resolve(ENV.ROOTDIR, metadata._src);
@@ -182,18 +159,17 @@ function registerPackages(servers) {
         const check = _path.join(rpath, filename);
 
         if ( metadata.enabled !== false && _fs.existsSync(check) ) {
-          let deprecated = false;
           if ( metadata.type === 'extension' ) {
             _logger.lognt('INFO', 'Loading:', _logger.colored('Extension', 'bold'), check.replace(ENV.ROOTDIR, ''));
-            deprecated = _registerExtension(require(check));
+            _api.register(require(check));
             _launchSpawners(p, module, metadata);
           } else {
             _logger.lognt('INFO', 'Loading:', _logger.colored('Application', 'bold'), check.replace(ENV.ROOTDIR, ''));
-            deprecated = _registerApplication(p, packages, require(check));
-          }
-
-          if ( deprecated ) {
-            _logger.lognt('WARN', _logger.colored('Warning:', 'yellow'), p, _logger.colored('is using the deprecated Application API(s)', 'bold'));
+            require(check).register(ENV, packages[p], {
+              http: servers.httpServer,
+              ws: servers.websocketServer,
+              proxy: servers.proxyServer
+            });
           }
         }
       });

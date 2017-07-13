@@ -27,14 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-// jscs:disable validateQuoteMarks
-const {API} = OSjs;
 
-/////////////////////////////////////////////////////////////////////////////
-// LOCALES
-/////////////////////////////////////////////////////////////////////////////
-
-const _Locales = {
+export default {
   bg_BG: {
     'Killing this process will stop things from working!': 'Прекратяването на този процес ще спре някой приложения!',
     'Open settings': 'Отвори настойки',
@@ -314,8 +308,3 @@ const _Locales = {
 
 };
 
-module.exports = function() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift(_Locales);
-  return API.__.apply(this, args);
-};

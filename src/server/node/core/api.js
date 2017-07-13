@@ -82,40 +82,9 @@ module.exports.get = function() {
  * @return {Boolean}
  */
 module.exports.register = function(module) {
-  function _createOldInstance(env) {
-    return {
-      request: null,
-      response: null,
-      config: _settings.get(),
-      handler: null,
-      logger: _logger
-    };
-  }
-
-  if ( typeof module.api === 'object' ) {
-    Object.keys(module.api).forEach((k) => {
-      MODULES[k] = module.api[k];
-    });
-
-    return false;
-  } else if ( typeof module.register === 'function' ) {
-    // Backward compatible with old API
-    let backAPI = {};
-    module.register(backAPI, {}, _createOldInstance());
-
-    Object.keys(backAPI).forEach((k) => {
-      MODULES[k] = function(http, resolve, reject, args) {
-        backAPI[k](_createOldInstance(), args, (err, res) => {
-          if ( err ) {
-            reject(err);
-          } else {
-            resolve(res);
-          }
-        });
-      };
-    });
-  }
-  return true;
+  Object.keys(module.api).forEach((k) => {
+    MODULES[k] = module.api[k];
+  });
 };
 
 /**

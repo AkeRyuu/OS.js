@@ -56,17 +56,14 @@ function getEntryFile(entry, onend, onprogress) {
 function openFile(file, done) {
   console.log('-->', 'openFile()');
 
-  VFS.download(file, (error, data) => {
-    if ( error ) {
-      console.warn('An error while opening zip', error);
-      done(error);
-      return;
-    }
-
+  VFS.download(file).then((data) => {
     const blob = new Blob([data], {type: file.mime});
     getEntries(blob, (error, result) => {
       done(error, result || []);
     });
+  }).catch((error) => {
+    console.warn('An error while opening zip', error);
+    done(error);
   });
 }
 
@@ -126,10 +123,9 @@ function saveZip(writer, file, ccb) {
     VFS.upload({
       destination: FS.dirname(file.path),
       files: [{filename: FS.filename(file.path), data: blob}]
-    }, (type, ev) => {
-      const error = (type === 'error') ? ev : false;
-      ccb(error, !!error);
-    }, {overwrite: true});
+    }, {overwrite: true})
+      .then(() => ccb(false, true))
+      .catch((error) => ccb(error, false));
   });
 }
 
@@ -200,18 +196,14 @@ class ZipArchiver {
    * @param   {Function}          cb            Callback function => fn(error, entries)
    */
   list(file, cb) {
-    VFS.download(file, (error, result) => {
-      if ( error ) {
-        alert(error);
-
-        cb(error, null);
-        return;
-      }
-
+    VFS.download(file).then((result) => {
       const blob = new Blob([result], {type: 'application/zip'});
       getEntries(blob, (error, entries) => {
         cb(error, entries);
       });
+    }).catch((error) => {
+      alert(error);
+      cb(error, null);
     });
   }
 
@@ -231,18 +223,15 @@ class ZipArchiver {
           files: [
             {filename: FS.filename(file.path), data: blob}
           ]
-        }, (type, ev) => {
-          if ( type === 'error' ) {
-            console.warn('Error creating blank zip', ev);
-          }
+        }, {
+          overwrite: true
+        }).then(() => {
           writer = null;
-
-          if ( type !== 'error' ) {
-            Process.message('vfs:upload', file, {source: appRef ? appRef.__pid : null});
-          }
-
-          cb(type === 'error' ? ev : false, type !== 'error');
-        }, {overwrite: true});
+          Process.message('vfs:upload', file, {source: appRef ? appRef.__pid : null});
+        }).catch((error) => {
+          writer = null;
+          cb(error, false);
+        });
       });
     });
   }
@@ -325,15 +314,10 @@ class ZipArchiver {
         if ( add instanceof window.File ) {
           _addBlob(add);
         } else {
-          VFS.download(add, (error, data) => {
-            if ( error ) {
-              done(error);
-              return;
-            }
-
+          VFS.download(add).then((data) => {
             const blob = new Blob([data], {type: add.mime});
             _addBlob(blob);
-          });
+          }).catch(done);
         }
       }
     }
@@ -470,13 +454,11 @@ class ZipArchiver {
 
         console.log('Extract', item, dest);
         if ( item.directory ) {
-          VFS.mkdir(new FileMetadata(dest), (error, result) => {
-            if ( error ) {
-              warnings.push(Utils.format('Could not create directory "{0}": {1}', item.filename, error));
-            } else {
-              extracted.push(item.filename);
-            }
-
+          VFS.mkdir(new FileMetadata(dest)).then((result) => {
+            extracted.push(item.filename);
+            cb();
+          }).catch((error) => {
+            warnings.push(Utils.format('Could not create directory "{0}": {1}', item.filename, error));
             cb();
           });
           return;
@@ -487,18 +469,13 @@ class ZipArchiver {
           VFS.upload({
             destination: dest,
             files: [{filename: Utils.filename(item.filename), data: blob}]
-          }, (type, ev) => { // error, result, ev
-            console.warn('ZipArchiver::extract()', '_extract()', 'upload', type, ev);
-
-            if ( type === 'error' ) {
-              warnings.push(Utils.format('Could not extract "{0}": {1}', item.filename, ev));
-            } else {
-              extracted.push(item.filename);
-            }
-
+          }).then(() => {
+            extracted.push(item.filename);
+            cb();
+          }).catch((ev) => {
+            warnings.push(Utils.format('Could not extract "{0}": {1}', item.filename, ev));
             cb();
           });
-
         }, () => {
         });
       }
@@ -528,38 +505,32 @@ class ZipArchiver {
       console.debug('ZipArchiver::extract()', 'Checking destination');
 
       const dst = new FileMetadata({path: destination, type: 'dir'});
-      VFS.mkdir(dst, (error, result) => {
-        if ( error ) {
-          console.warn('ZipArchiver::extract()', '_checkDirectory()', 'VFS::mkdir()', error);
-        }
-
-        VFS.exists(dst, (err, result) => {
-          if ( err ) {
-            console.warn('ZipArchiver::extract()', '_checkDirectory()', 'VFS::exists()', err);
-          }
-
+      const cont = () => {
+        VFS.exists(dst).then((result) => {
           if ( result ) {
             cb(false);
           } else {
             cb('Destination directory was not created or does not exist');
           }
+        }).catch(() => {
+          cb('Destination directory was not created or does not exist');
         });
+      };
+
+      VFS.mkdir(dst).then(cont).catch((error) => {
+        console.warn('ZipArchiver::extract()', '_checkDirectory()', 'VFS::mkdir()', error);
+        cont();
       });
     }
 
     console.debug('ZipArchiver::extract()', 'Downloading file...');
 
-    VFS.download(file, (error, result) => {
-      if ( error ) {
-        finished(error, warnings, false);
-        return;
-      }
-
+    VFS.download(file).then((result) => {
       const blob = new Blob([result], {type: 'application/zip'});
       _checkDirectory(destination, (err) => {
 
         if ( err ) {
-          finished(error, warnings, false);
+          finished(err, warnings, false);
           return;
         }
 
@@ -572,6 +543,8 @@ class ZipArchiver {
           _extractList(entries, destination);
         });
       });
+    }).catch((error) => {
+      finished(error, warnings, false);
     });
   }
 }

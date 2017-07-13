@@ -45,7 +45,7 @@ export default class DemoStorage extends Storage {
     return Promise.resolve();
   }
 
-  saveSettings(pool, storage, callback) {
+  saveSettings(pool, storage) {
     Object.keys(storage).forEach((key) => {
       if ( pool && key !== pool ) {
         return;
@@ -58,7 +58,7 @@ export default class DemoStorage extends Storage {
       }
     });
 
-    callback();
+    return Promise.resolve();
   }
 
 }

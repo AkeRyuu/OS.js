@@ -28,6 +28,9 @@
  * @licence Simplified BSD License
  */
 
+import Translations from './locales';
+const Locales = OSjs.require('core/locales');
+
 /*eslint valid-jsdoc: "off"*/
 (function(WindowManager, GUI, Utils, API, VFS) {
 
@@ -1312,7 +1315,7 @@
   OSjs.Applications.CoreWM.PanelItems        = OSjs.Applications.CoreWM.PanelItems || {};
   OSjs.Applications.CoreWM.Widgets           = OSjs.Applications.CoreWM.Widgets || {};
   OSjs.Applications.CoreWM.CurrentTheme      = OSjs.Applications.CoreWM.CurrentTheme || null;
-  OSjs.Applications.CoreWM._ = require('./locales.js');
+  OSjs.Applications.CoreWM._ = Locales.createLocalizer(Translations);
 
   require('./menu.js');
   require('./iconview.js');

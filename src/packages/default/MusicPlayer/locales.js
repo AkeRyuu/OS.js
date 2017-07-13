@@ -30,9 +30,7 @@
 
 // jscs:disable validateQuoteMarks
 
-const {API} = OSjs;
-
-const _Locales = {
+export default {
   bg_BG: {
     'Playlist': 'Плейлист',
     'Playback aborted': 'Прекратено изпълнение',
@@ -244,11 +242,5 @@ const _Locales = {
     'seek unavailable in format': 'không tua được trong định dạng này',
     'The audio type is not supported: {0}': 'Loại âm thanh {0} không được hỗ trợ'
   }
-};
-
-module.exports = function() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift(_Locales);
-  return API.__.apply(this, args);
 };
 

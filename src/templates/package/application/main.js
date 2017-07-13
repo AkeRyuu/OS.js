@@ -27,12 +27,8 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-
-/*eslint valid-jsdoc: "off"*/
-
-/////////////////////////////////////////////////////////////////////////////
-// WINDOWS
-/////////////////////////////////////////////////////////////////////////////
+const Application = OSjs.require('core/Application');
+const Window = OSjs.require('core/window');
 
 class ApplicationEXAMPLEWindow extends Window {
 
@@ -58,11 +54,6 @@ class ApplicationEXAMPLEWindow extends Window {
 
 }
 
-
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
-
 class ApplicationEXAMPLE extends Application {
 
   constructor(args, metadata) {
@@ -81,10 +72,4 @@ class ApplicationEXAMPLE extends Application {
   };
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationEXAMPLE = OSjs.Applications.ApplicationEXAMPLE || {};
-OSjs.Applications.ApplicationEXAMPLE.Class = Object.seal(ApplicationEXAMPLE);
+OSjs.Applications.ApplicationEXAMPLE = ApplicationEXAMPLE;

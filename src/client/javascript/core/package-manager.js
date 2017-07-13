@@ -35,7 +35,6 @@
 import Promise from 'bluebird';
 import Authenticator from 'core/authenticator';
 import SettingsManager from 'core/settings-manager';
-import {preload} from 'utils/preloader';
 import {cloneObject} from 'utils/misc';
 import {_, getLocale} from 'core/locales';
 import {getConfig, getBrowserPath, isStandalone} from 'core/config';
@@ -56,64 +55,38 @@ import Connection from 'core/connection';
 class PackageManager {
 
   constructor() {
-    this.packages = [];
+    this.packages = {};
     this.blacklist = [];
   }
 
   destroy() {
-    this.packages = [];
+    this.packages = {};
     this.blacklist = [];
   }
 
   /**
    * Load Metadata from server and set packages
    */
-  init() {
+  init(metadata) {
     console.debug('PackageManager::load()');
 
+    this.packages = metadata || {};
+
     return new Promise((resolve, reject) => {
-      this._loadMetadata((err) => {
-        if ( err ) {
-          reject(err);
-        } else {
-          const len = Object.keys(this.packages).length;
-          if ( len ) {
-            this._loadExtensions().then(resolve).catch(reject);
-          } else {
-            reject(_('ERR_PACKAGE_ENUM_FAILED'));
-          }
+      this._loadMetadata().then(() => {
+        const len = Object.keys(this.packages).length;
+        if ( len ) {
+          return resolve();
         }
-      });
+        return reject(_('ERR_PACKAGE_ENUM_FAILED'));
+      }).catch(reject);
     });
-  }
-
-  /**
-   * Internal method for loading all extensions
-   * @return {Promise}
-   */
-  _loadExtensions() {
-    let preloads = [];
-
-    Object.keys(this.packages).forEach((k) => {
-      const iter = this.packages[k];
-      if ( iter.type === 'extension' && iter.preload ) {
-        preloads = preloads.concat(iter.preload);
-      }
-    });
-
-    if ( preloads.length ) {
-      return preload(preloads);
-    }
-
-    return Promise.resolve();
   }
 
   /**
    * Internal method for loading all package metadata
-   *
-   * @param  {Function} callback      callback
    */
-  _loadMetadata(callback) {
+  _loadMetadata() {
     const packageURI = getConfig('Connection.PackageURI').replace(/\/?$/, '/');
     const rootURI = getBrowserPath().replace(/\/$/, packageURI);
 
@@ -142,29 +115,12 @@ class PackageManager {
     }
 
     if ( isStandalone() ) {
-      const uri = getConfig('Connection.MetadataURI');
-      preload([uri]).then((result) => {
-        if ( result.failed.length ) {
-          callback(_('ERR_PACKAGE_MANIFEST'), result.failed);
-          return;
-        }
-
-        this.packages = {};
-
-        const list = OSjs.Core.getMetadata();
-        Object.keys(list).forEach((name) => {
-          const iter = list[name];
-          this.packages[iter.className] = checkEntry(name, iter);
-        });
-
-        callback();
-      }).catch(callback);
-      return;
+      return Promise.resolve(true);
     }
 
     const paths = SettingsManager.instance('PackageManager').get('PackagePaths', []);
-    Connection.request('packages', {command: 'list', args: {paths: paths}}, (err, res) => {
-      if ( res ) {
+    return new Promise((resolve, reject) => {
+      Connection.request('packages', {command: 'list', args: {paths: paths}}).then((res) => {
         const packages = {};
 
         Object.keys(res).forEach((key) => {
@@ -175,21 +131,22 @@ class PackageManager {
         });
 
         this.packages = packages;
-      }
-
-      callback(err);
+        return resolve();
+      }).catch(reject);
     });
   }
 
   /**
    * Generates user-installed package metadata (on runtime)
-   *
-   * @param  {Function} callback      callback
    */
-  generateUserMetadata(callback) {
+  generateUserMetadata() {
     const paths = SettingsManager.instance('PackageManager').get('PackagePaths', []);
-    Connection.request('packages', {command: 'cache', args: {action: 'generate', scope: 'user', paths: paths}}, () => {
-      this._loadMetadata(callback);
+    return new Promise((resolve, reject) => {
+      const cb = () => this._loadMetadata().then(resolve).catch(reject);
+
+      Connection.request('packages', {command: 'cache', args: {action: 'generate', scope: 'user', paths: paths}})
+        .then(cb)
+        .catch(cb);
     });
   }
 
@@ -237,21 +194,18 @@ class PackageManager {
    *
    * @param {OSjs.VFS.File}   file        The ZIP file
    * @param {String}          root        Packge install root (defaults to first path)
-   * @param {Function}        cb          Callback function
    */
-  install(file, root, cb) {
+  install(file, root) {
     const paths = SettingsManager.instance('PackageManager').get('PackagePaths', []);
     if ( typeof root !== 'string' ) {
       root = paths[0];
     }
 
     const dest = FS.pathJoin(root, file.filename.replace(/\.zip$/i, ''));
-    Connection.request('packages', {command: 'install', args: {zip: file.path, dest: dest, paths: paths}}, (e, r) => {
-      if ( e ) {
-        cb(e);
-      } else {
-        this.generateUserMetadata(cb);
-      }
+    return new Promise((resolve, reject) => {
+      Connection.request('packages', {command: 'install', args: {zip: file.path, dest: dest, paths: paths}}).then(() => {
+        return this.generateUserMetadata().then(resolve).catch(reject);
+      }).catch(reject);
     });
   }
 
@@ -259,15 +213,12 @@ class PackageManager {
    * Uninstalls given package
    *
    * @param {OSjs.VFS.File}   file        The path
-   * @param {Function}        cb          Callback function
    */
-  uninstall(file, cb) {
-    Connection.request('packages', {command: 'uninstall', args: {path: file.path}}, (e, r) => {
-      if ( e ) {
-        cb(e);
-      } else {
-        this.generateUserMetadata(cb);
-      }
+  uninstall(file) {
+    return new Promise((resolve, reject) => {
+      Connection.request('packages', {command: 'uninstall', args: {path: file.path}}).then(() => {
+        return this.generateUserMetadata().then(resolve).catch(reject);
+      }).catch(reject);
     });
   }
 
@@ -284,7 +235,7 @@ class PackageManager {
    * Get a list of packges from online repositories
    *
    * @param {Object}    opts      Options
-   * @param {Function}  callback  Callback => fn(error, result)
+   * @param {Function}  callback  Callback => fn(error, result) FIXME
    */
   getStorePackages(opts, callback) {
     const repos = SettingsManager.instance('PackageManager').get('Repositories', []);
@@ -296,22 +247,21 @@ class PackageManager {
         Connection.request('curl', {
           url: url,
           method: 'GET'
-        }, (error, result) => {
-          if ( !error && result.body ) {
-            let list = [];
-            if ( typeof result.body === 'string' ) {
-              try {
-                list = JSON.parse(result.body);
-              } catch ( e ) {}
-            }
-
-            entries = entries.concat(list.map((iter) => {
-              iter._repository = url;
-              return iter;
-            }));
+        }).then((result) => {
+          let list = [];
+          if ( typeof result.body === 'string' ) {
+            try {
+              list = JSON.parse(result.body);
+            } catch ( e ) {}
           }
-          yes();
-        });
+
+          entries = entries.concat(list.map((iter) => {
+            iter._repository = url;
+            return iter;
+          }));
+
+          return yes();
+        }).catch(no);
       });
     }).then(() => callback(false, entries));
   }
@@ -395,38 +345,6 @@ class PackageManager {
       }
     });
     return list;
-  }
-
-  /**
-   * Add a dummy package (useful for having shortcuts in the launcher menu)
-   *
-   * @throws {Error} On invalid package name or callback
-   *
-   * @param   {String}      n             Name of your package
-   * @param   {String}      title         The display title
-   * @param   {String}      icon          The display icon
-   * @param   {Function}    fn            The function to run when the package tries to launch
-   */
-  addDummyPackage(n, title, icon, fn) {
-    if ( this.packages[n] || OSjs.Applications[n] ) {
-      throw new Error('A package already exists with this name!');
-    }
-    if ( typeof fn !== 'function' ) {
-      throw new TypeError('You need to specify a function/callback!');
-    }
-
-    this.packages[n] = Object.seal({
-      _dummy: true,
-      type: 'application',
-      className: n,
-      description: title,
-      name: title,
-      icon: icon,
-      cateogry: 'other',
-      scope: 'system'
-    });
-
-    OSjs.Applications[n] = fn;
   }
 
 }

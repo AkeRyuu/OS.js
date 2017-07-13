@@ -28,9 +28,8 @@
  * @licence Simplified BSD License
  */
 // jscs:disable validateQuoteMarks
-const {API} = OSjs;
 
-const _Locales = {
+export default {
   bg_BG: {
     'Background Type': 'Тип на фон',
     'Image (Repeat)': 'Изображение (повтарящо се)',
@@ -57,7 +56,7 @@ const _Locales = {
     'Enable Sounds': 'Aktiviere Sounds',
     'Enable Window Switcher': 'Aktiviere Fensterwechsler',
     'Enable Hotkeys': 'Aktiviere Hotkeys',
-    'Enable Icon View': 'Aktiviere Icon-Ansicht',
+    'Enable Icon View': 'Aktiviere Icon-Ansicht'
   },
   es_ES: {
     'Background Type': 'Tipo de fondo',
@@ -71,7 +70,7 @@ const _Locales = {
     'Enable Sounds': 'Activar sonidos',
     'Enable Window Switcher': 'Activar el alternador de ventanas',
     'Enable Hotkeys': 'Activar Hotkeys',
-    'Enable Icon View': 'Activar la vista de icono',
+    'Enable Icon View': 'Activar la vista de icono'
   },
   ar_DZ: {
     'Background Type': 'نوع الخلفية',
@@ -326,10 +325,4 @@ const _Locales = {
     'Enable File Search': 'Cho phép tìm kiếm tập tin',
     'Search path \'{0}\' is already handled by another entry': 'Đường dẫn tìm kiếm \'{0}\' đã bị xử lý bởi mục khác'
   }
-};
-
-module.exports = function() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift(_Locales);
-  return API.__.apply(this, args);
 };

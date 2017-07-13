@@ -171,6 +171,8 @@ export function error(title, message, error, exception, bugreport) {
 
   GUI.blurMenu();
 
+  console.error(exception || error);
+
   if ( exception && (exception.message.match(/^Script Error/i) && String(exception.lineNumber).match(/^0/)) ) {
     console.error('VENDOR ERROR', {
       title: title,
@@ -282,10 +284,9 @@ export function launch(name, args, onconstruct) {
       if ( metadata.scope === 'user' ) {
         list = list.map((p) => {
           if ( p.src.substr(0, 1) !== '/' && !p.src.match(/^(https?|ftp)/) ) {
-            VFS.url(p.src, (error, url) => {
-              if ( !error ) {
-                p.src = url;
-              }
+            VFS.url(p.src).then((url) => {
+              p.src = url;
+              return true;
             });
           }
 
@@ -364,16 +365,23 @@ export function launch(name, args, onconstruct) {
     }
 
     return new Promise((resolve, reject) => {
+      const onerror = (e) => {
+        console.warn(e);
+        return reject(e);
+      };
+
       Preloader.preload(preloads, pargs).then((result) => {
         if ( result.failed.length ) {
-          return reject(_('ERR_APP_PRELOAD_FAILED_FMT', name, result.failed.join(',')));
+          return onerror(_('ERR_APP_PRELOAD_FAILED_FMT', name, result.failed.join(',')));
         }
 
         if ( typeof OSjs.Applications[name] === 'undefined' ) {
-          return reject(new Error(_('ERR_APP_RESOURCES_MISSING_FMT', name)));
+          return onerror(new Error(_('ERR_APP_RESOURCES_MISSING_FMT', name)));
+        /* // FIXME: Backward compability
         } else if ( typeof OSjs.Applications[name] === 'function' ) {
           OSjs.Applications[name]();
           return resolve(true);
+          */
         }
 
         // Run
@@ -390,11 +398,17 @@ export function launch(name, args, onconstruct) {
             scheme.loadString(preloadScheme.data);
           }
 
-          instance = new OSjs.Applications[name].Class(args, metadata);
+          const ResolvedPackage = OSjs.Applications[name];
+          if ( ResolvedPackage.Class ) {
+            // FIXME: Backward compability
+            instance = new ResolvedPackage.Class(args, metadata);
+          } else {
+            instance = new ResolvedPackage(args, metadata);
+          }
 
           onconstruct(instance, metadata);
         } catch ( e ) {
-          return reject(e);
+          return onerror(e);
         }
 
         try {
@@ -409,11 +423,11 @@ export function launch(name, args, onconstruct) {
             metadata: metadata
           }]);
         } catch ( e ) {
-          return reject(e);
+          return onerror(e);
         }
 
         return resolve(instance);
-      }).catch(reject);
+      }).catch(onerror);
     });
   };
 

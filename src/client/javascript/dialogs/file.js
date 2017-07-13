@@ -147,12 +147,10 @@ export default class FileDialog extends DialogWindow {
       DialogWindow.create('Input', {message: _('DIALOG_FILE_MKDIR_MSG', this.path), value: 'New folder'}, (ev, btn, value) => {
         if ( btn === 'ok' && value ) {
           const path = FS.pathJoin(this.path, value);
-          VFS.mkdir(new FileMetadata(path, 'dir'), (err) => {
-            if ( err ) {
-              Main.error(_('DIALOG_FILE_ERROR'), _('ERR_VFSMODULE_MKDIR'), err);
-            } else {
-              this.changePath(path);
-            }
+          VFS.mkdir(new FileMetadata(path, 'dir')).then(() => {
+            this.changePath(path);
+          }).catch((err) => {
+            Main.error(_('DIALOG_FILE_ERROR'), _('ERR_VFSMODULE_MKDIR'), err);
           });
         }
       }, this);
@@ -357,36 +355,36 @@ export default class FileDialog extends DialogWindow {
       this.selected = new FileMetadata(this.path.replace(/^\//, '') + '/' + check.filename, check.mime);
       this._toggleDisabled(true);
 
-      VFS.exists(this.selected, (error, result) => {
+      VFS.exists(this.selected).then((result) => {
         this._toggleDisabled(false);
-
         if ( this._destroyed ) {
           return;
         }
 
-        if ( error ) {
-          Main.error(_('DIALOG_FILE_ERROR'), _('DIALOG_FILE_MISSING_FILENAME'));
-        } else {
-          if ( result ) {
-            this._toggleDisabled(true);
+        if ( result ) {
+          this._toggleDisabled(true);
 
-            if ( this.selected ) {
-              DialogWindow.create('Confirm', {
-                buttons: ['yes', 'no'],
-                message: _('DIALOG_FILE_OVERWRITE', this.selected.filename)
-              }, (ev, button) => {
-                this._toggleDisabled(false);
+          if ( this.selected ) {
+            DialogWindow.create('Confirm', {
+              buttons: ['yes', 'no'],
+              message: _('DIALOG_FILE_OVERWRITE', this.selected.filename)
+            }, (ev, button) => {
+              this._toggleDisabled(false);
 
-                if ( button === 'yes' || button === 'ok' ) {
-                  this.closeCallback(ev, 'ok', this.selected);
-                }
-              }, this);
-            }
-          } else {
-            this.closeCallback(ev, 'ok', this.selected);
+              if ( button === 'yes' || button === 'ok' ) {
+                this.closeCallback(ev, 'ok', this.selected);
+              }
+            }, this);
           }
+        } else {
+          this.closeCallback(ev, 'ok', this.selected);
         }
-
+      }).catch((error) => {
+        this._toggleDisabled(false);
+        if ( this._destroyed ) {
+          return;
+        }
+        Main.error(_('DIALOG_FILE_ERROR'), _('DIALOG_FILE_MISSING_FILENAME'));
       });
 
       return false;

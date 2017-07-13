@@ -132,7 +132,7 @@ export default class DefaultApplication extends Application {
 
     win._toggleLoading(true);
 
-    function CallbackVFS(error, result) {
+    function callbackVFS(error, result) {
       win._toggleLoading(false);
       if ( onError(error) ) {
         return;
@@ -141,9 +141,13 @@ export default class DefaultApplication extends Application {
     }
 
     if ( this.defaultOptions.readData ) {
-      VFS.read(file, CallbackVFS, {type: this.defaultOptions.rawData ? 'binary' : 'text'});
+      VFS.read(file, {type: this.defaultOptions.rawData ? 'binary' : 'text'}, this)
+        .then((res) => callbackVFS(false, res))
+        .catch((err) => callbackVFS(err));
     } else {
-      VFS.url(file, CallbackVFS);
+      VFS.url(file)
+        .then((res) => callbackVFS(false, res))
+        .catch((err) => callbackVFS(err));
     }
 
     return true;
@@ -162,20 +166,19 @@ export default class DefaultApplication extends Application {
     }
 
     win._toggleLoading(true);
-    VFS.write(file, value || '', (error, result) => {
+    VFS.write(file, value || '').then(() => {
       win._toggleLoading(false);
-
-      if ( error ) {
-        Main.error(this.__label,
-                   _('ERR_FILE_APP_SAVE'),
-                   _('ERR_FILE_APP_SAVE_ALT_FMT', file.path, error)
-        );
-        return;
-      }
 
       this._setArgument('file', file);
       win.updateFile(file);
-    }, {}, this);
+    }).catch((error) => {
+      win._toggleLoading(false);
+      Main.error(this.__label,
+                 _('ERR_FILE_APP_SAVE'),
+                 _('ERR_FILE_APP_SAVE_ALT_FMT', file.path, error)
+      );
+
+    }, null, this);
   }
 
   /**

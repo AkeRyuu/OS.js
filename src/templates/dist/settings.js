@@ -40,8 +40,7 @@
    * Exports
    */
   window.OSjs = window.OSjs || {};
-  OSjs.Core = OSjs.Core || {}
-  OSjs.Core.getConfig = function() {
+  OSjs.getConfig = function() {
     return SETTINGS;
   };
 

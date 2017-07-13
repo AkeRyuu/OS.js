@@ -134,21 +134,17 @@ export default class FileUploadDialog extends DialogWindow {
         this._wmref.createNotificationIcon(this.notificationId, {className: 'BusyNotification', tooltip: desc, image: false});
       }
 
-      VFS.upload({files: [file], destination: this.args.dest}, (err, result, ev) => {
-        if ( err ) {
-          error(err, ev);
-          return;
-        }
-        progressDialog._close(true);
-        this.onClose(ev, 'ok', file);
-      }, {
+      VFS.upload({files: [file], destination: this.args.dest}, {
         onprogress: (ev) => {
           if ( ev.lengthComputable ) {
             const p = Math.round(ev.loaded * 100 / ev.total);
             progressDialog.setProgress(p);
           }
         }
-      });
+      }).then(() => {
+        progressDialog._close(true);
+        this.onClose(null, 'ok', file);
+      }).catch(error);
 
       setTimeout(() => {
         if ( progressDialog ) {

@@ -27,15 +27,10 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-// jscs:disable validateQuoteMarks
 
-const {__} = require('core/locales.js');
+/* eslint quotes: "off" */
 
-/////////////////////////////////////////////////////////////////////////////
-// LOCALES
-/////////////////////////////////////////////////////////////////////////////
-
-const _Locales = {
+export default {
   bg_BG: {
     'Copying file...': 'Копиране на файл...',
     "Copying **{0}** to **{1}**" : "Копиране **{0}** към **{1}**",
@@ -175,8 +170,3 @@ const _Locales = {
   }
 };
 
-module.exports = function() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift(_Locales);
-  return __.apply(this, args);
-};

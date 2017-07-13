@@ -29,11 +29,8 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
-
-/////////////////////////////////////////////////////////////////////////////
-// WINDOWS
-/////////////////////////////////////////////////////////////////////////////
+const DefaultApplication = OSjs.require('helpers/default-application');
+const DefaultApplicationWindow = OSjs.require('helpers/default-application-window');
 
 class ApplicationHTMLViewerWindow extends DefaultApplicationWindow {
 
@@ -60,10 +57,6 @@ class ApplicationHTMLViewerWindow extends DefaultApplicationWindow {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
-
 class ApplicationHTMLViewer extends DefaultApplication {
 
   constructor(args, metadata) {
@@ -84,10 +77,4 @@ class ApplicationHTMLViewer extends DefaultApplication {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationHTMLViewer = OSjs.Applications.ApplicationHTMLViewer || {};
-OSjs.Applications.ApplicationHTMLViewer.Class = Object.seal(ApplicationHTMLViewer);
+OSjs.Applications.ApplicationHTMLViewer = ApplicationHTMLViewer;

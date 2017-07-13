@@ -29,8 +29,17 @@
  */
 
 /*eslint valid-jsdoc: "off"*/
-const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
-const {API, VFS, GUI, Utils} = OSjs;
+import Translations from './locales';
+
+const VFS = OSjs.require('vfs/fs');
+const Config = OSjs.require('core/config');
+const Dialog = OSjs.require('core/dialog');
+const GUIElement = OSjs.require('gui/element');
+const Utils = OSjs.require('utils/misc');
+const Locales = OSjs.require('core/locales');
+const DefaultApplication = OSjs.require('helpers/default-application');
+const DefaultApplicationWindow = OSjs.require('helpers/default-application-window');
+const _ = Locales.createLocalizer(Translations);
 
 /////////////////////////////////////////////////////////////////////////////
 // WINDOWS
@@ -39,7 +48,7 @@ const {API, VFS, GUI, Utils} = OSjs;
 class ApplicationWriterWindow extends DefaultApplicationWindow {
   /*eslint dot-notation: "off"*/
   constructor(app, metadata, scheme, file) {
-    const config = OSjs.Core.getConfig();
+    const config = Config.getConfig();
 
     super('ApplicationWriterWindow', {
       allow_drop: true,
@@ -47,7 +56,7 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
       title: metadata.name,
       width: 550,
       height: 400,
-      translator: OSjs.Applications.ApplicationWriter._
+      translator: _
     }, app, scheme, file);
 
     this.checkChangeLength = -1;
@@ -70,7 +79,6 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
   init(wmRef, app, scheme) {
     const root = super.init(...arguments);
     var self = this;
-    var _ = OSjs.Applications.ApplicationWriter._;
 
     // Load and set up scheme (GUI) here
     this._render('WriterWindow');
@@ -138,20 +146,20 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
         text.command('insertUnorderedList', false);
       },
       'MenuInsertImage': function() {
-        API.createDialog('File', {
+        Dialog.create('File', {
           filter: ['^image']
         }, function(ev, button, result) {
           if ( button !== 'ok' || !result ) {
             return;
           }
 
-          VFS.url(result, function(error, url) {
+          VFS.url(result).then((url) => {
             text.command('insertImage', false, url);
           });
         }, self);
       },
       'MenuInsertLink': function() {
-        API.createDialog('Input', {
+        Dialog.create('Input', {
           message: _('Insert URL'),
           placeholder: 'https://os-js.org'
         }, function(ev, button, result) {
@@ -196,7 +204,7 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
 
     function createColorDialog(current, cb) {
       self._toggleDisabled(true);
-      API.createDialog('Color', {
+      Dialog.create('Color', {
         color: current
       }, function(ev, button, result) {
         self._toggleDisabled(false);
@@ -208,7 +216,7 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
 
     function createFontDialog(current, cb) {
       self._toggleDisabled(true);
-      API.createDialog('Font', {
+      Dialog.create('Font', {
         fontSize: self.font.size,
         fontName: self.font.name,
         minSize: 1,
@@ -250,7 +258,7 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
       var id = b.getAttribute('data-id');
       var button = buttons[id];
       if ( button ) {
-        GUI.Element.createFromNode(b).on('click', function() {
+        GUIElement.createFromNode(b).on('click', function() {
           text.command(button.command);
         }).on('mousedown', function(ev) {
           ev.preventDefault();
@@ -352,7 +360,4 @@ class ApplicationWriter extends DefaultApplication {
 // EXPORTS
 /////////////////////////////////////////////////////////////////////////////
 
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationWriter = OSjs.Applications.ApplicationWriter || {};
-OSjs.Applications.ApplicationWriter.Class = Object.seal(ApplicationWriter);
-OSjs.Applications.ApplicationWriter._ = require('./locales.js');
+OSjs.Applications.ApplicationWriter = ApplicationWriter;

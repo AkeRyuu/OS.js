@@ -36,14 +36,6 @@ import PackageManager from 'core/package-manager';
 import SettingsManager from 'core/settings-manager';
 import {_} from 'core/locales';
 
-/**
- * A response from a VFS request. The results are usually from the server,
- * except for when an exception occured in the stack.
- * @callback CallbackVFS
- * @param {String} [error] Error from response (if any)
- * @param {Mixed} result Result from response (if any)
- */
-
 let watches = [];
 
 /**
@@ -185,25 +177,26 @@ function hasSameTransport(src, dest) {
 /*
  * A wrapper for checking if a file exists
  */
-function existsWrapper(item, callback, options) {
+function existsWrapper(item, options) {
   options = options || {};
 
-  return new Promise((resolve, reject) => {
-    if ( options.overwrite ) {
-      resolve();
-    } else {
-      exists(item, function(error, result) {
-        if ( error ) {
-          console.warn('existsWrapper() error', error);
-        }
+  if ( options.overwrite ) {
+    return Promise.resolve();
+  }
 
-        if ( result ) {
-          reject(new Error(_('ERR_VFS_FILE_EXISTS')));
-        } else {
-          resolve();
-        }
-      });
-    }
+  return new Promise((resolve, reject) => {
+    exists(item).then((result) => {
+      if ( result ) {
+        reject(new Error(_('ERR_VFS_FILE_EXISTS')));
+      } else {
+        resolve();
+      }
+    }).catch((error) => {
+      if ( error ) {
+        console.warn('existsWrapper() error', error);
+      }
+      reject(error);
+    });
   });
 }
 
@@ -319,8 +312,8 @@ function convertWriteData(data, mime) {
   });
 }
 
-function performRequest(method, args, options, test, appRef, errorStr, callback) {
-  const promise = new Promise((resolve, reject) => {
+function performRequest(method, args, options, test, appRef, errorStr) {
+  return new Promise((resolve, reject) => {
     if ( options && !(options instanceof Object) ) {
       reject(new TypeError(_('ERR_ARGUMENT_FMT', 'VFS::' + method, 'options', 'Object', typeof options)));
       return;
@@ -334,9 +327,6 @@ function performRequest(method, args, options, test, appRef, errorStr, callback)
 
     mountpoint.request(method, args, options).then(resolve).catch(reject);
   });
-
-  promise.then((res) => callback(false, res))
-    .catch((e) => callback(e));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -398,31 +388,27 @@ export function broadcastMessage(msg, item, appRef) {
  *
  * @param  {OSjs.VFS.File}   item              Root path
  * @param  {Object}          args              Search query
- * @param  {CallbackVFS}     callback          Callback function
  * @param  {Object}          [options]         Set of options
  * @param  {String}          options.query     The search query string
  * @param  {Number}          [options.limit]   Limit results to this amount
  *
  * @api     OSjs.VFS.find()
  */
-export function find(item, args, callback, options) {
+export function find(item, args, options) {
   options = options || {};
-  callback = callback || noop;
 
   console.debug('VFS::find()', item, args, options);
-  if ( arguments.length < 3 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 2 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  performRequest('find', [item, args], options, item.path, null, 'ERR_VFSMODULE_FIND_FMT');
+  return performRequest('find', [item, args], options, item.path, null, 'ERR_VFSMODULE_FIND_FMT');
 }
 
 /**
@@ -431,7 +417,6 @@ export function find(item, args, callback, options) {
  * @summary Scans a directory for files and directories.
  *
  * @param   {OSjs.VFS.File}   item                             File Metadata
- * @param   {CallbackVFS}     callback                         Callback function
  * @param   {Object}          [options]                        Set of options
  * @param   {String}          [options.typeFilter]             Filter by 'file' or 'dir'
  * @param   {Array}           [options.mimeFilter]             Array of mime regex matchers
@@ -440,16 +425,14 @@ export function find(item, args, callback, options) {
  * @param   {String}          [options.sortBy=null]            Sort by this key
  * @param   {String}          [options.sortDir='asc']          Sort in this direction
  */
-export function scandir(item, callback, options) {
+export function scandir(item, options) {
   const vfsSettings = SettingsManager.get('VFS');
 
   options = options || {};
-  callback = callback || noop;
 
   console.debug('VFS::scandir()', item, options);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   const oitem = new FileMetadata(item);
@@ -458,41 +441,40 @@ export function scandir(item, callback, options) {
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  performRequest('scandir', [item], options, item.path, null, 'ERR_VFSMODULE_SCANDIR_FMT', function(error, result) {
-    // Makes sure aliased mounts have correct paths and entries
-    if ( result instanceof Array ) {
+  return new Promise((resolve, reject) => {
+    performRequest('scandir', [item], options, item.path, null, 'ERR_VFSMODULE_SCANDIR_FMT').then((result) => {
+      if ( result instanceof Array ) {
 
-      result = FS.filterScandir(result, options, vfsSettings);
+        result = FS.filterScandir(result, options, vfsSettings);
 
-      if ( alias ) {
-        result = result.map(function(iter) {
-          const isShortcut = iter.shortcut === true;
-          const niter = new FileMetadata(iter);
-          if ( !isShortcut ) {
-            const str = iter.path.replace(/\/?$/, '');
-            const tmp = alias.options.alias.replace(/\/?$/, '');
-            niter.path = FS.pathJoin(alias.root, str.replace(tmp, ''));
+        if ( alias ) {
+          result = result.map(function(iter) {
+            const isShortcut = iter.shortcut === true;
+            const niter = new FileMetadata(iter);
+            if ( !isShortcut ) {
+              const str = iter.path.replace(/\/?$/, '');
+              const tmp = alias.options.alias.replace(/\/?$/, '');
+              niter.path = FS.pathJoin(alias.root, str.replace(tmp, ''));
+            }
+
+            return niter;
+          });
+        }
+
+        // Inserts the correct '..' entry if missing
+        if ( options.backlink !== false ) {
+          const back = createBackLink(item, result, alias, oitem);
+          if ( back ) {
+            result.unshift(back);
           }
-
-          return niter;
-        });
-      }
-
-      // Inserts the correct '..' entry if missing
-      if ( !error && options.backlink !== false ) {
-        const back = createBackLink(item, result, alias, oitem);
-        if ( back ) {
-          result.unshift(back);
         }
       }
-    }
-
-    return callback(error, result);
-  }, null, options);
+      return resolve(result);
+    }).catch(reject);
+  });
 }
 
 /**
@@ -502,37 +484,33 @@ export function scandir(item, callback, options) {
  *
  * @param   {OSjs.VFS.File}             item          File Metadata (you can also provide a string)
  * @param   {File}                      data          File Data (see supported types)
- * @param   {CallbackVFS}               callback      Callback function
  * @param   {Object}                    [options]     Set of options
  * @param   {OSjs.Core.Application}     [appRef]      Reference to an Application
  */
-export function write(item, data, callback, options, appRef) {
+export function write(item, data, options, appRef) {
   options = options || {};
-  callback = callback || noop;
 
   console.debug('VFS::write()', item, options);
-  if ( arguments.length < 3 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 2 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item, null, true);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  const mountpoint = MountManager.getModuleFromPath(item.path);
-  convertWriteData(data, item.mime).then((ab) => {
-    mountpoint.request('write', [item, ab], options).then((res) => {
-      return callback(false, res);
+  return new Promise((resolve, reject) => {
+    const mountpoint = MountManager.getModuleFromPath(item.path);
+    convertWriteData(data, item.mime).then((ab) => {
+      mountpoint.request('write', [item, ab], options).then(resolve).catch((e) => {
+        reject(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));
+      });
+      return true;
     }).catch((e) => {
-      callback(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));
+      reject(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));
     });
-    return true;
-  }).catch((e) => {
-    callback(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));
   });
 }
 
@@ -542,72 +520,68 @@ export function write(item, data, callback, options, appRef) {
  * @summary Reads data from a file
  *
  * @param   {OSjs.VFS.File}   item                File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback            Callback function
  * @param   {Object}          [options]           Set of options
  * @param   {String}          [options.type]      What to return, default: binary. Can also be: text, datasource, json
  */
-export function read(item, callback, options) {
+export function read(item, options) {
   options = options || {};
-  callback = callback || noop;
 
   console.debug('VFS::read()', item, options);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  const mountpoint = MountManager.getModuleFromPath(item.path);
-  mountpoint.request('read', [item], options).then((response) => {
-    if ( options.type ) {
-      const types = {
-        datasource: function readToDataSource() {
-          FS.abToDataSource(response, item.mime, function(error, dataSource) {
-            callback(error, error ? null : dataSource);
-          });
-        },
-        text: function readToText() {
-          FS.abToText(response, item.mime, function(error, text) {
-            callback(error, error ? null : text);
-          });
-        },
-        blob: function readToBlob() {
-          FS.abToBlob(response, item.mime, function(error, blob) {
-            callback(error, error ? null : blob);
-          });
-        },
-        json: function readToJSON() {
-          FS.abToText(response, item.mime, function(error, text) {
-            let jsn;
-            if ( typeof text === 'string' ) {
-              try {
-                jsn = JSON.parse(text);
-              } catch ( e ) {
-                console.warn('VFS::read()', 'readToJSON', e.stack, e);
+  return new Promise((resolve, reject) => {
+    const mountpoint = MountManager.getModuleFromPath(item.path);
+    mountpoint.request('read', [item], options).then((response) => {
+      if ( options.type ) {
+        const types = {
+          datasource: () => new Promise((yes, no) => {
+            FS.abToDataSource(response, item.mime, function(error, dataSource) {
+              return error ? no(error) : yes(dataSource);
+            });
+          }),
+          text: () => new Promise((yes, no) => {
+            FS.abToText(response, item.mime, function(error, text) {
+              return error ? no(error) : yes(text);
+            });
+          }),
+          blob: () => new Promise((yes, no) => {
+            FS.abToBlob(response, item.mime, function(error, blob) {
+              return error ? no(error) : yes(blob);
+            });
+          }),
+          json: () => new Promise((yes, no) => {
+            FS.abToText(response, item.mime, function(error, text) {
+              let jsn;
+              if ( typeof text === 'string' ) {
+                try {
+                  jsn = JSON.parse(text);
+                } catch ( e ) {
+                  console.warn('VFS::read()', 'readToJSON', e.stack, e);
+                }
               }
-            }
-            callback(error, error ? null : jsn);
-          });
+              return error ? no(error) : yes(jsn);
+            });
+          })
+        };
+
+        const type = options.type.toLowerCase();
+        if ( types[type] ) {
+          return types[type]().then(resolve).catch(reject);
         }
-      };
-
-      const type = options.type.toLowerCase();
-      if ( types[type] ) {
-        types[type]();
-      } else {
-        callback(false, response);
       }
-    }
 
-    return true;
-  }).catch((e) => {
-    callback(_('ERR_VFSMODULE_READ_FMT', e));
+      return resolve(response);
+    }).catch((e) => {
+      reject(_('ERR_VFSMODULE_READ_FMT', e));
+    });
   });
 }
 
@@ -618,27 +592,23 @@ export function read(item, callback, options) {
  *
  * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
  * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
- * @param   {CallbackVFS}               callback              Callback function
  * @param   {Object}                    [options]             Set of options
  * @param   {Boolean}                   [options.overwrite]   If set to true it will not check if the destination exists
  * @param   {OSjs.Core.Application}     [appRef]              Seference to an Application
  */
-export function copy(src, dest, callback, options, appRef) {
+export function copy(src, dest, options, appRef) {
   options = options || {};
-  callback = callback || noop;
 
   console.debug('VFS::copy()', src, dest, options);
-  if ( arguments.length < 3 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 2 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     src = checkMetadataArgument(src, _('ERR_VFS_EXPECT_SRC_FILE'));
     dest = checkMetadataArgument(dest, _('ERR_VFS_EXPECT_DST_FILE'), true);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
   options = Object.assign({}, {
@@ -655,7 +625,7 @@ export function copy(src, dest, callback, options, appRef) {
   }
 
   const promise = new Promise((resolve, reject) => {
-    existsWrapper(dest).then(() => {
+    existsWrapper(dest, options).then(() => {
       const sourceMountpoint  = MountManager.getModuleFromPath(src.path);
       const destMountpoint = MountManager.getModuleFromPath(dest.path);
       if ( hasSameTransport(src, dest) ) {
@@ -677,10 +647,10 @@ export function copy(src, dest, callback, options, appRef) {
     }).catch(reject);
   });
 
-  promise.then((r) => {
-    return callback(false, r);
-  }).catch((e) => {
-    callback(_('ERR_VFSMODULE_COPY_FMT', e));
+  return new Promise((resolve, reject) => {
+    promise.then(resolve).catch((e) => {
+      reject(_('ERR_VFSMODULE_COPY_FMT', e));
+    });
   });
 }
 
@@ -691,19 +661,16 @@ export function copy(src, dest, callback, options, appRef) {
  *
  * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
  * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
- * @param   {CallbackVFS}               callback              Callback function
  * @param   {Object}                    [options]             Set of options
  * @param   {Boolean}                   [options.overwrite]   If set to true it will not check if the destination exists
  * @param   {OSjs.Core.Application}     [appRef]              Seference to an Application
  */
-export function move(src, dest, callback, options, appRef) {
+export function move(src, dest, options, appRef) {
   options = options || {};
-  callback = callback || noop;
 
   console.debug('VFS::move()', src, dest, options);
-  if ( arguments.length < 3 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 2 ) {
+    return Promise.reject(_('ERR_VFS_NUM_ARGS'));
   }
 
   function dialogProgress(prog) {
@@ -713,7 +680,7 @@ export function move(src, dest, callback, options, appRef) {
   }
 
   const promise = new Promise((resolve, reject) => {
-    existsWrapper(dest).then(() => {
+    existsWrapper(dest, options).then(() => {
       const sourceMountpoint  = MountManager.getModuleFromPath(src.path);
       const destMountpoint = MountManager.getModuleFromPath(dest.path);
       if ( hasSameTransport(src, dest) ) {
@@ -738,10 +705,10 @@ export function move(src, dest, callback, options, appRef) {
     }).catch(reject);
   });
 
-  promise.then((r) => {
-    return callback(false, r);
-  }).catch((e) => {
-    callback(_('ERR_VFSMODULE_MOVE_FMT', e));
+  return new Promise((resolve, reject) => {
+    promise.then(resolve).catch((e) => {
+      reject(_('ERR_VFSMODULE_MOVE_FMT', e));
+    });
   });
 }
 
@@ -751,13 +718,12 @@ export function move(src, dest, callback, options, appRef) {
  *
  * @param   {OSjs.VFS.File}             src                   Source File Metadata (you can also provide a string)
  * @param   {OSjs.VFS.File}             dest                  Destination File Metadata (you can also provide a string)
- * @param   {CallbackVFS}               callback              Callback function
  * @param   {Object}                    [options]             Set of options
  * @param   {Boolean}                   [options.overwrite]   If set to true it will not check if the destination exists
  * @param   {OSjs.Core.Application}     [appRef]              Seference to an Application
  */
-export function rename(src, dest, callback) {
-  move.apply(this, arguments);
+export function rename(src, dest) {
+  return move(...arguments);
 }
 
 /**
@@ -768,29 +734,25 @@ export function rename(src, dest, callback) {
  * @summary Deletes a file
  *
  * @param   {OSjs.VFS.File}             item                  File Metadata (you can also provide a string)
- * @param   {CallbackVFS}               callback              Callback function
  * @param   {Object}                    [options]             Set of options
  * @param   {OSjs.Core.Application}     [appRef]              Reference to an Application
  */
-export function unlink(item, callback, options, appRef) {
+export function unlink(item, options, appRef) {
   options = options || {};
-  callback = callback || noop;
 
   console.debug('VFS::unlink()', item, options);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item, null, true);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  performRequest('unlink', [item], options, item.path, null, 'ERR_VFSMODULE_UNLINK_FMT', function(error, response) {
-    if ( !error ) {
+  return new Promise((resolve, reject) => {
+    performRequest('unlink', [item], options, item.path, appRef, 'ERR_VFSMODULE_UNLINK_FMT').then((response) => {
       const pkgdir = SettingsManager.instance('PackageManager').get('PackagePaths', []);
 
       const found = pkgdir.some(function(i) {
@@ -802,9 +764,10 @@ export function unlink(item, callback, options, appRef) {
       if ( found ) {
         PackageManager.generateUserMetadata(function() {});
       }
-    }
-    callback(error, response);
-  }, options, appRef);
+
+      return resolve(response);
+    }).catch(reject);
+  });
 }
 
 /**
@@ -813,33 +776,25 @@ export function unlink(item, callback, options, appRef) {
  * @summary Creates a directory
  *
  * @param   {OSjs.VFS.File}             item                  File Metadata (you can also provide a string)
- * @param   {CallbackVFS}               callback              Callback function
  * @param   {Object}                    [options]             Set of options
  * @param   {Boolean}                   [options.overwrite]   If set to true it will not check if the destination exists
  * @param   {OSjs.Core.Application}     [appRef]              Reference to an Application
  */
-export function mkdir(item, callback, options, appRef) {
+export function mkdir(item, options, appRef) {
   options = options || {};
-  callback = callback || noop;
 
   console.debug('VFS::mkdir()', item, options);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item, null, true);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  existsWrapper(item).then(() => {
-    return performRequest('mkdir', [item], options, item.path, null, 'ERR_VFSMODULE_MKDIR_FMT', callback, options, appRef);
-  }).catch((e) => {
-    callback(_('ERR_VFSMODULE_MKDIR_FMT', e));
-  });
+  return performRequest('mkdir', [item], options, item.path, appRef, 'ERR_VFSMODULE_MKDIR_FMT');
 }
 
 /**
@@ -848,25 +803,20 @@ export function mkdir(item, callback, options, appRef) {
  * @summary Check if a target exists
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback  Callback function
  */
-export function exists(item, callback) {
-  callback = callback || noop;
-
+export function exists(item) {
   console.debug('VFS::exists()', item);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  performRequest('exists', [item], {}, item.path, null, 'ERR_VFSMODULE_EXISTS_FMT', callback);
+  return performRequest('exists', [item], {}, item.path, null, 'ERR_VFSMODULE_EXISTS_FMT');
 }
 
 /**
@@ -875,25 +825,20 @@ export function exists(item, callback) {
  * @summary Gets information about a file
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback  Callback function
  */
-export function fileinfo(item, callback) {
-  callback = callback || noop;
-
+export function fileinfo(item) {
   console.debug('VFS::fileinfo()', item);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(_('ERR_VFS_NUM_ARGS'));
   }
 
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  performRequest('fileinfo', [item], {}, item.path, null, 'ERR_VFSMODULE_FILEINFO_FMT', callback);
+  return performRequest('fileinfo', [item], {}, item.path, null, 'ERR_VFSMODULE_FILEINFO_FMT');
 }
 
 /**
@@ -902,27 +847,23 @@ export function fileinfo(item, callback) {
  * @summary Gets absolute HTTP URL to a file
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback  Callback function
  * @param   {Object}          [options] Set of options
  */
-export function url(item, callback, options) {
-  callback = callback || noop;
+export function url(item, options) {
   options = options || {};
 
   console.debug('VFS::url()', item);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  performRequest('url', [item], options, item.path, null, 'ERR_VFSMODULE_URL_FMT', callback, options);
+  return performRequest('url', [item], options, item.path, null, 'ERR_VFSMODULE_URL_FMT');
 }
 
 /**
@@ -933,54 +874,48 @@ export function url(item, callback, options) {
  * @param   {Object}                    args                      Function arguments (see below)
  * @param   {String}                    args.destination          Full path to destination
  * @param   {Array}                     args.files                Array of 'File'
- * @param   {CallbackVFS}               callback                  Callback function
  * @param   {Object}                    [options]                 Set of options
  * @param   {Boolean}                   [options.overwrite=false] If set to true it will not check if the destination exists
  * @param   {OSjs.Core.Application}     [appRef]                  Reference to an Application
  */
-export function upload(args, callback, options, appRef) {
-  callback = callback || noop;
-  options = options || {};
+export function upload(args, options, appRef) {
   args = args || {};
 
   console.debug('VFS::upload()', args);
 
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
   if ( !args.files ) {
-    callback(_('ERR_VFS_UPLOAD_NO_FILES'));
-    return;
+    return Promise.reject(new Error(_('ERR_VFS_UPLOAD_NO_FILES')));
   }
   if ( !args.destination ) {
-    callback(_('ERR_VFS_UPLOAD_NO_DEST'));
-    return;
+    return Promise.reject(new Error(_('ERR_VFS_UPLOAD_NO_DEST')));
   }
 
   const dest = new FileMetadata(args.destination);
   const mountpoint = MountManager.getModuleFromPath(args.destination);
 
-  Promise.all(args.files, (f) => {
-    const filename = (f instanceof window.File) ? f.name : f.filename;
-    const fileDest = new FileMetadata(FS.pathJoin(args.destination, filename));
+  return new Promise((resolve, reject) => {
+    Promise.all(args.files.map((f) => {
+      const filename = (f instanceof window.File) ? f.name : f.filename;
+      const fileDest = new FileMetadata(FS.pathJoin(args.destination, filename));
 
-    return new Promise((resolve, reject) => {
-      existsWrapper(fileDest).then(() => {
-        return mountpoint.request('upload', [f, dest], options).then((res) => {
-          let file = FileMetadata.fromUpload(args.destination, f);
-          file = checkMetadataArgument(file);
+      return new Promise((resolve, reject) => {
+        existsWrapper(fileDest, options).then(() => {
+          return mountpoint.request('upload', [dest, f], options).then((res) => {
+            let file = FileMetadata.fromUpload(args.destination, f);
+            file = checkMetadataArgument(file);
 
-          broadcastMessage('vfs:upload', file, args.app, appRef);
+            broadcastMessage('vfs:upload', file, args.app, appRef);
 
-          return resolve(res);
+            return resolve(res);
+          }).catch(reject);
         }).catch(reject);
-      }).catch(reject);
+      });
+    })).then(resolve).catch((e) => {
+      reject(_('ERR_VFS_UPLOAD_FAIL_FMT', e));
     });
-  }).then(() => {
-    return callback(false, true);
-  }).catch((e) => {
-    callback(_('ERR_VFS_UPLOAD_FAIL_FMT', e));
   });
 }
 
@@ -990,27 +925,21 @@ export function upload(args, callback, options, appRef) {
  * @summary Downloads a file to the computer
  *
  * @param   {OSjs.VFS.File}   file      File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback  Callback function
  */
-export function download(file, callback) {
-  callback = callback || noop;
-
+export function download(file) {
   console.debug('VFS::download()', file);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     file = checkMetadataArgument(file);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
   if ( !file.path ) {
-    callback(_('ERR_VFS_DOWNLOAD_NO_FILE'));
-    return;
+    return Promise.reject(new Error(_('ERR_VFS_DOWNLOAD_NO_FILE')));
   }
 
   const promise = new Promise((resolve, reject) => {
@@ -1027,10 +956,10 @@ export function download(file, callback) {
     });
   });
 
-  promise.then((res) => {
-    return callback(false, res);
-  }).catch((e) => {
-    callback(_('ERR_VFS_DOWNLOAD_FAILED', e));
+  return new Promise((resolve, reject) => {
+    promise.then(resolve).catch((e) => {
+      reject(_('ERR_VFS_DOWNLOAD_FAILED', e));
+    });
   });
 }
 
@@ -1040,25 +969,20 @@ export function download(file, callback) {
  * @summary Trashes a file
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback  Callback function
  */
-export function trash(item, callback) {
-  callback = callback || noop;
-
+export function trash(item) {
   console.debug('VFS::trash()', item);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  performRequest('trash', [item], {}, item.path, null, 'ERR_VFSMODULE_TRASH_FMT', callback);
+  return performRequest('trash', [item], {}, item.path, null, 'ERR_VFSMODULE_TRASH_FMT');
 }
 
 /**
@@ -1067,44 +991,32 @@ export function trash(item, callback) {
  * @summary Removes a file from trash
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback  Callback function
  */
-export function untrash(item, callback) {
-  callback = callback || noop;
+export function untrash(item) {
 
   console.debug('VFS::untrash()', item);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.reject(e);
   }
 
-  performRequest('untrash', [item], {}, item.path, null, 'ERR_VFSMODULE_UNTRASH_FMT', callback);
+  return performRequest('untrash', [item], {}, item.path, null, 'ERR_VFSMODULE_UNTRASH_FMT');
 }
 
 /**
  * Permanently empty trash
  *
  * @summary Empties the trash
- *
- * @param   {CallbackVFS}     callback  Callback function
  */
-export function emptyTrash(callback) {
-  callback = callback || noop;
-
+export function emptyTrash() {
   console.debug('VFS::emptyTrash()');
-  if ( arguments.length < 1 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
-  }
 
-  performRequest('emptyTrash', [], {}, null, null, 'ERR_VFSMODULE_EMPTYTRASH_FMT', callback);
+  return performRequest('emptyTrash', [], {}, null, null, 'ERR_VFSMODULE_EMPTYTRASH_FMT');
 }
 
 /**
@@ -1115,27 +1027,22 @@ export function emptyTrash(callback) {
  * @summary Gets free space on target
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback  Callback function
  */
-export function freeSpace(item, callback) {
-  callback = callback || noop;
-
+export function freeSpace(item) {
   console.debug('VFS::freeSpace()', item);
-  if ( arguments.length < 2 ) {
-    callback(_('ERR_VFS_NUM_ARGS'));
-    return;
+  if ( arguments.length < 1 ) {
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return;
+    return Promise.resolve(e);
   }
 
   const m = MountManager.getModuleFromPath(item.path, false, true);
 
-  performRequest('freeSpace', [m.root], {}, item.path, null, 'ERR_VFSMODULE_FREESPACE_FMT', callback);
+  return performRequest('freeSpace', [m.root], {}, item.path, null, 'ERR_VFSMODULE_FREESPACE_FMT');
 }
 
 /**
@@ -1144,9 +1051,9 @@ export function freeSpace(item, callback) {
  * @summary Watches a file or directory for changes.
  *
  * @param   {OSjs.VFS.File}   item      File Metadata (you can also provide a string)
- * @param   {CallbackVFS}     callback  Callback function
+ * @param   {Function}     callback  Callback function
  *
- * @return  {Number}                    The index of your watch (you can unwatch with this)
+ * @return {Promise} The index of your watch (you can unwatch with this)
  */
 export function watch(item, callback) {
   callback = callback || noop;
@@ -1159,15 +1066,15 @@ export function watch(item, callback) {
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    callback(e);
-    return -1;
+    return Promise.reject(e);
   }
 
-  return watches.push({
+  return Promise.resolve(watches.push({
     path: item.path,
     type: item.type,
     cb: callback
-  }) - 1;
+  }) - 1);
+
 }
 
 /**

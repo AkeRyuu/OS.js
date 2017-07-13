@@ -351,13 +351,9 @@ export default class Connection {
   /*
    * This is a wrapper for making a request
    */
-  static request(m, a, cb, options) {
+  static request(m, a, options) {
     a = a || {};
     options = options || {};
-
-    if ( typeof cb !== 'function' ) {
-      throw new TypeError('call() expects a function as callback');
-    }
 
     if ( options && typeof options !== 'object' ) {
       throw new TypeError('call() expects an object as options');
@@ -375,9 +371,13 @@ export default class Connection {
       delete options.indicator;
     }
 
-    this.instance.createRequest(m, a, options).then((response) => {
-      cb(response.error || false, response.result);
-      return true;
-    }).catch(cb);
+    return new Promise((resolve, reject) => {
+      this.instance.createRequest(m, a, options).then((response) => {
+        if ( response.error ) {
+          return reject(new Error(response.error));
+        }
+        return resolve(response.result);
+      }).catch(reject);
+    });
   }
 }

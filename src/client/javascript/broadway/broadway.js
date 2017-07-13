@@ -744,7 +744,7 @@ function cmdCreateSurface(id, x, y, width, height, isTemp) {
 
 const Commands = {
   D: function() {
-    OSjs.Broadway.GTK.disconnect();
+    BroadwayConnection.disconnect();
   },
 
   s: function(cmd) { // Create new surface
@@ -944,7 +944,7 @@ export default {
    */
   connect: function(url, opts) {
     if ( ws ) {
-      OSjs.Broadway.Connection.disconnect();
+      BroadwayConnection.disconnect();
     }
 
     ws = new WebSocket(url, 'broadway');

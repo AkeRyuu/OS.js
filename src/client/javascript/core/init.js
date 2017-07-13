@@ -45,12 +45,12 @@ import {addHook, triggerHook} from 'helpers/hooks';
 import {getConfig, setConfig} from 'core/config';
 import {playSound} from 'core/assets';
 import * as GUI from 'utils/gui';
+import * as Utils from 'utils/misc';
 import Preloader from 'utils/preloader';
 import Broadway from 'broadway/broadway';
 import BroadwayConnection from 'broadway/connection';
 import DialogScheme from 'gui/dialogscheme';
 import ServiceNotificationIcon from 'helpers/service-notification-icon';
-import compability from 'compability';
 
 let hasBooted = false;
 let hasShutDown = false;
@@ -146,7 +146,13 @@ const initSettingsManager = (config) => new Promise((resolve, reject) => {
 const initPackageManager = (config) => new Promise((resolve, reject) => {
   const list = config.PreloadOnBoot || [];
 
-  PackageManager.init().then(() => {
+  let metadata = {};
+  try {
+    // In case of standalone
+    metadata = OSjs.getManifest();
+  } catch ( e ) {}
+
+  PackageManager.init(metadata).then(() => {
     return Promise.each(list, (iter) => {
       return new Promise((next) => {
         var pkg = PackageManager.getPackage(iter);
@@ -180,20 +186,47 @@ const initExtensions = (config) => new Promise((resolve, reject) => {
     });
   }
 
-  const exts = Object.keys(OSjs.Extensions);
-  const manifest = PackageManager.getPackages();
+  const packages = PackageManager.getPackages();
 
-  Promise.each(exts, (entry) => {
-    return new Promise((next) => {
-      try {
-        var m = manifest[entry];
-        OSjs.Extensions[entry].init(m, () => next());
-      } catch ( e ) {
-        console.warn('Extension init failed', e.stack, e);
-        next();
+  const preloadExtensions = () => new Promise((resolve, reject) => {
+    let preloads = [];
+    Object.keys(packages).forEach((k) => {
+      const iter = packages[k];
+      if ( iter.type === 'extension' && iter.preload ) {
+        preloads = preloads.concat(iter.preload);
       }
     });
-  }).then(resolve).catch(reject);
+
+    if ( preloads.length ) {
+      Preloader.preload(preloads).then(resolve).catch(() => resolve());
+    } else {
+      resolve();
+    }
+  });
+
+  const launchExtensions = () => new Promise((resolve, reject) => {
+    const exts = Object.keys(OSjs.Extensions);
+
+    Promise.each(exts, (entry) => {
+      return new Promise((next) => {
+        try {
+          // FIXME
+          const m = packages[entry];
+          OSjs.Extensions[entry].init(m, () => next());
+        } catch ( e ) {
+          console.warn('Extension init failed', e.stack, e);
+          next();
+        }
+      });
+    }).then(resolve).catch((err) => {
+      console.warn(err);
+      reject(err);
+    });
+  });
+
+  preloadExtensions().then(() => {
+    launchExtensions().then(resolve).catch(reject);
+  }).catch(() => resolve());
 });
 
 /**
@@ -448,10 +481,9 @@ const initWindowManager = (config) => new Promise((resolve, reject) => {
   if ( !wmConfig || !wmConfig.exec ) {
     reject(new Error(Locales._('ERR_CORE_INIT_NO_WM')));
   } else {
-    Main.launch(wmConfig.exec, (wmConfig.args || {}), (app) => {
+    Main.launch(wmConfig.exec, (wmConfig.args || {})).then((app) => {
       app.setup(() => resolve());
-    }, (error, name, args, exception) => {
-      console.warn(error, name, args, exception);
+    }).catch((error) => {
       reject(new Error(Locales._('ERR_CORE_INIT_WM_FAILED_FMT', error)));
     });
   }
@@ -464,7 +496,7 @@ const initWindowManager = (config) => new Promise((resolve, reject) => {
 /*
  * Initializes the user session
  */
-function initSession(config, callback) {
+function initSession(config) {
   // FIXME
   console.debug('initSession()');
 
@@ -496,9 +528,8 @@ function initSession(config, callback) {
     }
   });
 
-  var stor = OSjs.Core.getStorage();
-  stor.getLastSession(function(err, adds) {
-    if ( !err ) {
+  return new Promise((resolve) => {
+    Storage.instance.getLastSession().then((adds) => {
       adds.forEach(function(iter) {
         if ( typeof checkMap[iter.name] === 'undefined' ) {
           list.push(iter);
@@ -509,15 +540,17 @@ function initSession(config, callback) {
             if ( !ref.args ) {
               ref.args = {};
             }
-            ref.args = OSjs.Utils.mergeObject(ref.args, iter.args);
+            ref.args = Utils.mergeObject(ref.args, iter.args);
           }
         }
       });
-    }
 
-    console.info('initSession()->autostart()', list);
-
-    Main.launchList(list, null, null, callback);
+      console.info('initSession()->autostart()', list);
+      Main.launchList(list).then(resolve).catch(resolve);
+    }).catch((err) => {
+      console.warn(err);
+      resolve();
+    });
   });
 }
 
@@ -558,10 +591,8 @@ export function start() {
 
   console.info('Starting OS.js');
 
-  const config = OSjs.Core.getConfig();
+  const config = OSjs.getConfig();
   const total = 9;
-
-  compability();
 
   Locales.init(config.Locale, config.LocaleOptions, config.Languages);
 
@@ -600,10 +631,12 @@ export function start() {
     triggerHook('onInited');
     SplashScreen.hide();
 
-    var wm = OSjs.Core.getWindowManager();
-    wm._fullyLoaded = true;
+    var wm = WindowManager.instance;
+    if ( wm ) {
+      wm._fullyLoaded = true;
+    }
 
-    initSession(config, function onSessionLoaded() {
+    initSession(config).then(() => {
       triggerHook('onSessionLoaded');
     });
 
@@ -660,14 +693,13 @@ export function stop(restart = false) {
  * @param {Boolean} [save=false] Save session
  */
 export function restart(save = false) {
-  // FIXME
+  const lout = (cb) => Authenticator.instance.logout().then(cb).catch(cb);
+
   const saveFunction = save && Storage.instance ? function(cb) {
-    Storage.instance.saveSession(function() {
-      Authenticator.instance.logout(cb);
-    });
-  } : function(cb) {
-    Authenticator.instance.logout(cb);
-  };
+    Storage.instance.saveSession()
+      .then(() => lout(cb))
+      .catch(() => lout(cb));
+  } : lout;
 
   saveFunction(function() {
     console.clear();
@@ -680,28 +712,25 @@ export function restart(save = false) {
  * Perfors a log out of OS.js
  */
 export function logout() {
-  const auth = Authenticator.instance;
   const storage = Storage.instance;
   const wm = WindowManager.instance;
 
   function signOut(save) {
     playSound('LOGOUT');
 
+    const lout = (cb) => Authenticator.instance.logout().then(cb).catch(cb);
+
     if ( save ) {
-      storage.saveSession(function() {
-        auth.logout(function() {
-          stop();
-        });
-      });
+      storage.saveSession()
+        .then(() => lout(stop))
+        .catch(() => lout(stop));
     } else {
-      auth.logout(function() {
-        stop();
-      });
+      lout(stop);
     }
   }
 
   if ( wm ) {
-    const user = auth.getUser() || {name: Locales._('LBL_UNKNOWN')};
+    const user = Authenticator.instance.getUser() || {name: Locales._('LBL_UNKNOWN')};
     Dialog.create('Confirm', {
       title: Locales._('DIALOG_LOGOUT_TITLE'),
       message: Locales._('DIALOG_LOGOUT_MSG_FMT', user.name)

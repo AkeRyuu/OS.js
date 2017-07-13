@@ -138,7 +138,9 @@ class SettingsManager {
       callback = function() {};
     }
 
-    Storage.instance.saveSettings(pool, this.storage, callback);
+    Storage.instance.saveSettings(pool, this.storage).then((res) => {
+      return callback(false, res);
+    }).catch(callback);
   }
 
   /**

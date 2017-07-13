@@ -51,8 +51,6 @@ export default class ErrorDialog extends DialogWindow {
   constructor(args, callback) {
     args = Object.assign({}, {}, args);
 
-    console.error('ErrorDialog::constructor()', args);
-
     const exception = args.exception || {};
 
     let error = '';

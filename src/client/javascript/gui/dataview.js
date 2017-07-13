@@ -29,10 +29,10 @@
  */
 import * as GUI from 'utils/gui';
 import * as DOM from 'utils/dom';
-import * as VFS from 'vfs/fs';
 import * as Events from 'utils/events';
 import * as Clipboard from 'utils/clipboard';
 import * as Keycodes from 'utils/keycodes';
+import FileMetadata from 'vfs/file';
 import UIElement from 'gui/element';
 
 /////////////////////////////////////////////////////////////////////////////
@@ -140,7 +140,7 @@ function handleKeyPress(cls, el, ev) {
 
         selected.forEach(function(s) {
           if ( s && s.data ) {
-            data.push(new VFS.File(s.data.path, s.data.mime));
+            data.push(new FileMetadata(s.data.path, s.data.mime));
           }
         });
 

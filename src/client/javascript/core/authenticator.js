@@ -84,15 +84,7 @@ export default class Authenticator {
    * return {Promise}
    */
   init() {
-    return new Promise((resolve, reject) => {
-      this.onCreateUI((err, res) => {
-        if ( err ) {
-          reject(err);
-        } else {
-          resolve(res);
-        }
-      });
-    });
+    return this.onCreateUI();
   }
 
   /**
@@ -124,33 +116,27 @@ export default class Authenticator {
    * Log in user
    *
    * @param   {Object}               data            Login form data
-   * @param   {CallbackHandler}      callback        Callback function
    */
-  login(data, callback) {
-    Connection.request('login', data, function onLoginResponse(error, result) {
-      if ( result ) {
-        callback(false, result);
-      } else {
-        error = error || _('ERR_LOGIN_INVALID');
-        callback(_('ERR_LOGIN_FMT', error), false);
-      }
+  login(data) {
+    return new Promise((resolve, reject) => {
+      Connection.request('login', data).then((result) => {
+        return resolve(result ? result : _('ERR_LOGIN_INVALID'));
+      }).catch((error) => {
+        reject(_('ERR_LOGIN_FMT', error));
+      });
     });
   }
 
   /**
    * Log out user
-   *
-   * @param   {CallbackHandler}      callback        Callback function
    */
-  logout(callback) {
-    const opts = {};
-
-    Connection.request('logout', opts, function onLogoutResponse(error, result) {
-      if ( result ) {
-        callback(false, true);
-      } else {
-        callback('An error occured: ' + (error || 'Unknown error'));
-      }
+  logout() {
+    return new Promise((resolve, reject) => {
+      Connection.request('logout', {}).then((result) => {
+        return resolve(!!result);
+      }).catch((err) => {
+        reject('An error occured: ' + err);
+      });
     });
   }
 
@@ -185,15 +171,12 @@ export default class Authenticator {
    * When login is requested
    *
    * @param   {Object}               data            Login data
-   * @param   {CallbackHandler}      callback        Callback function
    */
-  onLoginRequest(data, callback) {
-    this.login(data, (err, result) => {
-      if ( err ) {
-        callback(err);
-      } else {
-        this.onLogin(result, callback);
-      }
+  onLoginRequest(data) {
+    return new Promise((resolve, reject) => {
+      this.login(data).then((res) => {
+        return this.onLogin(res).then(resolve).catch(reject);
+      }).catch(reject);
     });
   }
 
@@ -201,9 +184,8 @@ export default class Authenticator {
    * When login has occured
    *
    * @param   {Object}               data            User data
-   * @param   {CallbackHandler}      callback        Callback function
    */
-  onLogin(data, callback) {
+  onLogin(data) {
     let userSettings = data.userSettings;
     if ( !userSettings || userSettings instanceof Array ) {
       userSettings = {};
@@ -241,24 +223,18 @@ export default class Authenticator {
 
     this.loggedIn = true;
 
-    callback(null, true);
+    return Promise.resolve(true);
   }
 
   /**
    * When login UI is requested
-   *
-   * @param   {CallbackHandler}      callback        Callback function
    */
-  onCreateUI(callback) {
+  onCreateUI() {
     const container = document.getElementById('Login');
     const login = document.getElementById('LoginForm');
     const u = document.getElementById('LoginUsername');
     const p = document.getElementById('LoginPassword');
     const s = document.getElementById('LoginSubmit');
-
-    if ( !container ) {
-      throw new Error('Could not find Login Form Container');
-    }
 
     function _restore() {
       s.removeAttribute('disabled');
@@ -272,29 +248,30 @@ export default class Authenticator {
       p.setAttribute('disabled', 'disabled');
     }
 
-    login.onsubmit = (ev) => {
-      _lock();
-      if ( ev ) {
-        ev.preventDefault();
-      }
-
-      this.onLoginRequest({
-        username: u.value,
-        password: p.value
-      }, (err) => {
-        if ( err ) {
-          alert(err);
-          _restore();
-        } else {
-          container.parentNode.removeChild(container);
-          callback();
-        }
-      });
-    };
-
     container.style.display = 'block';
-
     _restore();
+
+    return new Promise((resolve, reject) => {
+      login.onsubmit = (ev) => {
+        _lock();
+        if ( ev ) {
+          ev.preventDefault();
+        }
+
+        this.onLoginRequest({
+          username: u.value,
+          password: p.value
+        }, (err) => {
+          if ( err ) {
+            alert(err);
+            _restore();
+          } else {
+            container.parentNode.removeChild(container);
+            resolve();
+          }
+        });
+      };
+    });
   }
 
 }

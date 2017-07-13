@@ -32,9 +32,17 @@
 // TODO: Playlist
 // TODO: Server seek support: https://gist.github.com/codler/3906826
 
-const {API, VFS, Utils} = OSjs;
-const {DefaultApplication, DefaultApplicationWindow} = OSjs.Helpers;
-const doTranslate = require('./locales.js');
+import Translations from './locales';
+
+const FS = OSjs.require('utils/fs');
+const Utils = OSjs.require('utils/misc');
+const Locales = OSjs.require('core/locales');
+const Dialog = OSjs.require('core/dialog');
+const FileMetadata = OSjs.require('vfs/file');
+const DefaultApplication = OSjs.require('helpers/default-application');
+const DefaultApplicationWindow = OSjs.require('helpers/default-application-window');
+
+const doTranslate = Locales.createLocalizer(Translations);
 
 function formatTime(secs) {
   var hr  = Math.floor(secs / 3600);
@@ -50,10 +58,6 @@ function formatTime(secs) {
 
   return min + ':' + sec;
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// WINDOWS
-/////////////////////////////////////////////////////////////////////////////
 
 class ApplicationMusicPlayerWindow extends DefaultApplicationWindow {
 
@@ -150,15 +154,15 @@ class ApplicationMusicPlayerWindow extends DefaultApplicationWindow {
             msg = doTranslate('Media source not supported');
             break;
           default:
-            msg = OSjs.API._('ERR_APP_UNKNOWN_ERROR');
+            msg = Locales._('ERR_APP_UNKNOWN_ERROR');
             break;
         }
       } catch ( e ) {
-        msg = OSjs.API._('ERR_GENERIC_APP_FATAL_FMT', e);
+        msg = Locales._('ERR_GENERIC_APP_FATAL_FMT', e);
       }
 
       if ( msg ) {
-        API.createDialog('Alert', {title: self._title, message: msg}, null, self);
+        Dialog.create('Alert', {title: self._title, message: msg}, null, self);
       }
     });
 
@@ -183,7 +187,7 @@ class ApplicationMusicPlayerWindow extends DefaultApplicationWindow {
     });
 
     var artist = file ? file.filename : '';
-    var album = file ? Utils.dirname(file.path) : '';
+    var album = file ? FS.dirname(file.path) : '';
 
     var labelArtist = this._find('LabelArtist').set('value', '');
     var labelTitle  = this._find('LabelTitle').set('value', artist);
@@ -197,7 +201,7 @@ class ApplicationMusicPlayerWindow extends DefaultApplicationWindow {
     this.seeking = false;
 
     function getInfo() {
-      self._app._api('info', {filename: file.path}, function(err, info) {
+      self._app._api('info', {filename: file.path}).then((info) => {
         if ( info ) {
           if ( info.Artist ) {
             labelArtist.set('value', info.Artist);
@@ -254,10 +258,6 @@ class ApplicationMusicPlayerWindow extends DefaultApplicationWindow {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
-
 class ApplicationMusicPlayer extends DefaultApplication {
 
   constructor(args, metadata) {
@@ -278,16 +278,9 @@ class ApplicationMusicPlayer extends DefaultApplication {
 
     if ( msg === 'attention' && obj && obj.file ) {
       var win = this._getMainWindow();
-      this.openFile(new VFS.File(obj.file), win);
+      this.openFile(new FileMetadata(obj.file), win);
     }
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationMusicPlayer = OSjs.Applications.ApplicationMusicPlayer || {};
-OSjs.Applications.ApplicationMusicPlayer.Class = Object.seal(ApplicationMusicPlayer);
-
+OSjs.Applications.ApplicationMusicPlayer = ApplicationMusicPlayer;

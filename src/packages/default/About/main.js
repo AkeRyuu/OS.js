@@ -28,14 +28,10 @@
  * @licence Simplified BSD License
  */
 
-const {Window, Application} = OSjs.Core;
-
-/////////////////////////////////////////////////////////////////////////////
-// WINDOWS
-/////////////////////////////////////////////////////////////////////////////
+const Window = OSjs.require('core/window');
+const Application = OSjs.require('core/application');
 
 class ApplicationAboutWindow extends Window {
-
   constructor(app, metadata, scheme) {
     super('ApplicationAboutWindow', {
       icon: metadata.icon,
@@ -61,28 +57,16 @@ class ApplicationAboutWindow extends Window {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
-
 class ApplicationAbout extends Application {
-
   constructor(args, metadata) {
     super('ApplicationAbout', args, metadata);
   }
 
   init(settings, metadata, scheme) {
-    super.init.apply(...arguments);
+    super.init(...arguments);
     this._addWindow(new ApplicationAboutWindow(this, metadata, scheme));
   }
-
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationAbout = OSjs.Applications.ApplicationAbout || {};
-OSjs.Applications.ApplicationAbout.Class = Object.seal(ApplicationAbout);
+OSjs.Applications.ApplicationAbout = ApplicationAbout;
 

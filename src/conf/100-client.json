@@ -9,7 +9,6 @@
       "RootURI": "",
       "APIURI": "API",
       "FSURI": "FS",
-      "MetadataURI": "packages.js",
       "ThemeURI": "themes/styles",
       "SoundURI": "themes/sounds",
       "IconURI": "themes/icons",

@@ -107,7 +107,7 @@ export default class Application extends Process {
      * Registered Settings
      * @type {Object}
      */
-    this.__settings   = {};
+    this.__settings   = null;
 
     /**
      * If is in the process of destroying
@@ -161,7 +161,9 @@ export default class Application extends Process {
         this._setScheme(scheme);
       }
 
-      this.__settings.set(null, settings);
+      if ( this.__settings ) {
+        this.__settings.set(null, settings);
+      }
 
       this.__inited = true;
 
@@ -411,7 +413,7 @@ export default class Application extends Process {
    * @return  {Object}    the current settings
    */
   _getSetting(k) {
-    return this.__settings.get(k);
+    return this.__settings ? this.__settings.get(k) : null;
   }
 
   /**
@@ -461,7 +463,9 @@ export default class Application extends Process {
     if ( arguments.length === 4 && typeof arguments[3] === 'function' ) {
       save = arguments[3];
     }
-    this.__settings.set(k, v, save);
+    if ( this.__settings ) {
+      this.__settings.set(k, v, save);
+    }
   }
 
   /**

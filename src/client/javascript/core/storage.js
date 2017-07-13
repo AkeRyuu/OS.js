@@ -72,54 +72,45 @@ export default class Storage {
   }
 
   /**
-   * Internal for saving settings
-   *
-   * @param   {String}               [pool]          Settings pool
-   * @param   {Object}               storage         Settings storage data
-   * @param   {CallbackHandler}      callback        Callback function
-   */
-  _settings(pool, storage, callback) {
-    Connection.request('settings', {pool: pool, settings: Utils.cloneObject(storage)}, callback);
-  }
-
-  /**
    * Default method to save given settings pool
    *
    * @param   {String}           [pool]        Pool Name
    * @param   {Mixed}            storage       Storage data
-   * @param   {CallbackHandler}  callback      Callback function
    */
-  saveSettings(pool, storage, callback) {
+  saveSettings(pool, storage) {
     clearTimeout(this.saveTimeout);
-    this.saveTimeout = setTimeout(() => {
-      this._settings(pool, storage, callback);
-      clearTimeout(this.saveTimeout);
-    }, 250);
+
+    return new Promise((resolve, reject) => {
+      this.saveTimeout = setTimeout(() => {
+        Connection.request('settings', {pool: pool, settings: Utils.cloneObject(storage)})
+          .then(resolve).catch(reject);
+        clearTimeout(this.saveTimeout);
+      }, 250);
+    });
   }
 
   /**
    * Default method for saving current sessions
-   *
-   * @param   {CallbackHandler}  callback      Callback function
    */
-  saveSession(callback) {
-    const data = [];
-    Process.getProcesses().forEach((proc, i) => {
-      if ( proc && (typeof proc._getSessionData === 'function') ) {
-        data.push(proc._getSessionData());
-      }
+  saveSession() {
+    return new Promise((resolve, reject) => {
+      const data = [];
+      Process.getProcesses().forEach((proc, i) => {
+        if ( proc && (typeof proc._getSessionData === 'function') ) {
+          data.push(proc._getSessionData());
+        }
+      });
+
+      SettingsManager.set('UserSession', null, data, (err, res) => {
+        return err ? reject(err) : resolve(res);
+      });
     });
-    SettingsManager.set('UserSession', null, data, callback);
   }
 
   /**
    * Get last saved sessions
-   *
-   * @param   {CallbackHandler}  callback      Callback function
    */
-  getLastSession(callback) {
-    callback = callback || function() {};
-
+  getLastSession() {
     const res = SettingsManager.get('UserSession');
     const list = [];
     (res || []).forEach((iter, i) => {
@@ -130,7 +121,7 @@ export default class Storage {
       list.push({name: iter.name, args: args});
     });
 
-    callback(false, list);
+    return Promise.resolve(list);
   }
 }
 

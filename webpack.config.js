@@ -40,12 +40,13 @@ const osjs = require('osjs-build');
 ///////////////////////////////////////////////////////////////////////////////
 
 const debug = process.env.OSJS_DEBUG ===  'true';
+const standalone = false; // FIXME
 
 ///////////////////////////////////////////////////////////////////////////////
 // HELPERS
 ///////////////////////////////////////////////////////////////////////////////
 
-const fixPath = (iter) => iter.replace(/^(dev|prod):/, '');
+const fixPath = (iter) => iter.replace(/^(dev|prod|standalone):/, '');
 const getAbsolute = (filename) => path.resolve(__dirname, filename);
 const getTemplateFile = (tpl, filename) => path.join(__dirname, 'src/templates/dist', tpl || 'default', filename);
 const getThemePath = (type) => path.join(__dirname, 'src/client/themes', type);
@@ -58,6 +59,9 @@ function getFiltered(i) {
     return false;
   }
   if ( i.match(/^prod:/) && debug ) {
+    return false;
+  }
+  if ( i.match(/^standalone:/) && !standalone ) {
     return false;
   }
   return true;
@@ -129,8 +133,8 @@ module.exports = new Promise((resolve, reject) => {
         new HtmlWebpackPlugin({
           template: getTemplateFile(cfg.build.template, 'index.ejs'),
           osjs: {
-            scripts: cfg.build.includes.scripts,
-            styles: cfg.build.includes.styles
+            scripts: cfg.build.includes.scripts.filter(getFiltered).map(fixPath),
+            styles: cfg.build.includes.styles.filter(getFiltered).map(fixPath)
           }
         }),
 

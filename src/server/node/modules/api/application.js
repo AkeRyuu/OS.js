@@ -84,29 +84,10 @@ module.exports.application = function(http, data) {
       let found = null;
       try {
         const module = require(fpath);
-
-        if ( typeof module.api === 'object' ) {
-          if ( typeof module.api[ameth] === 'function' ) {
-            found = function applicationApiCall() {
-              module.api[ameth](env, http, resolve, reject, aargs);
-            };
-          }
-        } else {
-          // Backward compatible with old API
-          let imported = {};
-          module.register(imported, {}, {});
-
-          if ( typeof imported[ameth] === 'function' ) {
-            found = function backwardCompatibleApplicationApiCall() {
-              imported[ameth](aargs, (error, result) => {
-                if ( error ) {
-                  reject(error);
-                } else {
-                  resolve(result);
-                }
-              }, http.request, http.response, config);
-            };
-          }
+        if ( typeof module.api[ameth] === 'function' ) {
+          found = function applicationApiCall() {
+            module.api[ameth](env, http, resolve, reject, aargs);
+          };
         }
       } catch ( e ) {
         _logger.log(_logger.WARNING, e.stack, e.trace);

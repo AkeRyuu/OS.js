@@ -28,14 +28,7 @@
  * @licence Simplified BSD License
  */
 
-/*eslint valid-jsdoc: "off"*/
-'use strict';
-
-const {Service} = OSjs.Core;
-
-/////////////////////////////////////////////////////////////////////////////
-// SERVICE
-/////////////////////////////////////////////////////////////////////////////
+const Service = OSjs.require('core/service');
 
 class EXAMPLEService extends Service {
   constructor(args, metadata) {
@@ -49,10 +42,4 @@ class EXAMPLEService extends Service {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.EXAMPLEService = OSjs.Applications.EXAMPLEService || {};
-OSjs.Applications.EXAMPLEService.Class = Object.seal(EXAMPLEService);
+OSjs.Applications.EXAMPLEService = EXAMPLEService;

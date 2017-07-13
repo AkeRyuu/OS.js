@@ -28,8 +28,10 @@
  * @licence Simplified BSD License
  */
 
-const {Utils, GUI} = OSjs;
-const {Window, Application} = OSjs.Core;
+const Window = OSjs.require('core/window');
+const Application = OSjs.require('core/application');
+const GUIElement = OSjs.require('gui/element');
+const DOM = OSjs.require('utils/dom');
 
 var ops = {
   dec: '.',
@@ -123,10 +125,10 @@ class ApplicationCalculatorWindow extends Window {
       var c = idx % 4;
       var op = buttons[r][c];
 
-      el = GUI.Element.createInstance(el);
+      el = GUIElement.createInstance(el);
       el.set('value', labels[op] || '');
       if ( op === null ) {
-        Utils.$addClass(el.$element, 'noop');
+        DOM.$addClass(el.$element, 'noop');
         el.set('disabled', true);
       } else {
         el.on('click', function() {
@@ -214,10 +216,10 @@ class ApplicationCalculatorWindow extends Window {
       }
 
       if ( output === 'NaN' || output === 'Infinity' || isNaN(output) || !isFinite(output) ) {
-        Utils.$addClass(this._$element, 'NaN');
+        DOM.$addClass(this._$element, 'NaN');
 
         setTimeout(function() {
-          Utils.$removeClass(self._$element, 'NaN');
+          DOM.$removeClass(self._$element, 'NaN');
         }, 3000);
       }
 
@@ -227,10 +229,6 @@ class ApplicationCalculatorWindow extends Window {
     this._find('Output').focus();
   }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// APPLICATION
-/////////////////////////////////////////////////////////////////////////////
 
 class ApplicationCalculator extends Application {
   constructor(args, metadata) {
@@ -244,11 +242,5 @@ class ApplicationCalculator extends Application {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// EXPORTS
-/////////////////////////////////////////////////////////////////////////////
-
-OSjs.Applications = OSjs.Applications || {};
-OSjs.Applications.ApplicationCalculator = OSjs.Applications.ApplicationCalculator || {};
-OSjs.Applications.ApplicationCalculator.Class = Object.seal(ApplicationCalculator);
+OSjs.Applications.ApplicationCalculator = ApplicationCalculator;
 

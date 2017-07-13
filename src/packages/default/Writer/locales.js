@@ -28,9 +28,8 @@
  * @licence Simplified BSD License
  */
 // jscs:disable validateQuoteMarks
-const {API} = OSjs;
 
-const _Locales = {
+export default {
   bg_BG: {
     'Insert URL': 'Въведи URL'
   },
@@ -75,8 +74,3 @@ const _Locales = {
   }
 };
 
-module.exports = function() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args.unshift(_Locales);
-  return API.__.apply(this, args);
-};
