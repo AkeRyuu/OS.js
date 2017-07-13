@@ -101,7 +101,7 @@ export default class WSConnection extends Connection {
     this.ws.onopen = function() {
       connected = true;
       // NOTE: For some reason it needs to be fired on next tick
-      setTimeout(() => callback, 0);
+      setTimeout(() => callback(false), 0);
     };
 
     this.ws.onmessage = (ev) => {
@@ -126,7 +126,7 @@ export default class WSConnection extends Connection {
       if ( this.wsqueue[idx] ) {
         delete data._index;
 
-        this.wsqueue[idx](data);
+        this.wsqueue[idx](false, data);
 
         delete this.wsqueue[idx];
       }
@@ -165,17 +165,13 @@ export default class WSConnection extends Connection {
     }
   }
 
-  createRequest(method, args, onsuccess, onerror, options) {
-    onerror = onerror || function() {
-      console.warn('Connection::callWS()', 'error', arguments);
-    };
-
-    const res = super.createRequest(...arguments);
-    if ( res !== false ) {
-      return res;
-    }
+  createRequest(method, args, options) {
     if ( !this.ws ) {
-      return false;
+      return Promise.reject('No websocket connection');
+    }
+
+    if ( ['FS:upload', 'FS:get'].indexOf(method) !== -1 ) {
+      return super.createRequest(...arguments);
     }
 
     const idx = this.index++;
@@ -187,16 +183,15 @@ export default class WSConnection extends Connection {
         path: base + method.replace(/^FS:/, ''),
         args: args
       }));
-
-      this.wsqueue[idx] = onsuccess || function() {};
-
-      return true;
     } catch ( e ) {
-      console.warn('callWS() Warning', e.stack, e);
-      onerror(e);
+      return Promise.reject(e);
     }
 
-    return false;
+    return new Promise((resolve, reject) => {
+      this.wsqueue[idx] = function(err, res) {
+        return err ? reject(err) : resolve(res);
+      };
+    });
   }
 }
 

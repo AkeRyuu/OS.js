@@ -100,7 +100,7 @@ const handlers = {
 
   html: (src) => new Promise((resolve, reject) => {
     axios.get(src).then((result) => {
-      resolve(result.data);
+      return resolve(result.data);
     }).catch((err) => reject(err.message));
   })
 

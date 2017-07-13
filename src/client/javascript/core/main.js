@@ -342,11 +342,6 @@ export function launch(name, args, onconstruct) {
 
         if ( typeof OSjs.Applications[name] === 'undefined' ) {
           return onerror(new Error(_('ERR_APP_RESOURCES_MISSING_FMT', name)));
-        /* // FIXME: Backward compability
-        } else if ( typeof OSjs.Applications[name] === 'function' ) {
-          OSjs.Applications[name]();
-          return resolve(true);
-          */
         }
 
         // Run

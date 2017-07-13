@@ -219,12 +219,12 @@ const initExtensions = (config) => new Promise((resolve, reject) => {
       });
     }).then(resolve).catch((err) => {
       console.warn(err);
-      reject(err);
+      reject(new Error(err));
     });
   });
 
   preloadExtensions().then(() => {
-    launchExtensions().then(resolve).catch(reject);
+    return launchExtensions().then(resolve).catch(reject);
   }).catch(() => resolve());
 });
 
@@ -481,7 +481,7 @@ const initWindowManager = (config) => new Promise((resolve, reject) => {
     reject(new Error(Locales._('ERR_CORE_INIT_NO_WM')));
   } else {
     Main.launch(wmConfig.exec, (wmConfig.args || {})).then((app) => {
-      app.setup(() => resolve());
+      return app.setup(() => resolve());
     }).catch((error) => {
       reject(new Error(Locales._('ERR_CORE_INIT_WM_FAILED_FMT', error)));
     });
@@ -545,7 +545,7 @@ function initSession(config) {
       });
 
       console.info('initSession()->autostart()', list);
-      Main.launchList(list).then(resolve).catch(resolve);
+      return Main.launchList(list).then(resolve).catch(resolve);
     }).catch((err) => {
       console.warn(err);
       resolve();
@@ -622,7 +622,7 @@ export function start() {
         return resolve(res);
       }).catch((err) => {
         console.groupEnd();
-        return reject(err);
+        return reject(new Error(err));
       });
     });
   }).then(() => {
@@ -637,7 +637,7 @@ export function start() {
     }
 
     initSession(config).then(() => {
-      triggerHook('onSessionLoaded');
+      return triggerHook('onSessionLoaded');
     });
 
     return true;

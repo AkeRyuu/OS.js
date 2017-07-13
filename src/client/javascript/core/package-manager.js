@@ -84,6 +84,7 @@ const resolvePreloads = (metadata, pm) => {
         // For user packages, make sure to load the correct URL
         VFS.url(FS.pathJoin(metadata.path, p.src)).then((url) => {
           p.src = url;
+          return true;
         });
       } else {
         p.src = FS.pathJoin(packageURI, metadata.path, p.src);

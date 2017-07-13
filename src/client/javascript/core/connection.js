@@ -362,7 +362,7 @@ export default class Connection {
         return resolve(response.result);
       }).catch(((err) => {
         destroyLoading('Connection.request');
-        reject(err);
+        reject(new Error(err));
       }));
     });
   }

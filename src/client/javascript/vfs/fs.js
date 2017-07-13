@@ -931,12 +931,8 @@ export function upload(args, options, appRef) {
 
       return new Promise((resolve, reject) => {
         existsWrapper(fileDest, options).then(() => {
-          return requestWrapper(mountpoint, 'upload', [dest, f], options, appRef).then((res) => {
-            let file = FileMetadata.fromUpload(args.destination, f);
-            file = checkMetadataArgument(file);
-
-            return resolve(res);
-          }).catch(reject);
+          return requestWrapper(mountpoint, 'upload', [dest, f], options, appRef)
+            .then(resolve).catch(reject);
         }).catch(reject);
       });
     })).then(resolve).catch((e) => {

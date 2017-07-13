@@ -754,7 +754,7 @@ class ApplicationFileManager extends Application {
 
     items.forEach(function(item) {
       VFS.url(new FileMetadata(item), {download: true}).then((result) => {
-        window.open(result);
+        return window.open(result);
       }, {download: true});
     });
   }
@@ -892,7 +892,7 @@ class ApplicationFileManager extends Application {
       };
 
       VFS.exists(item).then((done) => {
-        done(false, result);
+        return done(false, result);
       }).catch(done);
     }, win);
   }
