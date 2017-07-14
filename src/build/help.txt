@@ -9,7 +9,7 @@ Common build flags: [--no-minimize] [--no-sourcemaps] [--devtools=]
 Loglevels: INFO: 1, WARN: 2, WARNING: 2, ERROR: 3, VERBOSE: 8 (default: 7)
 
 Building:
-  watch [--debug]
+  watch [--debug] [--package=REPO/NAME]
   build [--debug] [--clean]
   build:config
   build:manifest

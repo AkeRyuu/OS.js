@@ -36,11 +36,11 @@
   /////////////////////////////////////////////////////////////////////////////
 
   function PanelItemDialog(name, args, settings, scheme, closeCallback) {
+    Window.apply(this, [name, args, null]);
+
     this._closeCallback = closeCallback || function() {};
     this._settings = settings;
-    this.scheme = scheme;
-
-    Window.apply(this, [name, args, null, scheme]);
+    this._scheme = scheme;
   }
 
   PanelItemDialog.prototype = Object.create(Window.prototype);
@@ -50,7 +50,7 @@
     var self = this;
     var root = Window.prototype.init.apply(this, arguments);
 
-    this._render(this._name);
+    this._render(this._name, this._scheme);
 
     this._find('ButtonApply').on('click', function() {
       self.applySettings();

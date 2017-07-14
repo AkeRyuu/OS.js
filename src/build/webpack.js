@@ -215,7 +215,7 @@ const createConfiguration = (options) => new Promise((resolve, reject) => {
         module: {
           loaders: [
             {
-              test: /(scheme|dialogs).html$/,
+              test: /(scheme|dialogs)\.html$/,
               loader: 'osjs-scheme-loader'
             },
             {
@@ -304,7 +304,7 @@ const createPackageConfiguration = (metadataFile, options) => new Promise((resol
         entry: packageEntry,
 
         output: {
-          publicPath: './',
+          publicPath: './packages/' + metadata.path,
           path: dest
         },
 

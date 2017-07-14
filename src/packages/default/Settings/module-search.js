@@ -82,7 +82,7 @@ const _ = Locales.createLocalizer(Translations);
           select: 'dir',
           mfilter: [
             function(m) {
-              return m.module.searchable === true;
+              return m.option('searchable') && m.mounted();
             }
           ]
         }, function(ev, button, result) {

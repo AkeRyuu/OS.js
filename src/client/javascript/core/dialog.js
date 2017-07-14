@@ -106,7 +106,7 @@ export default class DialogWindow extends Window {
     } else {
       try {
         if ( !_dialogScheme ) {
-          const cachedHtml = require('dialogs.html');
+          const cachedHtml = require('osjs-scheme-loader!dialogs.html');
           if ( cachedHtml ) {
             _dialogScheme = GUIScheme.fromString(cachedHtml);
           }

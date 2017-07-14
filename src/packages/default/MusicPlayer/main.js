@@ -82,7 +82,7 @@ class ApplicationMusicPlayerWindow extends DefaultApplicationWindow {
     var self = this;
 
     // Load and set up scheme (GUI) here
-    this._render('MusicPlayerWindow', require('./scheme.html'));
+    this._render('MusicPlayerWindow', require('osjs-scheme-loader!./scheme.html'));
 
     var label = this._find('LabelTime');
     var seeker = this._find('Seek');

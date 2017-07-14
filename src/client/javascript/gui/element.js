@@ -79,7 +79,7 @@ function parseDynamic(node, win, args) {
     }
   });
 
-  node.querySelectorAll('*[data-icon]').forEach(function(el) {
+  node.querySelectorAll('*[data-icon], *[data-stock-icon]').forEach(function(el) {
     const image = GUI.getIcon(el, win);
     el.setAttribute('data-icon', image);
   });

@@ -102,7 +102,7 @@ class ApplicationCalculatorWindow extends Window {
     var self = this;
 
     // Load and gel.set up scheme (GUI) here
-    this._render('CalculatorWindow', require('./scheme.html'));
+    this._render('CalculatorWindow', require('osjs-scheme-loader!scheme.html'));
 
     this._find('Output').on('keypress', function(ev) {
       ev.stopPropagation();

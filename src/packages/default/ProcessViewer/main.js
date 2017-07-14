@@ -50,7 +50,7 @@ class ApplicationProcessViewerWindow extends Window {
     const root = super.init(...arguments);
 
     // Load and set up scheme (GUI) here
-    this._render('ProcessViewerWindow', require('./scheme.html'));
+    this._render('ProcessViewerWindow', require('osjs-scheme-loader!scheme.html'));
 
     var view = this._find('View');
 

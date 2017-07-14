@@ -82,8 +82,6 @@ const newTask = (cli, fn) => new Promise((resolve, reject) => {
  */
 const tasks = {
 
-  'watch': () => Promise.reject('Not implemented'),
-
   'config:set': (cli) => newTask(cli, (cli, cfg, resolve, reject) => {
     const name = cli.option('name');
     ocfg.setConfiguration(name,
@@ -149,8 +147,21 @@ const tasks = {
   },
 
   'watch': (cli, ygor) => {
-    console.info('Starting', colors.blue('watch'));
 
+    const p = cli.package;
+    if ( p ) {
+      return newTask(cli, (cli, cfg, resolve, reject) => {
+        opkg.getMetadata(cfg, cli, (pkg, n) => n === p).then((pkgs) => {
+          if ( pkgs[p] ) {
+            console.info('Starting', colors.blue('watch'), 'for', colors.green(p));
+            return outils.execWebpack(cli, ygor, pkgs[p]._src, '--watch').then(resolve).catch(reject);
+          }
+          return reject('No such package');
+        }).catch(reject);
+      });
+    }
+
+    console.info('Starting', colors.blue('watch'));
     return outils.execWebpack(cli, ygor, ROOT, '--watch');
   },
 

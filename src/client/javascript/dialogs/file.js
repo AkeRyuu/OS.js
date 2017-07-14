@@ -235,18 +235,7 @@ export default class FileDialog extends DialogWindow {
 
     const rootPath = MountManager.getRootFromPath(this.path);
     const modules = MountManager.getModules().filter((m) => {
-      if ( this.args.mfilter.length ) {
-        let success = false;
-
-        this.args.mfilter.forEach((fn) => {
-          if ( !success ) {
-            success = fn({name: m.name, module: m.options});
-          }
-        });
-
-        return success;
-      }
-      return true;
+      return !!this.args.mfilter.filter((fn) => fn(m))[0];
     }).map((m) => {
       return {
         label: m.option('title') + (m.isReadOnly() ? Utils.format(' ({0})', _('LBL_READONLY')) : ''),

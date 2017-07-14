@@ -160,7 +160,7 @@ const getMetadata = (cfg, cli, filter) => new Promise((resolve, reject) => {
   Promise.all(promises).then(() => {
     const result = {};
     Object.keys(list).forEach((k) => {
-      if ( filter(list[k]) ) {
+      if ( filter(list[k], k) ) {
         result[k] = list[k];
       }
     });

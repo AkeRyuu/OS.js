@@ -164,7 +164,7 @@ class ApplicationFileManagerWindow extends Window {
     var viewExtension = scandirOptions.showFileExtensions === true;
 
     // Load and set up scheme (GUI) here
-    this._render('FileManagerWindow', require('./scheme.html'));
+    this._render('FileManagerWindow', require('osjs-scheme-loader!scheme.html'));
 
     if ( (Config.getConfig('Connection.Type') !== 'nw') && window.location.protocol.match(/^file/) ) { // FIXME: Translation
       this._setWarning('VFS does not work when in standalone mode');

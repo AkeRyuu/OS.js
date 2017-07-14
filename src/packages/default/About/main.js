@@ -49,7 +49,7 @@ class ApplicationAboutWindow extends Window {
   init(wm, app) {
     const root = super.init(...arguments);
 
-    this._render('AboutWindow', require('./scheme.html'));
+    this._render('AboutWindow', require('osjs-scheme-loader!scheme.html'));
 
     root.getElementsByTagName('img')[0].src = app._getResource('about.png');
 

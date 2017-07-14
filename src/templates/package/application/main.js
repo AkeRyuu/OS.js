@@ -45,7 +45,7 @@ class ApplicationEXAMPLEWindow extends Window {
     const root = super.init(...arguments);
 
     // Render our Scheme file fragment into this Window
-    this._render('EXAMPLEWindow', require('./scheme.html'));
+    this._render('EXAMPLEWindow', require('osjs-scheme-loader!./scheme.html'));
 
     // Put your GUI code here (or make a new prototype function and call it):
 

@@ -67,7 +67,7 @@ class ApplicationPreviewWindow extends DefaultApplicationWindow {
     const root = super.init(...arguments);
 
     // Load and set up scheme (GUI) here
-    this._render('PreviewWindow', require('./scheme.html'));
+    this._render('PreviewWindow', require('osjs-scheme-loader!scheme.html'));
 
     this._find('ZoomIn').son('click', this, this.onZoomIn);
     this._find('ZoomOut').son('click', this, this.onZoomOut);

@@ -1001,16 +1001,22 @@ export default class Window {
    * @param {Object}           [args]       Arguments to pass to parser
    */
   _render(id, scheme, root, args) {
-    this._scheme = typeof scheme === 'string' ? GUIScheme.fromString(scheme) : scheme;
+    if ( scheme ) {
+      root = root || this._getRoot();
+      args = args || {};
 
-    root = root || this._getRoot();
-    args = args || {};
+      if ( this._translator ) {
+        args._ = this._translator;
+      }
 
-    if ( this._translator ) {
-      args._ = this._translator;
+      this._scheme = typeof scheme === 'string' ? GUIScheme.fromString(scheme) : scheme;
     }
 
-    this._scheme.render(this, id, root, null, null, args);
+    if ( this._scheme instanceof GUIScheme ) {
+      this._scheme.render(this, id, root, null, null, args);
+    } else {
+      console.warn('Got an invalid scheme in window render()', this._scheme);
+    }
   }
 
   /**

@@ -255,7 +255,7 @@ class ApplicationDrawWindow extends DefaultApplicationWindow {
     var self = this;
 
     // Load and set up scheme (GUI) here
-    this._render('DrawWindow', require('./scheme.html'));
+    this._render('DrawWindow', require('osjs-scheme-loader!./scheme.html'));
 
     var statusbar = this._find('Statusbar');
 

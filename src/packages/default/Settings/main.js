@@ -425,7 +425,7 @@ const _ = Locales.createLocalizer(Translations);
   ApplicationSettings.prototype.init = function(settings, metadata) {
     Application.prototype.init.apply(this, arguments);
 
-    const scheme = GUIScheme.fromString(require('osjs-scheme-loader!./scheme.html'));
+    const scheme = GUIScheme.fromString(require('osjs-scheme-loader!scheme.html'));
     var category = this._getArgument('category') || settings.category;
     var win = this._addWindow(new ApplicationSettingsWindow(this, metadata, scheme, category));
 

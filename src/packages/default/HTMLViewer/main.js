@@ -45,7 +45,7 @@ class ApplicationHTMLViewerWindow extends DefaultApplicationWindow {
 
   init(wmRef, app) {
     const root = super.init(...arguments);
-    this._render('HTMLViewerWindow', require('./scheme.html'));
+    this._render('HTMLViewerWindow', require('osjs-scheme-loader!scheme.html'));
     return root;
   }
 

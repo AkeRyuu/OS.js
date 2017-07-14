@@ -48,7 +48,7 @@ class ApplicationTextpadWindow extends DefaultApplicationWindow {
     const root = super.init(...arguments);
 
     // Load and set up scheme (GUI) here
-    this._render('TextpadWindow', require('./scheme.html'));
+    this._render('TextpadWindow', require('osjs-scheme-loader!scheme.html'));
 
     this._find('Text').on('change', () => {
       this.hasChanged = true;

@@ -79,7 +79,7 @@ const GUIScheme = OSjs.require('gui/scheme');
     this.$themeScript     = null;
     this.$animationLink   = null;
     this.importedSettings = Utils.mergeObject(API.getConfig('SettingsManager.CoreWM'), importSettings);
-    this._scheme          = GUIScheme.fromString(require('./scheme.html'));
+    this._scheme          = GUIScheme.fromString(require('osjs-scheme-loader!scheme.html'));
 
     this.generatedHotkeyMap = {};
 

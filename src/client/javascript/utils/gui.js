@@ -119,26 +119,25 @@ export function getViewNodeValue(el) {
  */
 export function getIcon(el, win) {
   let image = el.getAttribute('data-icon');
+  if ( image ) {
+    return win ? Assets.getPackageResource(win._app, image) : image;
+  }
+
+  image = el.getAttribute('data-stock-icon');
 
   if ( image && image !== 'undefined') {
-    if ( image.match(/^stock:\/\//) ) {
-      image = image.replace('stock://', '');
+    let size  = '16x16';
+    try {
+      let spl = image.split('/');
+      let tmp = spl.shift();
+      let siz = tmp.match(/^\d+x\d+/);
+      if ( siz ) {
+        size = siz[0];
+        image = spl.join('/');
+      }
 
-      let size  = '16x16';
-      try {
-        let spl = image.split('/');
-        let tmp = spl.shift();
-        let siz = tmp.match(/^\d+x\d+/);
-        if ( siz ) {
-          size = siz[0];
-          image = spl.join('/');
-        }
-
-        image = Assets.getIcon(image, size);
-      } catch ( e ) {}
-    } else if ( image.match(/^app:\/\//) ) {
-      image = Assets.getPackageResource(win._app, image.replace('app://', ''));
-    }
+      image = Assets.getIcon(image, size);
+    } catch ( e ) {}
 
     return image;
   }

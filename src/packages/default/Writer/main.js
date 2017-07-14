@@ -81,7 +81,7 @@ class ApplicationWriterWindow extends DefaultApplicationWindow {
     var self = this;
 
     // Load and set up scheme (GUI) here
-    this._render('WriterWindow', require('./scheme.html'));
+    this._render('WriterWindow', require('osjs-scheme-loader!scheme.html'));
 
     var text = this._find('Text');
 
