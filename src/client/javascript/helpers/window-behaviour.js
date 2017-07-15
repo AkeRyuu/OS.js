@@ -35,103 +35,105 @@ import * as Utils from 'utils/misc';
 /*
  * Holds information about current behaviour
  */
-function BehaviourState(wm, win, action, mousePosition) {
-  this.win = win;
-  this.$element = win._$element;
-  this.$top = win._$top;
-  this.$handle = win._$resize;
+class BehaviourState {
+  constructor(wm, win, action, mousePosition) {
+    this.win = win;
+    this.$element = win._$element;
+    this.$top = win._$top;
+    this.$handle = win._$resize;
 
-  this.rectWorkspace  = wm.getWindowSpace(true);
-  this.rectWindow     = {
-    x: win._position.x,
-    y: win._position.y,
-    w: win._dimension.w,
-    h: win._dimension.h,
-    r: win._dimension.w + win._position.x,
-    b: win._dimension.h + win._position.y
-  };
+    this.rectWorkspace  = wm.getWindowSpace(true);
+    this.rectWindow     = {
+      x: win._position.x,
+      y: win._position.y,
+      w: win._dimension.w,
+      h: win._dimension.h,
+      r: win._dimension.w + win._position.x,
+      b: win._dimension.h + win._position.y
+    };
 
-  const theme = Utils.cloneObject(wm.getStyleTheme(true, true));
-  if ( !theme.style ) {
-    theme.style = {'window': {margin: 0, border: 0}};
+    const theme = Utils.cloneObject(wm.getStyleTheme(true, true));
+    if ( !theme.style ) {
+      theme.style = {'window': {margin: 0, border: 0}};
+    }
+
+    this.theme = {
+      topMargin: theme.style.window.margin || 0, // FIXME
+      borderSize: theme.style.window.border || 0
+    };
+
+    this.snapping   = {
+      cornerSize: wm.getSetting('windowCornerSnap') || 0,
+      windowSize: wm.getSetting('windowSnap') || 0
+    };
+
+    this.action     = action;
+    this.moved      = false;
+    this.direction  = null;
+    this.startX     = mousePosition.x;
+    this.startY     = mousePosition.y;
+    this.minWidth   = win._properties.min_width;
+    this.minHeight  = win._properties.min_height;
+
+    const windowRects = [];
+    wm.getWindows().forEach((w) => {
+      if ( w && w._wid !== win._wid ) {
+        const pos = w._position;
+        const dim = w._dimension;
+        const rect = {
+          left: pos.x - this.theme.borderSize,
+          top: pos.y - this.theme.borderSize,
+          width: dim.w + (this.theme.borderSize * 2),
+          height: dim.h + (this.theme.borderSize * 2) + this.theme.topMargin
+        };
+
+        rect.right = rect.left + rect.width;
+        rect.bottom = (pos.y + dim.h) + this.theme.topMargin + this.theme.borderSize;//rect.top + rect.height;
+
+        windowRects.push(rect);
+      }
+    });
+
+    this.snapRects = windowRects;
   }
 
-  this.theme = {
-    topMargin: theme.style.window.margin || 0, // FIXME
-    borderSize: theme.style.window.border || 0
-  };
+  getRect() {
+    const win = this.win;
 
-  this.snapping   = {
-    cornerSize: wm.getSetting('windowCornerSnap') || 0,
-    windowSize: wm.getSetting('windowSnap') || 0
-  };
+    return {
+      left: win._position.x,
+      top: win._position.y,
+      width: win._dimension.w,
+      height: win._dimension.h
+    };
+  }
 
-  this.action     = action;
-  this.moved      = false;
-  this.direction  = null;
-  this.startX     = mousePosition.x;
-  this.startY     = mousePosition.y;
-  this.minWidth   = win._properties.min_width;
-  this.minHeight  = win._properties.min_height;
+  calculateDirection() {
+    const dir = DOM.$position(this.$handle);
+    const dirX = this.startX - dir.left;
+    const dirY = this.startY - dir.top;
+    const dirD = 20;
 
-  const windowRects = [];
-  wm.getWindows().forEach((w) => {
-    if ( w && w._wid !== win._wid ) {
-      const pos = w._position;
-      const dim = w._dimension;
-      const rect = {
-        left: pos.x - this.theme.borderSize,
-        top: pos.y - this.theme.borderSize,
-        width: dim.w + (this.theme.borderSize * 2),
-        height: dim.h + (this.theme.borderSize * 2) + this.theme.topMargin
-      };
+    const checks = {
+      nw: (dirX <= dirD) && (dirY <= dirD),
+      n: (dirX > dirD) && (dirY <= dirD),
+      w: (dirX <= dirD) && (dirY >= dirD),
+      ne: (dirX >= (dir.width - dirD)) && (dirY <= dirD),
+      e: (dirX >= (dir.width - dirD)) && (dirY > dirD),
+      se: (dirX >= (dir.width - dirD)) && (dirY >= (dir.height - dirD)),
+      sw: (dirX <= dirD) && (dirY >= (dir.height - dirD))
+    };
 
-      rect.right = rect.left + rect.width;
-      rect.bottom = (pos.y + dim.h) + this.theme.topMargin + this.theme.borderSize;//rect.top + rect.height;
+    let direction = 's';
+    Object.keys(checks).forEach(function(k) {
+      if ( checks[k] ) {
+        direction = k;
+      }
+    });
 
-      windowRects.push(rect);
-    }
-  });
-
-  this.snapRects = windowRects;
+    this.direction = direction;
+  }
 }
-
-BehaviourState.prototype.getRect = function() {
-  const win = this.win;
-
-  return {
-    left: win._position.x,
-    top: win._position.y,
-    width: win._dimension.w,
-    height: win._dimension.h
-  };
-};
-
-BehaviourState.prototype.calculateDirection = function() {
-  const dir = DOM.$position(this.$handle);
-  const dirX = this.startX - dir.left;
-  const dirY = this.startY - dir.top;
-  const dirD = 20;
-
-  const checks = {
-    nw: (dirX <= dirD) && (dirY <= dirD),
-    n: (dirX > dirD) && (dirY <= dirD),
-    w: (dirX <= dirD) && (dirY >= dirD),
-    ne: (dirX >= (dir.width - dirD)) && (dirY <= dirD),
-    e: (dirX >= (dir.width - dirD)) && (dirY > dirD),
-    se: (dirX >= (dir.width - dirD)) && (dirY >= (dir.height - dirD)),
-    sw: (dirX <= dirD) && (dirY >= (dir.height - dirD))
-  };
-
-  let direction = 's';
-  Object.keys(checks).forEach(function(k) {
-    if ( checks[k] ) {
-      direction = k;
-    }
-  });
-
-  this.direction = direction;
-};
 
 /*
  * Window Behavour Abstraction

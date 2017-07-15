@@ -113,25 +113,6 @@ export default class OSjsTransport extends Transport {
     options.overwrite = true;
     options.onprogress = options.onprogress || function() {};
 
-    // Backward compability
-    // FIXME: Deprecate
-    if ( options.upload === false ) {
-      if ( typeof data === 'string' && !data.length ) {
-        return this._request('write', {path: file.path, data: data}, options);
-      } else {
-        return new Promise((resolve, reject) => {
-          FS.abToDataSource(data, file.mime, (error, dataSource) => {
-            if ( error ) {
-              reject(error);
-            } else {
-              this._request('write', {path: file.path, data: dataSource}, options)
-                .then(resolve).catch(reject);
-            }
-          });
-        });
-      }
-    }
-
     const parentfile = new FileMetadata(FS.dirname(file.path), file.mime);
     return this._requestUpload(parentfile, data, options);
   }

@@ -77,8 +77,11 @@ class MountManager {
     this.inited = true;
 
     const config = getConfig('VFS.Mountpoints', {});
+    const enabled = Object.keys(config).filter((name) => {
+      return config[name].enabled !== false;
+    });
 
-    return Promise.each(Object.keys(config), (name) => {
+    return Promise.each(enabled, (name) => {
       return new Promise((resolve) => {
         const iter = Object.assign({
           name: name,
@@ -121,7 +124,7 @@ class MountManager {
         if ( typeof point.transport === 'string' ) {
           const T = this.transports[point.transport];
           if ( !T ) {
-            return Promise.rejec('No such transport: ' + point.transport);
+            return Promise.reject(new Error('No such transport: ' + point.transport));
           }
           point.transport = new T();
         }
@@ -239,11 +242,6 @@ class MountManager {
    */
   getTransport(name) {
     return this.transports[name];
-  }
-
-  getRootFromPath(path) {
-    // FIXME: Deprecate
-    return this.getModuleFromPath(path).option('root');
   }
 
 }

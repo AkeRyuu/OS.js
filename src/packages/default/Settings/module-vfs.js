@@ -53,7 +53,7 @@
       title: win._app.__metadata.name,
       width: 400,
       height: 440
-    }, win._app, scheme);
+    }, win._app);
 
     nwin._on('destroy', function(root) {
       win._toggleDisabled(false);
@@ -94,7 +94,7 @@
         nwin._close();
       }
 
-      nwin._render(nwin._name);
+      nwin._render(nwin._name, scheme);
 
       if ( selected ) {
         nwin._find('MountType').set('value', selected.transport);
@@ -242,7 +242,7 @@
 
       addMounts.forEach(function(iter) {
         try {
-          mm.add(iter);
+          mm.add(Object.assign({}, iter));
 
           mounts.push(iter); // FIXME: Move this  down ?
         } catch ( e ) {

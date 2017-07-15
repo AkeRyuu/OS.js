@@ -55,8 +55,13 @@ function getFilePath(c, ns, mount) {
   const moduleOptions = mount.option('options') || {};
   const uri = Utils.parseurl(moduleOptions.host).path;
 
-  let path = c.getElementsByTagNameNS(ns, 'href')[0].textContent;
-  return path.substr(uri.length - 1, path.length);
+  try {
+    let path = c.getElementsByTagNameNS(ns, 'href')[0].textContent;
+    return path.substr(uri.length - 1, path.length);
+  } catch ( e ) {
+    console.warn(e);
+  }
+  return '/';
 }
 
 function getFileMime(type, c, ns) {
@@ -89,8 +94,12 @@ function getFileSize(type, c, ns) {
 function parseListing(doc, item, mount) {
   const root = mount.option('root');
   const moduleOptions = mount.option('options') || {};
-  const ns = moduleOptions.ns || 'DAV:';
   const reqpath = getTargetPath(item, mount);
+
+  let ns = moduleOptions.ns || 'DAV';
+  if ( ns.substr(-1) !== ':' ) {
+    ns += ':';
+  }
 
   return (doc.children || []).map((c) => {
     let path = getFilePath(c, ns, mount);

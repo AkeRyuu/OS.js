@@ -233,7 +233,7 @@ export default class FileDialog extends DialogWindow {
       this._find('FileInput').hide();
     }
 
-    const rootPath = MountManager.getRootFromPath(this.path);
+    const rootPath = MountManager.getModuleFromPath(this.path).option('root');
     const modules = MountManager.getModules().filter((m) => {
       return !!this.args.mfilter.filter((fn) => fn(m))[0];
     }).map((m) => {
@@ -260,8 +260,8 @@ export default class FileDialog extends DialogWindow {
     const lastDir = this.path;
 
     const resetLastSelected = () => {
-      const rootPath = MountManager.getRootFromPath(lastDir);
       try {
+        const rootPath = MountManager.getModuleFromPath(lastDir).option('root');
         this._find('ModuleSelect').set('value', rootPath);
       } catch ( e ) {
         console.warn('FileDialog::changePath()', 'resetLastSelection()', e);

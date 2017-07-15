@@ -192,7 +192,7 @@ abstract class Filesystem
         return file_put_contents(self::_getRealPath($arguments['path']), $data) !== false;
     }
 
-    final public static function delete(Request $request, Array $arguments = [])
+    final public static function unlink(Request $request, Array $arguments = [])
     {
         $path = self::_getRealPath($arguments['path']);
 

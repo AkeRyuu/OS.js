@@ -35,6 +35,13 @@ import {createLoading, destroyLoading} from 'core/main';
 import {getConfig} from 'core/config';
 
 //let _CALL_INDEX = 1;
+function progressHandler(ev, onprogress) {
+  if ( ev.lengthComputable ) {
+    onprogress(ev, ev.loaded / ev.total);
+  } else {
+    onprogress(ev, -1);
+  }
+}
 
 /*
  * Attaches options to a XHR call
@@ -51,13 +58,8 @@ function appendRequestOptions(data, options) {
     }
   });
 
-  data.onprogress = function XHR_onprogress(ev) {
-    if ( ev.lengthComputable ) {
-      onprogress(ev, ev.loaded / ev.total);
-    } else {
-      onprogress(ev, -1);
-    }
-  };
+  data.onUploadProgress = (ev) => progressHandler(ev, onprogress);
+  data.onDownloadProgress = (ev) => progressHandler(ev, onprogress);
 
   return data;
 }

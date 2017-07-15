@@ -39,7 +39,7 @@ export default class HttpConnection extends Connection {
 
   onVFSRequestCompleted(module, method, args, result, appRef) {
     // Emit a VFS event when a change occures
-    if ( ['write', 'mkdir', 'copy', 'move', 'unlink'].indexOf(method) !== -1 ) {
+    if ( ['upload', 'write', 'mkdir', 'copy', 'move', 'unlink'].indexOf(method) !== -1 ) {
       const arg = method === 'move' ? {
         source: args[0] instanceof FileMetadata ? args[0] : null,
         destination: args[1] instanceof FileMetadata ? args[1] : null

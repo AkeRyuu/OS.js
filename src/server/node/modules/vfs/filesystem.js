@@ -407,7 +407,7 @@ const VFS = {
     }
   },
 
-  delete: function(http, args, resolve, reject) {
+  unlink: function(http, args, resolve, reject) {
     const resolved = _vfs.parseVirtualPath(args.path, http);
     if ( ['', '.', '/'].indexOf() !== -1 ) {
       reject('Permission denied');

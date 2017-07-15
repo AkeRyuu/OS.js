@@ -361,7 +361,7 @@
 
     describe('#delete', function() {
       it('should delete file without error', function(done) {
-        _callVFS('delete', {path: 'home:///.mocha/test2.txt'}, function(error, result) {
+        _callVFS('unlink', {path: 'home:///.mocha/test2.txt'}, function(error, result) {
           assert.equal(null, error);
           assert.equal(true, result);
           done();
@@ -369,7 +369,7 @@
       });
 
       it('should delete folder without error', function(done) {
-        _callVFS('delete', {path: 'home:///.mocha'}, function(error, result) {
+        _callVFS('unlink', {path: 'home:///.mocha'}, function(error, result) {
           assert.equal(null, error);
           assert.equal(true, result);
           done();
@@ -377,7 +377,7 @@
       });
 
       it('should delete copied folder without error', function(done) {
-        _callVFS('delete', {path: 'home:///.mocha-copy'}, function(error, result) {
+        _callVFS('unlink', {path: 'home:///.mocha-copy'}, function(error, result) {
           assert.equal(null, error);
           assert.equal(true, result);
           done();
@@ -659,7 +659,7 @@
         });
       });
       it('should successfully remove file', function(done) {
-        post(url + '/FS/delete', {path: 'home:///foo'}, function(err, res, body) {
+        post(url + '/FS/unlink', {path: 'home:///foo'}, function(err, res, body) {
           assert.equal(200, res.statusCode);
           assert.equal(true, body.result);
           done();
