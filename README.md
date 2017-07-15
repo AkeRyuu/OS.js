@@ -17,7 +17,7 @@
 
 Visit the [official demo](https://demo.os-js.org) for a preview version. Please note that some features are disabled and might be outdated or unavailable at times.
 
-![ScreenShot](https://raw.githubusercontent.com/os-js/OS.js/master/src/gfx/screenshot.png)
+![ScreenShot](https://www.os-js.org/screenshot.png)
 
 ## Installation
 
