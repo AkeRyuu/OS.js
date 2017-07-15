@@ -248,12 +248,10 @@
     this.$message.style.display = 'block';
 
     var self = this;
-    OSjs.Core.getSearchEngine().search(q, {limit: 10, recursive: true}, function(errors, result) {
-      if ( errors.length ) {
-        console.error('PanelItemSearch::search()', 'errors', errors);
-      } else {
-        self.renderResult(result);
-      }
+    OSjs.Core.getSearchEngine().search(q, {limit: 10, recursive: true}).then((result) => {
+      self.renderResult(result);
+    }).catch((errors) => {
+      console.error('PanelItemSearch::search()', 'errors', errors);
     });
   };
 

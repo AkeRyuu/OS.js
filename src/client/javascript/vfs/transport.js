@@ -55,51 +55,51 @@ export default class Transport {
       }
     }
 
-    const newArgs = args.concat([options]);
+    const newArgs = args.concat([options, mount]);
     return this[method](...newArgs);
   }
 
-  scandir(item, options) {
+  scandir(item, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  read(item, options) {
+  read(item, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  write(file, data, options) {
+  write(file, data, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  unlink(src) {
+  unlink(src, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  copy(src, dest) {
+  copy(src, dest, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  move(src, dest) {
+  move(src, dest, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  exists(item) {
+  exists(item, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  fileinfo(item) {
+  fileinfo(item, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  mkdir(dir) {
+  mkdir(dir, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  upload(file, dest) {
+  upload(file, dest, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  download(item) {
+  download(item, options, mount) {
     return new Promise((resolve, reject) => {
       this.url(item).then((url) => {
         return axios({
@@ -115,27 +115,27 @@ export default class Transport {
     });
   }
 
-  url(item) {
+  url(item, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  find(file, options) {
+  find(file, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  trash(file) {
+  trash(file, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  untrash(file) {
+  untrash(file, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  emptyTrash() {
+  emptyTrash(options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 
-  freeSpace(root) {
+  freeSpace(root, options, mount) {
     return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
   }
 

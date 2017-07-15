@@ -449,10 +449,6 @@ class ApplicationFileManagerWindow extends Window {
 
     var sideViewItems = [];
     MountManager.getModules({special: true}).forEach(function(m, i) {
-      if ( m.option('dynamic') && !m.mounted() ) {
-        return;
-      }
-
       var classNames = [m.mounted() ? 'mounted' : 'unmounted'];
       if ( m.isReadOnly() ) {
         classNames.push('readonly gui-has-emblem');
@@ -480,11 +476,10 @@ class ApplicationFileManagerWindow extends Window {
     side.add(sideViewItems);
   }
 
-  onMountEvent(module, msg) {
-    var m = MountManager.getModule(module);
+  onMountEvent(m, msg) {
     if ( m ) {
       if ( msg === 'vfs:unmount' ) {
-        if ( this.currentPath.match(m.match) ) {
+        if ( this.currentPath.match(m.option('match')) ) {
           this.changePath(Config.getDefaultPath());
         }
       }

@@ -28,10 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/package-manager
- */
-
 import Promise from 'bluebird';
 import Authenticator from 'core/authenticator';
 import SettingsManager from 'core/settings-manager';
@@ -251,14 +247,14 @@ class PackageManager {
    * Get a list of packges from online repositories
    *
    * @param {Object}    opts      Options
-   * @param {Function}  callback  Callback => fn(error, result) FIXME
+   * @return {Promise<Array, Error>}
    */
-  getStorePackages(opts, callback) {
+  getStorePackages(opts) {
     const repos = SettingsManager.instance('PackageManager').get('Repositories', []);
 
     let entries = [];
 
-    Promise.all(repos, (url) => {
+    return Promise.all(repos, (url) => {
       return new Promise((yes, no) => {
         Connection.request('curl', {
           url: url,
@@ -279,7 +275,7 @@ class PackageManager {
           return yes();
         }).catch(no);
       });
-    }).then(() => callback(false, entries));
+    });
   }
 
   /**

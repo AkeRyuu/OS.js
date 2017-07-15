@@ -317,6 +317,7 @@ function convertWriteData(data, mime) {
 }
 
 function requestWrapper(mountpoint, method, args, options, appRef) {
+  console.info('VFS operation', method, args);
   return new Promise((resolve, reject) => {
     mountpoint.request(method, args, options).then((response) => {
       return Connection.instance.onVFSRequestCompleted(mountpoint, method, args, response)
@@ -409,7 +410,6 @@ export function broadcastMessage(msg, item, appRef) {
 export function find(item, args, options) {
   options = options || {};
 
-  console.debug('VFS::find()', item, args, options);
   if ( arguments.length < 2 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -443,7 +443,6 @@ export function scandir(item, options) {
 
   options = options || {};
 
-  console.debug('VFS::scandir()', item, options);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -506,7 +505,6 @@ export function scandir(item, options) {
 export function write(item, data, options, appRef) {
   options = options || {};
 
-  console.debug('VFS::write()', item, options);
   if ( arguments.length < 2 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -544,7 +542,6 @@ export function write(item, data, options, appRef) {
 export function read(item, options) {
   options = options || {};
 
-  console.debug('VFS::read()', item, options);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -618,7 +615,6 @@ export function read(item, options) {
 export function copy(src, dest, options, appRef) {
   options = options || {};
 
-  console.debug('VFS::copy()', src, dest, options);
   if ( arguments.length < 2 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -691,7 +687,6 @@ export function copy(src, dest, options, appRef) {
 export function move(src, dest, options, appRef) {
   options = options || {};
 
-  console.debug('VFS::move()', src, dest, options);
   if ( arguments.length < 2 ) {
     return Promise.reject(_('ERR_VFS_NUM_ARGS'));
   }
@@ -768,7 +763,6 @@ export function rename(src, dest) {
 export function unlink(item, options, appRef) {
   options = options || {};
 
-  console.debug('VFS::unlink()', item, options);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -812,7 +806,6 @@ export function unlink(item, options, appRef) {
 export function mkdir(item, options, appRef) {
   options = options || {};
 
-  console.debug('VFS::mkdir()', item, options);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -835,7 +828,6 @@ export function mkdir(item, options, appRef) {
  * @return {Promise<Boolean, Error>}
  */
 export function exists(item) {
-  console.debug('VFS::exists()', item);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -858,7 +850,6 @@ export function exists(item) {
  * @return {Promise<Object, Error>}
  */
 export function fileinfo(item) {
-  console.debug('VFS::fileinfo()', item);
   if ( arguments.length < 1 ) {
     return Promise.reject(_('ERR_VFS_NUM_ARGS'));
   }
@@ -884,7 +875,6 @@ export function fileinfo(item) {
 export function url(item, options) {
   options = options || {};
 
-  console.debug('VFS::url()', item);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -913,8 +903,6 @@ export function url(item, options) {
  */
 export function upload(args, options, appRef) {
   args = args || {};
-
-  console.debug('VFS::upload()', args);
 
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
@@ -955,7 +943,6 @@ export function upload(args, options, appRef) {
  * @return {Promise<String, Error>}
  */
 export function download(file) {
-  console.debug('VFS::download()', file);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -1000,7 +987,6 @@ export function download(file) {
  * @return {Promise<Boolean, Error>}
  */
 export function trash(item) {
-  console.debug('VFS::trash()', item);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -1023,8 +1009,6 @@ export function trash(item) {
  * @return {Promise<Boolean, Error>}
  */
 export function untrash(item) {
-
-  console.debug('VFS::untrash()', item);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
@@ -1045,8 +1029,6 @@ export function untrash(item) {
  * @return {Promise<Boolean, Error>}
  */
 export function emptyTrash() {
-  console.debug('VFS::emptyTrash()');
-
   return performRequest('emptyTrash', [], {}, null, null, 'ERR_VFSMODULE_EMPTYTRASH_FMT');
 }
 
@@ -1061,7 +1043,6 @@ export function emptyTrash() {
  * @return {Promise<Number, Error>}
  */
 export function freeSpace(item) {
-  console.debug('VFS::freeSpace()', item);
   if ( arguments.length < 1 ) {
     return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }

@@ -173,11 +173,12 @@ module.exports.request = function(http, method, args, cb) {
 
       if ( method === 'read' && opts.stream !== false ) {
         if ( typeof data === 'string' ) {
-          return http.respond.stream(data, true, null, null, {
-            download: opts.download
-          });
+          return http.respond.streamLocal(data, {}, opts);
+        } else if ( typeof data === 'function' ) {
+          return http.respond.stream(data, opts);
         }
-        return http.respond.stream(data.path, data);
+
+        return reject('Invalid stream');
       }
 
       return resolve(data);

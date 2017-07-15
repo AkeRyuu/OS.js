@@ -33,6 +33,13 @@ import MountManager from 'core/mount-manager';
 import {getBrowserPath} from 'core/config';
 import {_} from 'core/locales';
 
+/**
+ * Dist VFS Transport Module
+ *
+ * This is just an override of the default OS.js transport module
+ *
+ * @extends OSjsTransport
+ */
 export default class DistTransport extends OSjsTransport {
 
   request(method, args, options) {

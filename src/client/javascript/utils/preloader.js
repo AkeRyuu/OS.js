@@ -3,8 +3,9 @@ import promiseLimit from 'promise-limit';
 import {getBrowserPath} from 'core/config';
 import axios from 'axios';
 
-/**
+/*
  * Gets file type
+ * @return {String}
  */
 const getFileType = (src) => {
   if ( src.match(/\.js$/i) ) {
@@ -17,8 +18,9 @@ const getFileType = (src) => {
   return 'unknown';
 };
 
-/**
+/*
  * Ensures correct base uris
+ * @return {String}
  */
 const getSource = (src) => {
   if ( src && !src.match(/^(\/|file|https?)/) ) {
@@ -27,8 +29,9 @@ const getSource = (src) => {
   return src;
 };
 
-/**
+/*
  * Check if CSS has been loaded
+ * @return {Boolean}
  */
 const checkCss = (path) => {
   let result = false;

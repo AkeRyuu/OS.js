@@ -34,6 +34,15 @@ import Mountpoint from 'vfs/mountpoint';
 import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 
+function loadTransports() {
+  const list = ['web', 'osjs', 'dist', 'applications', 'webdav'];
+  const result = {};
+  list.forEach((name) => {
+    result[name] = require(`vfs/transports/${name}`).default;
+  });
+  return result;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // MOUNT MANAGER
 /////////////////////////////////////////////////////////////////////////////
@@ -51,12 +60,8 @@ class MountManager {
    */
   constructor() {
     this.inited = false;
-    this.transports = { // FIXME
-      osjs: require('vfs/transports/osjs').default,
-      dist: require('vfs/transports/dist').default,
-      applications: require('vfs/transports/applications').default
-    };
     this.mountpoints = [];
+    this.transports = loadTransports();
   }
 
   /**
@@ -109,16 +114,33 @@ class MountManager {
    * @return {Promise<Mountpoint, Error>}
    */
   add(point, mount, options) {
-    //throw new Error(_('ERR_VFSMODULE_ALREADY_MOUNTED_FMT', name));
+
     try {
       if ( !(point instanceof Mountpoint) ) {
 
         if ( typeof point.transport === 'string' ) {
           const T = this.transports[point.transport];
+          if ( !T ) {
+            return Promise.rejec('No such transport: ' + point.transport);
+          }
           point.transport = new T();
         }
 
         point = new Mountpoint(point);
+      }
+
+      const found = this.mountpoints.filter((m) => {
+        if ( m.option('name') === point.option('name') ) {
+          return true;
+        }
+        if ( m.option('root') === point.option('root') ) {
+          return true;
+        }
+        return false;
+      });
+
+      if ( found.length ) {
+        return Promise.reject(new Error(_('ERR_VFSMODULE_ALREADY_MOUNTED_FMT', point.option('name'))));
       }
 
       this.mountpoints.push(point);

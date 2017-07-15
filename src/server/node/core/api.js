@@ -84,6 +84,7 @@ module.exports.register = function(module) {
   Object.keys(module.api).forEach((k) => {
     MODULES[k] = module.api[k];
   });
+  return true;
 };
 
 /**

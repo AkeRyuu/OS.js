@@ -33,6 +33,14 @@ import Transport from 'vfs/transport';
 import FileMetadata from 'vfs/file';
 import {_} from 'core/locales';
 
+/**
+ * Application VFS Transport Module
+ *
+ * This is a purely virtual module that allows for listing of applications
+ * via scandir etc.
+ *
+ * @extends Transport
+ */
 export default class ApplicationTransport extends Transport {
 
   request(method, args, options) {
@@ -44,7 +52,6 @@ export default class ApplicationTransport extends Transport {
   }
 
   scandir() {
-
     const metadata = PackageManager.getPackages();
     const files = [];
 

@@ -43,7 +43,21 @@ const VFS = {
 
     if ( options.raw !== false ) {
       if ( options.stream !== false ) {
-        createReadStream(http, args.path).then(resolve).catch(reject);
+        createReadStream(http, args.path).then((stream) => {
+
+          resolve(function(cb) {
+
+            stream.on('response', (response) => {
+              cb({
+                'Content-Length': response.headers['content-length'],
+                'Content-Type': response.headers['content-type']
+              });
+            });
+
+            return stream;
+          });
+
+        }).catch(reject);
       } else {
         _read(args.path, false);
       }

@@ -29,6 +29,7 @@
  */
 
 /* eslint quotes: "off" */
+/* eslint key-spacing: "off" */
 
 export default {
   bg_BG: {

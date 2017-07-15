@@ -407,7 +407,7 @@ export default class Process {
   static message(msg, obj, opts) {
     opts = opts || {};
 
-    console.debug('doProcessMessage', msg, opts);
+    console.debug('doProcessMessage', msg, obj, opts);
 
     let filter = opts.filter || function() {
       return true;

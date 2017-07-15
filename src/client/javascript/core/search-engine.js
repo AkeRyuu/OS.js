@@ -79,7 +79,7 @@ function SearchObject(obj) {
 // MODULES
 /////////////////////////////////////////////////////////////////////////////
 
-/**
+/*
  * Search Applications
  */
 const ApplicationModule = (function() {
@@ -106,7 +106,7 @@ const ApplicationModule = (function() {
   }
 
   return {
-    search: function(q, args, settings, cb) {
+    search: function(q, args, settings) {
       if ( settings.applications ) {
         let results = search(query(), q);
 
@@ -114,31 +114,29 @@ const ApplicationModule = (function() {
           results = results.splice(0, args.dlimit);
         }
 
-        cb(false, results);
-      } else {
-        cb(false, []);
+        return Promise.resolve(results);
       }
+      return Promise.resolve([]);
     },
-    reindex: function(args, cb) {
-      cb(false, true);
+    reindex: function(args) {
+      return Promise.resolve(true);
     },
     destroy: function() {
     }
   };
 })();
 
-/**
+/*
  * Search VFS for files
  */
 const FilesystemModule = {
   search: function(q, args, settings, cb) {
     if ( !settings.files || !settings.paths ) {
-      cb(false, []);
-      return;
+      return Promise.resolve([]);
     }
 
     let found = [];
-    Promise.each(settings.paths, (e) => {
+    return Promise.each(settings.paths, (e) => {
       return new Promise((n) => {
         VFS.find(e, {query: q, limit: (args.limit ? args.dlimit : 0), recursive: args.recursive}).then((result) => {
           if ( result ) {
@@ -159,10 +157,10 @@ const FilesystemModule = {
           n();
         });
       });
-    }).then(() => cb(false, found)).catch(cb);
+    });
   },
-  reindex: function(args, cb) {
-    cb(false, true);
+  reindex: function(args) {
+    return Promise.resolve();
   },
   destroy: function() {
   }
@@ -224,9 +222,9 @@ class SearchEngine {
    *
    * @param   {String}      q         Search query
    * @param   {Object}      args      Arguments
-   * @param   {Function}    cb        Callback => fn(error, result)
+   * @return  {Promise<Array, Error>}
    */
-  search(q, args, cb) {
+  search(q, args) {
     let result = [];
     let errors = [];
 
@@ -240,8 +238,8 @@ class SearchEngine {
       args.dlimit = args.limit;
     }
 
-    Promise.each([this.modules], (module) => {
-      return new Promise((next) => {
+    return Promise.each([this.modules], (module) => {
+      return new Promise((next, reject) => {
 
         console.debug('SearchEngine::search()', '=>', module);
 
@@ -258,11 +256,9 @@ class SearchEngine {
             next();
           });
         } else {
-          cb(errors, result);
+          reject(new Error(errors.join(', ')));
         }
       });
-    }).then(() => cb(errors, result)).catch(() => {
-      cb(errors, result);
     });
   }
 
@@ -273,22 +269,23 @@ class SearchEngine {
    *
    * @param   {Object}      args      Arguments
    * @param   {Function}    cb        Callback => fn(error, result)
+   * @return {Promise<Boolean, Error>}
    */
-  reindex(args, cb) {
+  reindex(args) {
     const errors = [];
 
-    Promise.each(this.modules, (module) => {
+    return Promise.each(this.modules, (module) => {
       return new Promise((next) => {
         console.debug('SearchEngine::reindex()', '=>', module);
 
-        module.reindex(args, (err, res) => {
+        module.reindex(args).then(next).catch((err) => {
           if ( err ) {
             errors.push(err);
           }
           next();
         });
       });
-    }).then(() => cb(errors, true)).catch((err) => cb(err, false));
+    });
   }
 
   /**

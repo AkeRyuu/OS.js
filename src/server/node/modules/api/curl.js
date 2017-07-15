@@ -98,7 +98,7 @@ module.exports.curl = function(http, args) {
         }
       }
 
-      if ( method === 'POST' ) {
+      if ( method === 'POST' || method === 'PUT' ) {
         _parsePOST();
       } else {
         _parseOTHER();

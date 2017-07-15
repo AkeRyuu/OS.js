@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/application
- */
 import Process from 'core/process';
 import SettingsManager from 'core/settings-manager';
 import WindowManager from 'core/windowmanager';

@@ -27,9 +27,6 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-/**
- * @module core/connection
- */
 
 import axios from 'axios';
 import Promise from 'bluebird';

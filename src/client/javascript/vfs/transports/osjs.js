@@ -35,6 +35,13 @@ import Transport from 'vfs/transport';
 import {getConfig} from 'core/config';
 import {_} from 'core/locales';
 
+/**
+ * OS.js VFS Transport Module
+ *
+ * This module allows you to interact with files via the OS.js server.
+ *
+ * @extends Transport
+ */
 export default class OSjsTransport extends Transport {
 
   _request(method, args, options) {

@@ -56,7 +56,7 @@
 
         "http": {
           "readOnly": true,
-          "transport": "http",
+          "transport": "web",
           "title": "HTTP",
           "description": "HTTP",
           "visible": false,

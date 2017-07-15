@@ -1,9 +1,5 @@
 /* eslint new-cap:"off" */
 module.exports = function() {
-  /**
-   * @namespace Bootstrap
-   * @memberof OSjs
-   */
   window.OSjs = window.OSjs || {};
 
   // Make sure these namespaces exist
@@ -18,13 +14,6 @@ module.exports = function() {
   (['Helpers', 'Transports']).forEach(function(ns) {
     OSjs.VFS[ns] = OSjs.VFS[ns] || {};
   });
-
-  /**
-   * Callback for all Handler methods
-   * @param {String} [error] Error from response (if any)
-   * @param {Mixed} result Result from response (if any)
-   * @callback CallbackHandler
-   */
 
   const Process = require('core/process.js');
   const WindowManager = require('core/windowmanager.js');
@@ -227,17 +216,6 @@ module.exports = function() {
 
   OSjs.VFS['delete'] = OSjs.VFS.unlink;
 
-  /**
-   * Returns an instance of ServiceNotificationIcon
-   *
-   * This is the icon in the panel where external connections
-   * etc gets a menu entry.
-   *
-   * @function getServiceNotificationIcon
-   * @memberof OSjs.API
-   *
-   * @return  {ServiceNotificationIcon}
-   */
   module.exports.getServiceNotificationIcon = function() {
     return ServiceNotificationIcon;
   };
@@ -264,16 +242,6 @@ module.exports = function() {
     return Main.openFile(file, launchArgs);
   };
 
-  /**
-   * Restarts all processes with the given name
-   *
-   * This also reloads any metadata preload items defined in the application.
-   *
-   * @function relaunch
-   * @memberof OSjs.API
-   *
-   * @param   {String}      n               Application Name
-   */
   OSjs.API.relaunch = function(n) {
     function relaunch(p) {
       let data = null;
@@ -311,23 +279,6 @@ module.exports = function() {
     res.forEach(relaunch);
   };
 
-  /**
-   * Global function for calling API (backend)
-   *
-   * You can call VFS functions by prefixing your method name with "FS:"
-   *
-   * @function call
-   * @memberof OSjs.API
-   * @see OSjs.Core.Connection#request
-   * @see OSjs.Utils.ajax
-   * @throws {Error} On invalid arguments
-   *
-   * @param   {String}    m                           Method name
-   * @param   {Object}    a                           Method arguments
-   * @param   {Function}  cb                          Callback on success => fn(err, res)
-   * @param   {Object}    [options]                   Options (all options except the ones listed below are sent to Connection)
-   * @param   {Boolean}   [options.indicator=true]    Show loading indicator
-   */
   OSjs.API.call = function(m, a, cb, options) {
     Connection.request(m, a, options).then((res) => {
       cb(false, res);
@@ -350,19 +301,6 @@ module.exports = function() {
     return Assets.getPackageResource(app, name, vfspath);
   };
 
-  /**
-   * Perform cURL call
-   *
-   * The response is in form of: {httpCode, body}
-   *
-   * @function curl
-   * @memberof OSjs.API
-   *
-   * @param   {Object}    args      cURL Arguments (see docs)
-   * @param   {Function}  callback  Callback function => fn(error, response)
-   *
-   * @link https://os-js.org/manual/api/usage/curl/
-   */
   OSjs.API.curl = function(args, callback) {
     args = args || {};
     callback = callback || {};
@@ -377,74 +315,26 @@ module.exports = function() {
     return OSjs.API.call('curl', opts, callback, args.options);
   };
 
-  /**
-   * Checks the given permission (groups) against logged in user
-   *
-   * @function checkPermission
-   * @memberof OSjs.API
-   *
-   * @param   {Mixed}     group         Either a string or array of groups
-   *
-   * @return {Boolean}
-   */
   module.exports.checkPermission = function(group) {
     return Authenticator.default.instance().checkPermission(group);
   };
 
-  /**
-   * Get the current SettingsManager  instance
-   *
-   * @function getSettingsManager
-   * @memberof OSjs.Core
-   * @return {OSjs.Core.SettingsManager}
-   */
   OSjs.Core.getSettingsManager = function Core_getSettingsManager() {
     return SettingsManager.default;
   };
 
-  /**
-   * Get the current SearchEngine  instance
-   *
-   * @function getSearchEngine
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.SearchEngine}
-   */
   OSjs.Core.getSearchEngine = function Core_getSearchEngine() {
     return SearchEngine.default;
   };
 
-  /**
-   * Get the current PackageManager instance
-   *
-   * @function getPackageManager
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.PackageManager}
-   */
   OSjs.Core.getPackageManager = function Core_getPackageManager() {
     return PackageManager.default;
   };
 
-  /**
-   * Get the current MountManager  instance
-   *
-   * @function getMountManager
-   * @memberof OSjs.Core
-   * @return {OSjs.Core.MountManager}
-   */
   OSjs.Core.getMountManager = function Core_getMountManager() {
     return MountManager.default;
   };
 
-  /**
-   * This is kept for backward compability with the old Handler system
-   *
-   * @function getHandler
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.Handler}
-   */
   OSjs.Core.getHandler = function() {
     console.warn('HANDLER IS DEPRECATED. YOU SHOULD UPDATE YOUR CODE!');
     return (function() {
@@ -462,107 +352,34 @@ module.exports = function() {
     })();
   };
 
-  /**
-   * Get default configured settings
-   *
-   * THIS IS JUST A PLACEHOLDER. 'settings.js' SHOULD HAVE THIS!
-   *
-   * You should use 'OSjs.API.getConfig()' to get a setting
-   *
-   * @function getConfig
-   * @memberof OSjs.Core
-   * @see OSjs.API.getConfig
-   *
-   * @return  {Object}
-   */
   OSjs.Core.getConfig = OSjs.Core.getConfig || function() {
     return OSjs.getConfig ? OSjs.getConfig() : {};
   };
 
-  /**
-   * Get default configured packages
-   *
-   * THIS IS JUST A PLACEHOLDER. 'packages.js' SHOULD HAVE THIS!
-   *
-   * @function getMetadata
-   * @memberof OSjs.Core
-   *
-   * @return  {Metadata[]}
-   */
   OSjs.Core.getMetadata = OSjs.Core.getMetadata || function() {
     return OSjs.getManifest ? OSjs.getManifest() : {};
   };
 
-  /**
-   * Get running 'Connection' instance
-   *
-   * @function getConnection
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.Connection}
-   */
   OSjs.Core.getConnection = function Core_getConnection() {
     return Connection.default.instance;
   };
 
-  /**
-   * Get running 'Storage' instance
-   *
-   * @function getStorage
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.Storage}
-   */
   OSjs.Core.getStorage = function Core_getStorage() {
     return Storage.default.instance;
   };
 
-  /**
-   * Get running 'Authenticator' instance
-   *
-   * @function getAuthenticator
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.Authenticator}
-   */
   OSjs.Core.getAuthenticator = function Core_getAuthenticator() {
     return Authenticator.default.instance;
   };
 
-  /**
-   * Get the current WindowManager instance
-   *
-   * @function getWindowManager
-   * @memberof OSjs.Core
-   *
-   * @return {OSjs.Core.WindowManager}
-   */
   OSjs.Core.getWindowManager  = function Core_getWindowManager() {
     return WindowManager.default.instance;
   };
 
-  /**
-   * Shortcut for creating a new UIScheme class
-   *
-   * @function createScheme
-   * @memberof OSjs.GUI
-   *
-   * @param {String}    url     URL to scheme file
-   *
-   * @return {OSjs.GUI.Scheme}
-   */
   OSjs.GUI.createScheme = function(url) {
     console.error('FUNCTION REMOVED');
   };
 
-  /**
-   * Gets the browser window rect (x, y, width, height)
-   *
-   * @function getRect
-   * @memberof OSjs.Utils
-   *
-   * @return {Object}
-   */
   OSjs.Utils.getRect = function Utils_getRect() {
     const body = document.body || {};
     return {
@@ -573,100 +390,30 @@ module.exports = function() {
     };
   };
 
-  /**
-   * Creates a new VFS.File instance
-   *
-   * @function file
-   * @memberof OSjs.VFS
-   * @see OSjs.VFS.File
-   *
-   * @example
-   * OSjs.VFS.file('home:///foo').read(<fn>);
-   */
   OSjs.VFS.file = function createFileInstance(arg, mime) {
     return new VFSFile.default(arg, mime);
   };
 
-  /**
-   * Gets the currently running instance
-   *
-   * @function getInstance
-   * @memberof OSjs.Helpers.GoogleAPI
-   *
-   * @return  {OSjs.Helpers.GoogleAPI.Class}       Can also be null
-   */
   OSjs.Helpers.GoogleAPI.getInstance = function() {
     return GoogleAPI.instance();
   };
 
-  /**
-   * Create an instance of GoogleAPI
-   *
-   * @example
-   * The 'load' Array can be filled with either strings, or arrays. ex:
-   * - ['drive-realtime', 'drive-share']
-   * - [['calendar', 'v1'], 'drive-share']
-   *
-   * @function createInstance
-   * @memberof OSjs.Helpers.GoogleAPI
-   *
-   * @param   {Object}    args                   Arguments
-   * @param   {Array}     args.load              What functions/apis to load
-   * @param   {Array}     args.scope             What scopes to load
-   * @param   {boolean}   [args.client=false]    Load using gapi.client WILL BE REPLACED!
-   * @param   {Function}  callback               Callback function => fn(error, instance)
-   */
   OSjs.Helpers.GoogleAPI.createInstance = function(args, callback) {
     return GoogleAPI.craete(args, callback);
   };
 
-  /**
-   * Gets the currently running instance
-   *
-   * @function getInstance
-   * @memberof OSjs.Helpers.WindowsLiveAPI
-   *
-   * @return  {OSjs.Helpers.WindowsLiveAPI.Class}       Can also be null
-   */
   OSjs.Helpers.WindowsLiveAPI.getInstance = function() {
     return WindowsLiveAPI.instance();
   };
 
-  /**
-   * Create an instance of WindowsLiveAPI
-   *
-   * @function createInstance
-   * @memberof OSjs.Helpers.WindowsLiveAPI
-   *
-   * @param   {Object}    args           Arguments
-   * @param   {Array}     args.load      What functions/apis to load
-   * @param   {Function}  callback       Callback function => fn(error, instance)
-   */
   OSjs.Helpers.WindowsLiveAPI.createInstance = function(args, callback) {
     return WindowsLiveAPI.create(args, callback);
   };
 
-  /**
-   * Gets the currently running instance
-   *
-   * @function getInstance
-   * @memberof OSjs.Helpers.ZipArchiver
-   *
-   * @return  {OSjs.Helpers.ZipArchiver.Class}       Can also be null
-   */
   OSjs.Helpers.ZipArchiver.getInstance = function() {
     return ZipArchiver.instance();
   };
 
-  /**
-   * Create an instance of ZipArchiver
-   *
-   * @function createInstance
-   * @memberof OSjs.Helpers.ZipArchiver
-   *
-   * @param   {Object}    args      Arguments
-   * @param   {Function}  callback  Callback function => fn(error, instance)
-   */
   OSjs.Helpers.ZipArchiver.createInstance = function(args, callback) {
     ZipArchiver.create(args, callback);
   };

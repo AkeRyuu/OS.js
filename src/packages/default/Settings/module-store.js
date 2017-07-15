@@ -71,7 +71,7 @@
     win._toggleLoading(true);
 
     var pacman = OSjs.Core.getPackageManager();
-    pacman.getStorePackages({}, function(error, result) {
+    pacman.getStorePackages({}).then((result) => {
       var rows = result.map(function(i, idx) {
         var a = document.createElement('a');
         a.href = i._repository;
@@ -94,6 +94,11 @@
       if ( gelList ) {
         gelList.clear().add(rows);
       }
+
+      return true;
+    }).catch((err) => {
+      console.warn(err);
+      win._toggleLoading(false);
     });
   }
 

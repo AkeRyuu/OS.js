@@ -120,7 +120,7 @@ module.exports.createFromHttp = function(servers, request, response) {
     _raw(String(message), code);
   }
 
-  function _stream(path, stream, code, mime, options) {
+  function _stream(path, code, options) {
     options = options || {};
     code = code || 200;
 
@@ -137,7 +137,7 @@ module.exports.createFromHttp = function(servers, request, response) {
 
         const range = options.download ? false : request.headers.range;
         const headers = {
-          'Content-Type': mime || _vfs.getMime(path) || 'text/plain',
+          'Content-Type': _vfs.getMime(path) || 'text/plain',
           'Content-Length': stats.size
         };
 
@@ -145,51 +145,49 @@ module.exports.createFromHttp = function(servers, request, response) {
           headers['Content-Disposition'] = 'attachment; filename=' + _path.basename(path);
         }
 
-        if ( stream === true ) {
-          const opts = {
-            bufferSize: 64 * 1024
-          };
+        const opts = {
+          bufferSize: 64 * 1024
+        };
 
-          if ( range ) {
-            code = 206;
+        if ( range ) {
+          code = 206;
 
-            const positions = range.replace(/bytes=/, '').split('-');
-            const start = parseInt(positions[0], 10);
-            const total = stats.size;
-            const end = positions[1] ? parseInt(positions[1], 10) : total - 1;
+          const positions = range.replace(/bytes=/, '').split('-');
+          const start = parseInt(positions[0], 10);
+          const total = stats.size;
+          const end = positions[1] ? parseInt(positions[1], 10) : total - 1;
 
-            opts.start = start;
-            opts.end = end;
+          opts.start = start;
+          opts.end = end;
 
-            headers['Content-Length'] = (end - start) + 1;
-            headers['Content-Range'] = 'bytes ' + start + '-' + end + '/' + total;
-            headers['Accept-Ranges'] = 'bytes';
-          } else {
-            try {
-              const cacheEnabled = !_env.get('DEBUG');
-              if ( cacheEnabled && options.cache ) {
-                const cacheConfig = config.http.cache[options.cache];
-                if ( typeof cacheConfig === 'object' ) {
-                  Object.keys(cacheConfig).forEach((k) => {
-                    headers[k] = cacheConfig[k];
-                  });
-                }
-                if ( stats.mtime ) {
-                  try {
-                    // Last-Modified: <day-name>, <day> <month> <year> <hour>:<minute>:<second> GMT
-                    headers['Last-Modified'] = getLastModifiedTimestamp(stats.mtime);
-                  } catch ( e ) {
-                    headers['Last-Modified'] = stats.mtime;
-                  }
+          headers['Content-Length'] = (end - start) + 1;
+          headers['Content-Range'] = 'bytes ' + start + '-' + end + '/' + total;
+          headers['Accept-Ranges'] = 'bytes';
+        } else {
+          try {
+            const cacheEnabled = !_env.get('DEBUG');
+            if ( cacheEnabled && options.cache ) {
+              const cacheConfig = config.http.cache[options.cache];
+              if ( typeof cacheConfig === 'object' ) {
+                Object.keys(cacheConfig).forEach((k) => {
+                  headers[k] = cacheConfig[k];
+                });
+              }
+              if ( stats.mtime ) {
+                try {
+                  // Last-Modified: <day-name>, <day> <month> <year> <hour>:<minute>:<second> GMT
+                  headers['Last-Modified'] = getLastModifiedTimestamp(stats.mtime);
+                } catch ( e ) {
+                  headers['Last-Modified'] = stats.mtime;
                 }
               }
-            } catch ( e ) {
-              // We can safely supress this. Errors due to configuration problems
             }
+          } catch ( e ) {
+            // We can safely supress this. Errors due to configuration problems
           }
-
-          stream = _fs.createReadStream(path, opts);
         }
+
+        const stream = _fs.createReadStream(path, opts);
 
         stream.on('error', (err) => {
           console.error('An error occured while streaming', path, err);
@@ -231,11 +229,22 @@ module.exports.createFromHttp = function(servers, request, response) {
       });
     },
 
-    stream: _stream,
+    stream: function(stream, options) {
+      const target = stream((headers) => {
+        response.writeHead(200, headers);
+      });
+
+      target.pipe(response);
+    },
+
+    streamLocal: function(path, args, options) {
+      args = args || {};
+      return _stream(path, args.code, options);
+    },
 
     file: function(path, options, code) {
       options = options || {};
-      return _stream(path, true, code, null, options);
+      return this.streamLocal(path, {code: code}, options);
     }
   });
 };
@@ -274,6 +283,10 @@ module.exports.createFromWebsocket = function(servers, ws, index) {
     },
 
     stream: function() {
+      _json({error: 'Not available'});
+    },
+
+    streamLocal: function() {
       _json({error: 'Not available'});
     },
 

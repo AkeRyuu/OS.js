@@ -28,9 +28,6 @@
  * @licence Simplified BSD License
  */
 
-/**
- * @module core/authenticator
- */
 import Promise from 'bluebird';
 import {_, setLocale} from 'core/locales';
 import {getConfig, getUserLocale} from 'core/config';
@@ -173,7 +170,7 @@ export default class Authenticator {
    * When login is requested
    *
    * @param  {Object}               data            Login data
-   * @return {Promise<Object>}
+   * @return {Promise<Object, Error>}
    */
   onLoginRequest(data) {
     return new Promise((resolve, reject) => {
@@ -187,6 +184,7 @@ export default class Authenticator {
    * When login has occured
    *
    * @param   {Object}               data            User data
+   * @return {Promise<Object, Error>}
    */
   onLogin(data) {
     let userSettings = data.userSettings;

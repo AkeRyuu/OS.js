@@ -45,7 +45,6 @@ module.exports.request = function(http, next) {
       }
     }).then(() => {
       console.log('xx');
-
     }).catch((error) => {
       console.error(error);
       next(true);
