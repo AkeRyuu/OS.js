@@ -75,7 +75,7 @@
         "google-drive": {
           "enabled": false,
           "title": "GoogleDrive",
-          "transport": "googledrive",
+          "transport": "google-drive",
           "description": "Google Drive",
           "icon": "places/google-drive.png"
         },
@@ -83,7 +83,7 @@
         "localstorage": {
           "enabled": false,
           "title": "LocalStorage",
-          "transport": "LocalStorage",
+          "transport": "localstorage",
           "description": "Browser Localstorage",
           "icon": "apps/web-browser.png"
         },
@@ -91,7 +91,7 @@
         "onedrive": {
           "enabled": false,
           "title": "OneDrive",
-          "transport": "OneDrive",
+          "transport": "onedrive",
           "description": "OneDrive",
           "icon": "places/onedrive.png"
         }

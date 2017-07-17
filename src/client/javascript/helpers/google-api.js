@@ -29,7 +29,7 @@
  */
 import MountManager from 'core/mount-manager';
 import ServiceNotificationIcon from 'helpers/service-notification-icon';
-import {preload} from 'utils/preloader';
+import Preloader from 'utils/preloader';
 import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 import jsonp from 'then-jsonp';
@@ -93,7 +93,7 @@ class GoogleAPI {
     if ( this.preloaded ) {
       callback(false, true);
     } else {
-      preload(this.preloads).then((result) => {
+      Preloader.preload(this.preloads).then((result) => {
         if ( result.failed.length ) {
           this.preloaded = true;
         }
