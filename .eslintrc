@@ -14,7 +14,8 @@
     "EventTarget": true,
     "Uint8Array": true,
     "ArrayBuffer": true,
-    "Promise": true
+    "Promise": true,
+    "gapi": true
   },
   "parserOptions": {
     "ecmaVersion": 6,
