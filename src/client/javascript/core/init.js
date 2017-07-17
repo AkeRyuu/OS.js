@@ -481,7 +481,7 @@ const initWindowManager = (config) => new Promise((resolve, reject) => {
     reject(new Error(Locales._('ERR_CORE_INIT_NO_WM')));
   } else {
     Main.launch(wmConfig.exec, (wmConfig.args || {})).then((app) => {
-      return app.setup(() => resolve());
+      return app.setup().then(resolve).catch(reject);
     }).catch((error) => {
       reject(new Error(Locales._('ERR_CORE_INIT_WM_FAILED_FMT', error)));
     });

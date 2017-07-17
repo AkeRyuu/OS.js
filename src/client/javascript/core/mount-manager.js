@@ -35,7 +35,7 @@ import {_} from 'core/locales';
 import {getConfig} from 'core/config';
 
 function loadTransports() {
-  const list = ['web', 'osjs', 'dist', 'applications', 'webdav'];
+  const list = ['web', 'osjs', 'dist', 'applications', 'webdav', 'google-drive'];
   const result = {};
   list.forEach((name) => {
     result[name] = require(`vfs/transports/${name}`).default;

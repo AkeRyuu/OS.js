@@ -332,7 +332,7 @@ export function launch(name, args, onconstruct) {
     return new Promise((resolve, reject) => {
       const onerror = (e) => {
         console.warn(e);
-        return reject(e);
+        return reject(new Error(e));
       };
 
       Preloader.preload(metadata.preload, pargs).then((result) => {

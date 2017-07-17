@@ -28,8 +28,6 @@
  * @licence Simplified BSD License
  */
 
-'use strict';
-
 module.exports.api = {
   test: function(env, http, resolve, reject, args) {
     resolve('test');

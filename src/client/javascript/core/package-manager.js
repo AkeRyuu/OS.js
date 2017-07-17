@@ -115,7 +115,9 @@ class PackageManager {
   init(metadata) {
     console.debug('PackageManager::load()', metadata);
 
-    this.setPackages(metadata);
+    if ( metadata ) {
+      this.setPackages(metadata);
+    }
 
     return new Promise((resolve, reject) => {
       this._loadMetadata().then(() => {

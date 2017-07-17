@@ -140,12 +140,11 @@ export default class WindowManager extends Process {
 
   /**
    * @param   {String}            name      Window Manager name
-   * @param   {WindowManager}     ref       Constructed instance ref
    * @param   {Object}            args      Constructed arguments
    * @param   {Object}            metadata  Package Metadata
    * @param   {Object}            settings  Restored settings
    */
-  constructor(name, ref, args, metadata, settings) {
+  constructor(name, args, metadata, settings) {
     console.group('WindowManager::constructor()');
     console.debug('Name', name);
     console.debug('Arguments', args);
