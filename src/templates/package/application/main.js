@@ -27,7 +27,7 @@
  * @author  Anders Evenrud <andersevenrud@gmail.com>
  * @licence Simplified BSD License
  */
-const Application = OSjs.require('core/Application');
+const Application = OSjs.require('core/application');
 const Window = OSjs.require('core/window');
 
 class ApplicationEXAMPLEWindow extends Window {
