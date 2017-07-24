@@ -160,12 +160,14 @@ module.exports = new Promise((resolve, reject) => {
       webpackConfig.entry[k] = webpackConfig.entry[k]
         .filter(getFiltered)
         .map(fixPath)
-        .map(getAbsolute);
+        .map(getAbsolute)
+        .map(osjs.utils.fixWinPath);
     });
 
     const finalConfig = osjs.utils.mergeObject(webpack, webpackConfig);
     // Fixes "not an absolute path" problem in Webpack
     finalConfig.output.path = path.resolve(finalConfig.output.path);
+    finalConfig.resolve.modules = finalConfig.resolve.modules.map(osjs.utils.fixWinPath);
     resolve(finalConfig);
   }).catch(reject);
 });
