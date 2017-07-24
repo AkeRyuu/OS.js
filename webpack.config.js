@@ -164,6 +164,8 @@ module.exports = new Promise((resolve, reject) => {
     });
 
     const finalConfig = osjs.utils.mergeObject(webpack, webpackConfig);
+    // Fixes "not an absolute path" problem in Webpack
+    finalConfig.output.path = path.resolve(finalConfig.output.path);
     resolve(finalConfig);
   }).catch(reject);
 });
