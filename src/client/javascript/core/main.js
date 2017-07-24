@@ -440,8 +440,8 @@ export function launchList(list, onconstruct) {
 /**
  * Open a file
  *
- * @param   {OSjs.VFS.File}   file    The File reference (can also be a tuple with 'path' and 'mime')
- * @param   {Object}          args    Arguments to send to process launch function
+ * @param   {FileMetadata}   file    The File reference (can also be a tuple with 'path' and 'mime')
+ * @param   {Object}         args    Arguments to send to process launch function
  * @return  {Promise<Process, Error>}
  */
 export function openFile(file, args) {

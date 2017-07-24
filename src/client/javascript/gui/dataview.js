@@ -284,7 +284,7 @@ export default class UIDataView extends GUIElement {
    *
    * @param {Node} [body] The body to clear
    *
-   * @return {OSjs.GUI.Element} this
+   * @return {GUIElement} this
    */
   clear(body) {
     const el = this.$element;
@@ -309,7 +309,7 @@ export default class UIDataView extends GUIElement {
    * @param {Array|Object}  entries       Entry list, or a single entry
    * @param {Function}      [oncreate]    Callback on creation => fn(this, node)
    *
-   * @return {OSjs.GUI.Element} this
+   * @return {GUIElement} this
    */
   add(entries, oncreate) {
     oncreate = oncreate || function() {};
@@ -334,7 +334,7 @@ export default class UIDataView extends GUIElement {
    * @param {Function}      [oncreate]    Callback on creation => fn(this, node)
    * @param {Function}      [oninit]      Callback on init => fn(this, node)
    *
-   * @return {OSjs.GUI.Element} this
+   * @return {GUIElement} this
    */
   patch(entries, className, body, oncreate, oninit) {
     let single = false;
@@ -397,7 +397,7 @@ export default class UIDataView extends GUIElement {
    * @param {Node}      [target]    Remove this target instead of using args
    * @param {Node}      [parentEl]  Entry parent node
    *
-   * @return {OSjs.GUI.Element} this
+   * @return {GUIElement} this
    */
   remove(args, className, target, parentEl) {
 

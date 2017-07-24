@@ -49,7 +49,7 @@ import {getDefaultPath} from 'core/config';
  * @param  {String}           args.title                Dialog title
  * @param  {String}           [args.type=open]          Dialog type (alternative=save)
  * @param  {Boolean}          [args.multiple=false]     Multiple file selection
- * @param  {OSjs.VFS.File}    [args.file]               Current file
+ * @param  {FileMetadata}     [args.file]               Current file
  * @param  {String}           [args.path]               Default path
  * @param  {String}           [args.filename]           Default filename
  * @param  {String}           [args.extension]          Default file extension

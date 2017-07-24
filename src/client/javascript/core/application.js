@@ -336,7 +336,7 @@ export default class Application extends Process {
   /**
    * Get a Window by Name
    *
-   * @see OSjs.Core.Application#_getWindow
+   * @see Application#_getWindow
    *
    * @param {String}  name      Window Name
    *
@@ -349,7 +349,7 @@ export default class Application extends Process {
   /**
    * Get Windows(!) by Tag
    *
-   * @see OSjs.Core.Application#_getWindow
+   * @see Application#_getWindow
    *
    * @param {String}  tag       Tag name
    *

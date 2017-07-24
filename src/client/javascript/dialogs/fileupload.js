@@ -45,7 +45,7 @@ export default class FileUploadDialog extends DialogWindow {
    * @param  {Object}          args              An object with arguments
    * @param  {String}          args.title        Dialog title
    * @param  {String}          args.dest         VFS destination
-   * @param  {OSjs.VFS.File}   [args.file]       File to upload
+   * @param  {FileMetadata}    [args.file]       File to upload
    * @param  {CallbackDialog}  callback          Callback when done
    */
   constructor(args, callback) {

@@ -45,7 +45,7 @@ export default class ApplicationChooserDialog extends DialogWindow {
    * @param  {Object}          args              An object with arguments
    * @param  {String}          args.title        Dialog title
    * @param  {String}          args.message      Dialog message
-   * @param  {OSjs.VFS.File}   args.file         The file to open
+   * @param  {FileMetadata}    args.file         The file to open
    * @param  {CallbackDialog}  callback          Callback when done
    */
   constructor(args, callback) {

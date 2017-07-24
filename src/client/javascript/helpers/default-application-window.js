@@ -176,8 +176,8 @@ export default class DefaultApplicationWindow extends Window {
    *
    * YOU SHOULD EXTEND THIS METHOD IN YOUR WINDOW TO ACTUALLY DISPLAY CONTENT
    *
-   * @param   {OSjs.VFS.File}       file        File
-   * @param   {Mixed}               content     File contents
+   * @param   {FileMetadata}       file        File
+   * @param   {Mixed}              content     File contents
    */
   showFile(file, content) {
     this.updateFile(file);
@@ -186,7 +186,7 @@ export default class DefaultApplicationWindow extends Window {
   /**
    * Updates current view for given File
    *
-   * @param   {OSjs.VFS.File}       file        File
+   * @param   {FileMetadata}       file        File
    */
   updateFile(file) {
     this.currentFile = file || null;

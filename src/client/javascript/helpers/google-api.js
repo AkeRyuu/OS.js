@@ -48,9 +48,6 @@ let SingletonInstance = null;
  * <pre><b>
  * Generally you want to create an instance of this helper
  * and when successfully created use `window.gapi`.
- *
- * This is a private class and can only be aquired through
- * OSjs.Helpers.GoogleAPI.createInsatance()
  * </b></pre>
  *
  * @desk Helper for communicating with Google API.

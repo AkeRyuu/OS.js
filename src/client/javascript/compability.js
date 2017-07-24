@@ -1,4 +1,8 @@
 /* eslint new-cap:"off" */
+
+//
+// This is the backward compability layer for OS.js v2.0.x
+//
 module.exports = function() {
   window.OSjs = window.OSjs || {};
 
@@ -285,18 +289,6 @@ module.exports = function() {
     }).catch(cb);
   };
 
-  /**
-   * Get a resource from application
-   *
-   * @function getApplicationResource
-   * @memberof OSjs.API
-   *
-   * @param   {OSjs.Core.Process}   app     Application instance reference. You can also specify a name by String
-   * @param   {String}              name    Resource Name
-   * @param   {Boolean}             vfspath Return a valid VFS path
-   *
-   * @return  {String}            The absolute URL of resource
-   */
   OSjs.API.getApplicationResource = function(app, name, vfspath) {
     return Assets.getPackageResource(app, name, vfspath);
   };

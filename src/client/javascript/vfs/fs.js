@@ -496,10 +496,10 @@ export function scandir(item, options) {
  *
  * @desc Writes data to a file
  *
- * @param  {FileMetadata}           item          File Metadata (you can also provide a string)
- * @param  {File}                   data          File Data (see supported types)
- * @param  {Object}                 [options]     Set of options
- * @param  {OSjs.Core.Application}  [appRef]      Reference to an Application
+ * @param  {FileMetadata} item          File Metadata (you can also provide a string)
+ * @param  {File}         data          File Data (see supported types)
+ * @param  {Object}       [options]     Set of options
+ * @param  {Application}  [appRef]      Reference to an Application
  * @return {Promise<Boolean, Error>}
  */
 export function write(item, data, options, appRef) {
@@ -605,11 +605,11 @@ export function read(item, options) {
  *
  * @desc Copies a file to a destination
  *
- * @param  {FileMetadata}           src                   Source File Metadata (you can also provide a string)
- * @param  {FileMetadata}           dest                  Destination File Metadata (you can also provide a string)
- * @param  {Object}                 [options]             Set of options
- * @param  {Boolean}                [options.overwrite]   If set to true it will not check if the destination exists
- * @param  {OSjs.Core.Application}  [appRef]              Seference to an Application
+ * @param  {FileMetadata}   src                   Source File Metadata (you can also provide a string)
+ * @param  {FileMetadata}   dest                  Destination File Metadata (you can also provide a string)
+ * @param  {Object}         [options]             Set of options
+ * @param  {Boolean}        [options.overwrite]   If set to true it will not check if the destination exists
+ * @param  {Application}    [appRef]              Seference to an Application
  * @return {Promise<Boolean, Error>}
  */
 export function copy(src, dest, options, appRef) {
@@ -677,11 +677,11 @@ export function copy(src, dest, options, appRef) {
  *
  * @desc Moves a file to a destination
  *
- * @param  {FileMetadata}           src                   Source File Metadata (you can also provide a string)
- * @param  {FileMetadata}           dest                  Destination File Metadata (you can also provide a string)
- * @param  {Object}                 [options]             Set of options
- * @param  {Boolean}                [options.overwrite]   If set to true it will not check if the destination exists
- * @param  {OSjs.Core.Application}  [appRef]              Seference to an Application
+ * @param  {FileMetadata}   src                   Source File Metadata (you can also provide a string)
+ * @param  {FileMetadata}   dest                  Destination File Metadata (you can also provide a string)
+ * @param  {Object}         [options]             Set of options
+ * @param  {Boolean}        [options.overwrite]   If set to true it will not check if the destination exists
+ * @param  {Application}    [appRef]              Seference to an Application
  * @return {Promise<Boolean, Error>}
  */
 export function move(src, dest, options, appRef) {
@@ -737,11 +737,11 @@ export function move(src, dest, options, appRef) {
  * Alias of move
  * @alias move
  *
- * @param  {FileMetadata}           src                   Source File Metadata (you can also provide a string)
- * @param  {FileMetadata}           dest                  Destination File Metadata (you can also provide a string)
- * @param  {Object}                 [options]             Set of options
- * @param  {Boolean}                [options.overwrite]   If set to true it will not check if the destination exists
- * @param  {OSjs.Core.Application}  [appRef]              Seference to an Application
+ * @param  {FileMetadata}   src                   Source File Metadata (you can also provide a string)
+ * @param  {FileMetadata}   dest                  Destination File Metadata (you can also provide a string)
+ * @param  {Object}         [options]             Set of options
+ * @param  {Boolean}        [options.overwrite]   If set to true it will not check if the destination exists
+ * @param  {Application}    [appRef]              Seference to an Application
  * @return {Promise<Boolean, Error>}
  */
 export function rename(src, dest) {
@@ -755,9 +755,9 @@ export function rename(src, dest) {
  *
  * @desc Deletes a file
  *
- * @param  {FileMetadata}           item                  File Metadata (you can also provide a string)
- * @param  {Object}                 [options]             Set of options
- * @param  {OSjs.Core.Application}  [appRef]              Reference to an Application
+ * @param  {FileMetadata} item                  File Metadata (you can also provide a string)
+ * @param  {Object}       [options]             Set of options
+ * @param  {Application}  [appRef]              Reference to an Application
  * @return {Promise<Boolean, Error>}
  */
 export function unlink(item, options, appRef) {
@@ -797,10 +797,10 @@ export function unlink(item, options, appRef) {
  *
  * @desc Creates a directory
  *
- * @param  {FileMetadata}           item                  File Metadata (you can also provide a string)
- * @param  {Object}                 [options]             Set of options
- * @param  {Boolean}                [options.overwrite]   If set to true it will not check if the destination exists
- * @param  {OSjs.Core.Application}  [appRef]              Reference to an Application
+ * @param  {FileMetadata} item                  File Metadata (you can also provide a string)
+ * @param  {Object}       [options]             Set of options
+ * @param  {Boolean}      [options.overwrite]   If set to true it will not check if the destination exists
+ * @param  {Application}  [appRef]              Reference to an Application
  * @return {Promise<Boolean, Error>}
  */
 export function mkdir(item, options, appRef) {
@@ -893,12 +893,12 @@ export function url(item, options) {
  *
  * @desc Uploads a file to the target from browser
  *
- * @param  {Object}                    args                      Function arguments (see below)
- * @param  {String}                    args.destination          Full path to destination
- * @param  {Array}                     args.files                Array of 'File'
- * @param  {Object}                    [options]                 Set of options
- * @param  {Boolean}                   [options.overwrite=false] If set to true it will not check if the destination exists
- * @param  {OSjs.Core.Application}     [appRef]                  Reference to an Application
+ * @param  {Object}          args                      Function arguments (see below)
+ * @param  {String}          args.destination          Full path to destination
+ * @param  {Array}           args.files                Array of 'File'
+ * @param  {Object}          [options]                 Set of options
+ * @param  {Boolean}         [options.overwrite=false] If set to true it will not check if the destination exists
+ * @param  {Application}     [appRef]                  Reference to an Application
  * @return {Promise<FileMetadata, Error>}
  */
 export function upload(args, options, appRef) {
@@ -1104,9 +1104,9 @@ export function unwatch(idx) {
 /**
  * Triggers a VFS watch event
  *
- * @param   {String}              method      VFS method
- * @param   {Object}              arg         VFS file
- * @param   {OSjs.Core.Process}   [appRef]    Optional application reference
+ * @param   {String}    method      VFS method
+ * @param   {Object}    arg         VFS file
+ * @param   {Process}   [appRef]    Optional application reference
  */
 export function triggerWatch(method, arg, appRef) {
   broadcastMessage('vfs:' + method, arg, appRef);

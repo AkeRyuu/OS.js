@@ -141,8 +141,6 @@ let SingletonInstance = null;
  * @desc Helper for handling ZIP files.
  *
  * <pre><b>
- * This is a private class and can only be aquired through
- * OSjs.Helpers.ZipArchiver.createInsatance()
  *
  * Generally you want to create an instance of this helper
  * and when successfully created use `window.zip` use the instance helpers.
@@ -189,8 +187,8 @@ class ZipArchiver {
   /**
    * Lists contents of a ZIP file
    *
-   * @param   {OSjs.VFS.File}     file          File to extract
-   * @param   {Function}          cb            Callback function => fn(error, entries)
+   * @param   {FileMetadata}     file          File to extract
+   * @param   {Function}         cb            Callback function => fn(error, entries)
    */
   list(file, cb) {
     VFS.download(file).then((result) => {
@@ -207,9 +205,9 @@ class ZipArchiver {
   /**
    * Create a new blank ZIP file
    *
-   * @param   {OSjs.VFS.File}               file          File to extract
-   * @param   {Function}                    cb            Callback function => fn(error)
-   * @param   {OSjs.Core.Application}       [appRef]      Application reference
+   * @param   {FileMetadata}      file          File to extract
+   * @param   {Function}          cb            Callback function => fn(error)
+   * @param   {Application}       [appRef]      Application reference
    */
   create(file, cb, appRef) {
     const writer = new zip.BlobWriter();
@@ -237,12 +235,12 @@ class ZipArchiver {
    * Add a entry to the ZIP file
    * @TODO Adding directory does not actually add files inside dirs yet
    *
-   * @param   {OSjs.VFS.File}     file                Archive File
-   * @param   {OSjs.VFS.File}     add                 File to add
-   * @param   {Object}            args                Arguments
-   * @param   {String}            [args.path=/]       Root path to add to
-   * @param   {Function}          args.onprogress     Callback on progress => fn(state[, args, ...])
-   * @param   {Function}          args.oncomplete     Callback on complete => fn(error, result)
+   * @param   {FileMetadata}     file                Archive File
+   * @param   {FileMetadata}     add                 File to add
+   * @param   {Object}           args                Arguments
+   * @param   {String}           [args.path=/]       Root path to add to
+   * @param   {Function}         args.onprogress     Callback on progress => fn(state[, args, ...])
+   * @param   {Function}         args.oncomplete     Callback on complete => fn(error, result)
    */
   add(file, add, args) {
     const cb = args.oncomplete || function() {};
@@ -352,9 +350,9 @@ class ZipArchiver {
   /**
    * Removes an entry from ZIP file
    *
-   * @param   {OSjs.VFS.File}     file          Archive File
-   * @param   {String}            path          Path
-   * @param   {Function}          cb            Callback function => fn(err, result)
+   * @param   {FileMetadata}     file          Archive File
+   * @param   {String}           path          Path
+   * @param   {Function}         cb            Callback function => fn(err, result)
    */
   remove(file, path, cb) {
 
@@ -401,12 +399,12 @@ class ZipArchiver {
   /**
    * Extract a File to destination
    *
-   * @param   {OSjs.VFS.File}         file                 File to extract
-   * @param   {String}                destination          Destination path
-   * @param   {Object}                args                 Arguments
-   * @param   {Function}              args.onprogress      Callback on progress => fn(filename, currentIndex, totalIndex)
-   * @param   {Function}              args.oncomplete      Callback on complete => fn(error, warnings, result)
-   * @param   {OSjs.Core.Application} [args.app]           Application reference
+   * @param   {FileMetadata}      file                 File to extract
+   * @param   {String}            destination          Destination path
+   * @param   {Object}            args                 Arguments
+   * @param   {Function}          args.onprogress      Callback on progress => fn(filename, currentIndex, totalIndex)
+   * @param   {Function}          args.oncomplete      Callback on complete => fn(error, warnings, result)
+   * @param   {Application}       [args.app]           Application reference
    */
   extract(file, destination, args) {
     args = args || {};

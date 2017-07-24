@@ -96,8 +96,8 @@ export default class DefaultApplication extends Application {
   /**
    * Open given File
    *
-   * @param   {OSjs.VFS.File}       file        File
-   * @param   {OSjs.Core.Window}    win         Window reference
+   * @param   {FileMetadata}  file        File
+   * @param   {Window}        win         Window reference
    */
   openFile(file, win) {
     if ( !file ) {
@@ -156,9 +156,9 @@ export default class DefaultApplication extends Application {
   /**
    * Save given File
    *
-   * @param   {OSjs.VFS.File}       file        File
-   * @param   {Mixed}               value       File contents
-   * @param   {OSjs.Core.Window}    win         Window reference
+   * @param   {FileMetadata}  file        File
+   * @param   {Mixed}         value       File contents
+   * @param   {Window}        win         Window reference
    */
   saveFile(file, value, win) {
     if ( !file ) {
@@ -184,10 +184,10 @@ export default class DefaultApplication extends Application {
   /**
    * Open Save dialog
    *
-   * @param   {OSjs.VFS.File}       file        File
-   * @param   {OSjs.Core.Window}    win         Window reference
-   * @param   {Boolean}             saveAs      SaveAs ?
-   * @param   {CallbackDialog}      cb          Called after the user closed the dialog
+   * @param   {FileMetadata}       file        File
+   * @param   {Window}             win         Window reference
+   * @param   {Boolean}            saveAs      SaveAs ?
+   * @param   {CallbackDialog}     cb          Called after the user closed the dialog
    */
   saveDialog(file, win, saveAs, cb) {
     const value = win.getFileData();
@@ -218,8 +218,8 @@ export default class DefaultApplication extends Application {
   /**
    * Open Open dialog
    *
-   * @param   {OSjs.VFS.File}       [file]      Current File
-   * @param   {OSjs.Core.Window}    [win]       Window reference
+   * @param   {FileMetadata}   [file]      Current File
+   * @param   {Window}         [win]       Window reference
    */
   openDialog(file, win) {
 
@@ -244,8 +244,8 @@ export default class DefaultApplication extends Application {
   /**
    * Create a new file
    *
-   * @param   {String}              [path]        Current path
-   * @param   {OSjs.Core.Window}    [win]         Window reference
+   * @param   {String}    [path]        Current path
+   * @param   {Window}    [win]         Window reference
    */
   newDialog(path, win) {
     win.checkHasChanged((discard) => {

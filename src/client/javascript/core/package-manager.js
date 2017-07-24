@@ -204,7 +204,7 @@ class PackageManager {
   /**
    * Installs a package by ZIP
    *
-   * @param {OSjs.VFS.File}   file        The ZIP file
+   * @param {FileMetadata}    file        The ZIP file
    * @param {String}          root        Packge install root (defaults to first path)
    * @return {Promise<Object, Error>}
    */
@@ -225,7 +225,7 @@ class PackageManager {
   /**
    * Uninstalls given package
    *
-   * @param {OSjs.VFS.File}   file        The path
+   * @param {FileMetadata}   file        The path
    * @return {Promise<Boolean, Error>}
    */
   uninstall(file) {

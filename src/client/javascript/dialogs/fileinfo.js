@@ -42,7 +42,7 @@ export default class FileInfoDialog extends DialogWindow {
   /**
    * @param  {Object}          args              An object with arguments
    * @param  {String}          args.title        Dialog title
-   * @param  {OSjs.VFS.File}   args.file         File to use
+   * @param  {FileMetadata}    args.file         File to use
    * @param  {CallbackDialog}  callback          Callback when done
    */
   constructor(args, callback) {

@@ -354,9 +354,9 @@ function readdir(cls, dir, done, sopts) {
  *   action    chdir                     Change directory => fn(args)  (args = {path: '', done: function() })
  * </code></pre>
  *
- * @see OSjs.GUI.Elements.GUIListView
- * @see OSjs.GUI.Elements.GUITreeView
- * @see OSjs.GUI.Elements.GUIIconView
+ * @see GUIListView
+ * @see GUITreeView
+ * @see GUIIconView
  */
 class GUIFileView extends GUIElement {
 

@@ -340,7 +340,7 @@ export default class GUIScheme {
    *
    * @param   {String}            id        Fragment ID
    * @param   {String}            [type]    Fragment Type
-   * @param   {OSjs.Core.Window}  [win]     OS.js Window
+   * @param   {Window}            [win]     OS.js Window
    * @param   {Function}          [onparse] Callback on parsed
    * @param   {Object}            [args]    Parameters
    *
@@ -378,12 +378,12 @@ export default class GUIScheme {
   /**
    * Renders the given fragment into Window
    *
-   * @param   {OSjs.Core.Window}    win       OS.js Window
-   * @param   {String}              id        Fragment ID
-   * @param   {Node}                [root]    Root HTML Node
-   * @param   {String}              [type]    Fragment Type
-   * @param   {Function}            [onparse] Callback on parsed
-   * @param   {Object}              [args]    Parameters
+   * @param   {Window}    win       OS.js Window
+   * @param   {String}    id        Fragment ID
+   * @param   {Node}      [root]    Root HTML Node
+   * @param   {String}    [type]    Fragment Type
+   * @param   {Function}  [onparse] Callback on parsed
+   * @param   {Object}    [args]    Parameters
    */
   render(win, id, root, type, onparse, args) {
     root = root || win._getRoot();

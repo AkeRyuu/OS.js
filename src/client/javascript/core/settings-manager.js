@@ -206,7 +206,7 @@ class SettingsManager {
    *
    * @param  {String}     pool      Name of settings pool that changed
    *
-   * @return {OSjs.Core.SettingsManager}      this
+   * @return {SettingsManager}      this
    */
   changed(pool) {
     this.watches.forEach((watch) => {
@@ -224,7 +224,7 @@ class SettingsManager {
    * @param  {String}     pool        Name of settings pool
    * @param  {Mixed}      [save=true] Boolean or callback function for saving
    *
-   * @return {OSjs.Core.SettingsManager}      this
+   * @return {SettingsManager}      this
    */
   clear(pool, save) {
     save = (typeof save === 'undefined') || (save === true);

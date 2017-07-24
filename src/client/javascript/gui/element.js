@@ -152,7 +152,7 @@ export default class GUIElement {
   /**
    * Builds the DOM nodes etc
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   build() {
     return this;
@@ -161,7 +161,7 @@ export default class GUIElement {
   /**
    * Removes element from the DOM
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   remove() {
     this.$element = DOM.$remove(this.$element);
@@ -171,7 +171,7 @@ export default class GUIElement {
   /**
    * Empties the DOM element
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   empty() {
     DOM.$empty(this.$element);
@@ -181,7 +181,7 @@ export default class GUIElement {
   /**
    * Blur (unfocus)
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   blur() {
     if ( this.$element ) {
@@ -196,7 +196,7 @@ export default class GUIElement {
   /**
    * Focus (focus)
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   focus() {
     if ( this.$element ) {
@@ -211,7 +211,7 @@ export default class GUIElement {
   /**
    * Show
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   show() {
     if ( this.$element && !this.$element.offsetParent ) {
@@ -225,7 +225,7 @@ export default class GUIElement {
   /**
    * Hide
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   hide() {
     if ( this.$element && this.$element.offsetParent ) {
@@ -247,7 +247,7 @@ export default class GUIElement {
    * @param   {CallbackEvent} callback    Callback function
    * @param   {Object}        [args]      Binding arguments
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   on(evName, callback, args) {
     return this;
@@ -276,14 +276,14 @@ export default class GUIElement {
    *  // obj = 'element'
    * }
    *
-   * @see OSjs.GUI.Element#on
+   * @see GUIElement#on
    *
    * @param   {String}        evName      Event Name
    * @param   {Object}        thisArg     Which object instance to bind to
    * @param   {CallbackEvent} callback    Callback function
    * @param   {Object}        [args]      Binding arguments
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   son(evName, thisArg, callback, args) {
     return this.on(evName, function() {
@@ -302,7 +302,7 @@ export default class GUIElement {
    * @param   {Mixed}     [arg]     Extra argument ...
    * @param   {Mixed}     [arg2]    Extra argument ...
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   set(param, value, arg, arg2) {
     if ( this.$element ) {
@@ -316,7 +316,7 @@ export default class GUIElement {
    *
    * @param   {String}    param     Parameter name
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   get(param) {
     if ( this.$element ) {
@@ -328,9 +328,9 @@ export default class GUIElement {
   /**
    * Appends a childNode to this element
    *
-   * @param   {(Node|OSjs.GUI.Element)}     el        Element
+   * @param   {(Node|GUIElement)}     el        Element
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   append(el) {
     if ( el instanceof GUIElement ) {
@@ -351,11 +351,11 @@ export default class GUIElement {
   /**
    * Appends (and builds) HTML into the node
    *
-   * @param   {String}              html        HTML code
-   * @param   {OSjs.Core.Window}    [win]       Reference to the Window
-   * @param   {Object}              [args]      List of arguments to send to the parser
+   * @param   {String}    html        HTML code
+   * @param   {Window}    [win]       Reference to the Window
+   * @param   {Object}    [args]      List of arguments to send to the parser
    *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   appendHTML(html, win, args) {
     const el = document.createElement('div');
@@ -388,7 +388,7 @@ export default class GUIElement {
    * @param     {String}      q             Query
    * @param     {Boolean}     [rui=false]   Return UI Element if possible
    *
-   * @return    {(Node|OSjs.GUI.Element)} Depending on arguments
+   * @return    {(Node|GUIElement)} Depending on arguments
    */
   querySelector(q, rui) {
     const el = this.$element.querySelector(q);
@@ -404,7 +404,7 @@ export default class GUIElement {
    * @param     {String}      q             Query
    * @param     {Boolean}     [rui=false]   Return UI Element if possible
    *
-   * @return    {OSjs.GUI.Element[]}
+   * @return    {GUIElement[]}
    */
   querySelectorAll(q, rui) {
     let el = this.$element.querySelectorAll(q);
@@ -422,9 +422,7 @@ export default class GUIElement {
    * @param {String}          k     CSS key
    * @param {(String|Number)} v     CSS value
    *
-   * @see OSjs.Utils.$css
-   *
-   * @return {OSjs.GUI.Element} The current instance (this)
+   * @return {GUIElement} The current instance (this)
    */
   css(k, v) {
     DOM.$css(this.$element, k, v);
@@ -433,7 +431,6 @@ export default class GUIElement {
 
   /**
    * Get position
-   * @see OSjs.Utils.$position
    * @return {Object}
    */
   position() {
@@ -472,13 +469,13 @@ export default class GUIElement {
   /**
    * Creates a new GUI Element into given parent
    *
-   * @param   {String}                tagName       OS.js GUI Element name
-   * @param   {Object}                params        Parameters
-   * @param   {Node}                  [parentNode]  Parent Node
-   * @param   {Object}                [applyArgs]   New element parameters
-   * @param   {OSjs.Core.Window}      [win]         OS.js Window
+   * @param   {String}      tagName       OS.js GUI Element name
+   * @param   {Object}      params        Parameters
+   * @param   {Node}        [parentNode]  Parent Node
+   * @param   {Object}      [applyArgs]   New element parameters
+   * @param   {Window}      [win]         OS.js Window
    *
-   * @return  {OSjs.GUI.Element}
+   * @return  {GUIElement}
    */
   static createInto(tagName, params, parentNode, applyArgs, win) {
     if ( parentNode instanceof GUIElement ) {
@@ -497,7 +494,7 @@ export default class GUIElement {
    * @param {String}      [q]         DOM Element query
    * @param {String}      [tagName]   Custom tag name
    *
-   * @return  {OSjs.GUI.Element}
+   * @return  {GUIElement}
    */
   static createFromNode(el, q, tagName) {
     if ( el ) {
@@ -512,12 +509,12 @@ export default class GUIElement {
   /**
    * Creates a new GUI.Element
    *
-   * @param   {String}                tagName         OS.js GUI Element name
-   * @param   {Object}                params          Parameters
-   * @param   {Object}                [applyArgs]     New element parameters
-   * @param   {OSjs.Core.Window}      [win]           OS.js Window
+   * @param   {String}      tagName         OS.js GUI Element name
+   * @param   {Object}      params          Parameters
+   * @param   {Object}      [applyArgs]     New element parameters
+   * @param   {Window}      [win]           OS.js Window
    *
-   * @return  {OSjs.GUI.Element}
+   * @return  {GUIElement}
    */
   static create(tagName, params, applyArgs, win) {
     tagName = tagName || '';
@@ -537,7 +534,7 @@ export default class GUIElement {
    * @param {String}      [q]         DOM Element query
    * @param {String}      [tagName]   Custom tag name
    *
-   * @return {OSjs.GUI.Element}
+   * @return {GUIElement}
    */
   static createInstance(el, q, tagName) {
     console.warn('Element::createInstance() is DEPRECATED, use Element::createFromNode() instead');
@@ -547,12 +544,12 @@ export default class GUIElement {
   /**
    * Parses the given HTML node and makes OS.js compatible markup
    *
-   * @param   {OSjs.Core.Window}    win               Reference to the Window
-   * @param   {Node}                node              The HTML node to parse
-   * @param   {String}              [type=snipplet]   Node type
-   * @param   {Object}              [args]            List of arguments to send to the parser
-   * @param   {Function}            [onparse]         Method to signal when parsing has started
-   * @param   {Mixed}               [id]              The id of the source (for debugging)
+   * @param   {Window}    win               Reference to the Window
+   * @param   {Node}      node              The HTML node to parse
+   * @param   {String}    [type=snipplet]   Node type
+   * @param   {Object}    [args]            List of arguments to send to the parser
+   * @param   {Function}  [onparse]         Method to signal when parsing has started
+   * @param   {Mixed}     [id]              The id of the source (for debugging)
    */
   static parseNode(win, node, type, args, onparse, id) {
     onparse = onparse || function() {};
