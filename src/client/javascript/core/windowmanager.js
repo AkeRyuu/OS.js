@@ -974,7 +974,7 @@ export default class WindowManager extends Process {
    * @return    {Window[]}           List of all Windows
    */
   getWindows() {
-    return this._windows;
+    return this._windows.filter((w) => !!w);
   }
 
   /**
