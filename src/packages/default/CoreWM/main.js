@@ -28,7 +28,20 @@
  * @licence Simplified BSD License
  */
 
-import Translations from './locales';
+import WindowSwitcher from './windowswitcher';
+import DesktopIconView from './iconview';
+import Panel from './panel';
+
+import WidgetDigitalClock from './widgets/digitalclock';
+import WidgetAnalogClock from './widgets/analogclock';
+import PanelItemAppMenu from './panelitems/appmenu';
+import PanelItemButtons from './panelitems/buttons';
+import PanelItemClock from './panelitems/clock';
+import PanelItemNotificationArea from './panelitems/notificationarea';
+import PanelItemSearch from './panelitems/search';
+import PanelItemWeather from './panelitems/weather';
+import PanelItemWindowList from './panelitems/windowlist';
+
 const Locales = OSjs.require('core/locales');
 const GUIScheme = OSjs.require('gui/scheme');
 const Config = OSjs.require('core/config');
@@ -350,7 +363,7 @@ class CoreWM extends WindowManager {
   //
 
   initSwitcher() {
-    this.switcher = new OSjs.Applications.CoreWM.WindowSwitcher();
+    this.switcher = new WindowSwitcher();
   }
 
   initDesktop() {
@@ -380,7 +393,7 @@ class CoreWM extends WindowManager {
         }
 
         const panelSettings = new SettingsFragment(storedItem.options, 'CoreWM', SettingsManager);
-        const p = new OSjs.Applications.CoreWM.Panel('Default', panelSettings, this);
+        const p = new Panel('Default', panelSettings, this);
         p.init(document.body);
 
         (storedItem.items || []).forEach((iter) => {
@@ -482,7 +495,7 @@ class CoreWM extends WindowManager {
     }
 
     if ( en && !this.iconView ) {
-      this.iconView = new OSjs.Applications.CoreWM.DesktopIconView(this);
+      this.iconView = new DesktopIconView(this);
       document.body.appendChild(this.iconView.getRoot());
     }
 
@@ -1276,19 +1289,14 @@ OSjs.Applications.CoreWM.Class             = Object.seal(CoreWM);
 OSjs.Applications.CoreWM.PanelItems        = OSjs.Applications.CoreWM.PanelItems || {};
 OSjs.Applications.CoreWM.Widgets           = OSjs.Applications.CoreWM.Widgets || {};
 OSjs.Applications.CoreWM.CurrentTheme      = OSjs.Applications.CoreWM.CurrentTheme || null;
-OSjs.Applications.CoreWM._ = Locales.createLocalizer(Translations);
 
-require('./menu.js');
-require('./iconview.js');
-require('./windowswitcher.js');
-require('./panel.js');
-require('./widget.js');
-require('./panelitems/buttons.js');
-require('./panelitems/clock.js');
-require('./panelitems/notificationarea.js');
-require('./panelitems/windowlist.js');
-require('./panelitems/weather.js');
-require('./panelitems/appmenu.js');
-require('./panelitems/search.js');
-require('./widgets/analogclock.js');
-require('./widgets/digitalclock.js');
+OSjs.Applications.CoreWM.Widgets.DigitalClock = WidgetDigitalClock;
+OSjs.Applications.CoreWM.Widgets.AnalogClock = WidgetAnalogClock;
+OSjs.Applications.CoreWM.PanelItems.AppMenu = PanelItemAppMenu;
+OSjs.Applications.CoreWM.PanelItems.Buttons = PanelItemButtons;
+OSjs.Applications.CoreWM.PanelItems.Clock = PanelItemClock;
+OSjs.Applications.CoreWM.PanelItems.NotificationArea = PanelItemNotificationArea;
+OSjs.Applications.CoreWM.PanelItems.Search = PanelItemSearch;
+OSjs.Applications.CoreWM.PanelItems.Weather = PanelItemWeather;
+OSjs.Applications.CoreWM.PanelItems.WindowList = PanelItemWindowList;
+
