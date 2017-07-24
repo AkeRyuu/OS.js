@@ -46,6 +46,7 @@ import {getConfig} from 'core/config';
 import {playSound} from 'core/assets';
 import * as GUI from 'utils/gui';
 import * as Utils from 'utils/misc';
+import GUIElement from 'gui/element';
 import Preloader from 'utils/preloader';
 import Broadway from 'broadway/broadway';
 import BroadwayConnection from 'broadway/connection';
@@ -257,212 +258,212 @@ const initGUI = (config) => new Promise((resolve, reject) => {
   const GUIFileView = require('gui/elements/fileview.js').default;
   const GUIMenus = require('gui/elements/menus.js').default;
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-paned-view',
     type: 'container',
     allowedChildren: ['gui-paned-view-container']
   }, GUIContainers.GUIPanedView);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-paned-view-container',
     type: 'container',
     allowedParents: ['gui-paned-view']
   }, GUIContainers.GUIPanedViewContainer);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-button-bar',
     type: 'container'
   }, GUIContainers.GUIButtonBar);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-toolbar',
     type: 'container'
   }, GUIContainers.GUIToolBar);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-grid',
     type: 'container',
     allowedChildren: ['gui-grid-row']
   }, GUIContainers.GUIGrid);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-grid-row',
     type: 'container',
     allowedChildren: ['gui-grid-entry'],
     allowedParents: ['gui-grid-row']
   }, GUIContainers.GUIGridRow);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-grid-entry',
     type: 'container',
     allowedParents: ['gui-grid-row']
   }, GUIContainers.GUIGridEntry);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-vbox',
     type: 'container',
     allowedChildren: ['gui-vbox-container']
   }, GUIContainers.GUIVBox);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-vbox-container',
     type: 'container',
     allowedParents: ['gui-vbox']
   }, GUIContainers.GUIVBoxContainer);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-hbox',
     type: 'container',
     allowedChildren: ['gui-hbox-container']
   }, GUIContainers.GUIHBox);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-hbox-container',
     type: 'container',
     allowedParents: ['gui-hbox']
   }, GUIContainers.GUIHBoxContainer);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-expander',
     type: 'container'
   }, GUIContainers.GUIExpander);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-audio'
   }, GUIVisual.GUIAudio);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-video'
   }, GUIVisual.GUIVideo);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-image'
   }, GUIVisual.GUIImage);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-canvas'
   }, GUIVisual.GUICanvas);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-tabs'
   }, GUITabs.GUITabs);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-richtext'
   }, GUIRichText.GUIRichText);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-color-box'
   }, GUIMisc.GUIColorBox);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-color-swatch'
   }, GUIMisc.GUIColorSwatch);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-iframe'
   }, GUIMisc.GUIIframe);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-progress-bar'
   }, GUIMisc.GUIProgressBar);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-statusbar'
   }, GUIMisc.GUIStatusBar);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-label'
   }, GUIInputs.GUILabel);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-textarea',
     type: 'input'
   }, GUIInputs.GUITextarea);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-text',
     type: 'input'
   }, GUIInputs.GUIText);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-password',
     type: 'input'
   }, GUIInputs.GUIPassword);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-file-upload',
     type: 'input'
   }, GUIInputs.GUIFileUpload);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-radio',
     type: 'input'
   }, GUIInputs.GUIRadio);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-checkbox',
     type: 'input'
   }, GUIInputs.GUICheckbox);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-switch',
     type: 'input'
   }, GUIInputs.GUISwitch);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-button',
     type: 'input'
   }, GUIInputs.GUIButton);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-select',
     type: 'input'
   }, GUIInputs.GUISelect);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-select-list',
     type: 'input'
   }, GUIInputs.GUISelectList);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-slider',
     type: 'input'
   }, GUIInputs.GUISlider);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-input-modal',
     type: 'input'
   }, GUIInputs.GUIInputModal);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     parent: GUIDataView,
     tagName: 'gui-tree-view'
   }, GUITreeView.GUITreeView);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     parent: GUIDataView,
     tagName: 'gui-list-view'
   }, GUIListView.GUIListView);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     parent: GUIDataView,
     tagName: 'gui-icon-view'
   }, GUIIconView.GUIIconView);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-file-view'
   }, GUIFileView.GUIFileView);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-menu-bar'
   }, GUIMenus.GUIMenuBar);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-menu'
   }, GUIMenus.GUIMenu);
 
-  OSjs.GUI.Element.register({
+  GUIElement.register({
     tagName: 'gui-menu-entry'
   }, GUIMenus.GUIMenuEntry);
 

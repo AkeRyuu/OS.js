@@ -55,7 +55,7 @@ window.OSjs.require = (n) => {
 //
 // Backward compability
 //
-import compability from 'compability';
+//import compability from 'compability';
 
 //
 // Then proceed to start up
@@ -65,7 +65,7 @@ import {start} from 'core/init';
 
 const run = () => {
   polyfill();
-  compability();
+  //compability();
   start();
 };
 

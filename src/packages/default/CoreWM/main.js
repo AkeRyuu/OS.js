@@ -28,6 +28,7 @@
  * @licence Simplified BSD License
  */
 
+import Translations from './locales';
 import WindowSwitcher from './windowswitcher';
 import DesktopIconView from './iconview';
 import Panel from './panel';
@@ -82,13 +83,7 @@ function defaultSettings(defaults) {
   return cfg;
 }
 
-function translate() {
-  let _ = OSjs.Applications.CoreWM._;
-  if ( typeof _ !== 'function' ) {
-    _ = Locales._;
-  }
-  return _.apply(_, arguments);
-}
+const translate = Locales.createLocalizer(Translations);
 
 /////////////////////////////////////////////////////////////////////////////
 // APPLICATION
