@@ -88,6 +88,12 @@ function createVisualElement(el, nodeType, applyArgs) {
  * </code></pre>
  */
 class GUIAudio extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-audio'
+    }, this);
+  }
+
   on(evName, callback, params) {
     const target = this.$element.querySelector('audio');
     Events.$bind(target, evName, callback.bind(this), params);
@@ -113,6 +119,12 @@ class GUIAudio extends GUIElement {
  * </code></pre>
  */
 class GUIVideo extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-video'
+    }, this);
+  }
+
   on(evName, callback, params) {
     const target = this.$element.querySelector('video');
     Events.$bind(target, evName, callback.bind(this), params);
@@ -138,6 +150,12 @@ class GUIVideo extends GUIElement {
  * </code></pre>
  */
 class GUIImage extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-image'
+    }, this);
+  }
+
   on(evName, callback, params) {
     const target = this.$element.querySelector('img');
     Events.$bind(target, evName, callback.bind(this), params);
@@ -163,6 +181,12 @@ class GUIImage extends GUIElement {
  * </code></pre>
  */
 class GUICanvas extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-canvas'
+    }, this);
+  }
+
   on(evName, callback, params) {
     const target = this.$element.querySelector('canvas');
     Events.$bind(target, evName, callback.bind(this), params);

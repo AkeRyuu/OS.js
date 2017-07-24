@@ -359,6 +359,11 @@ function readdir(cls, dir, done, sopts) {
  * @see GUIIconView
  */
 class GUIFileView extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-file-view'
+    }, this);
+  }
 
   on(evName, callback, params) {
     if ( (['activate', 'select', 'contextmenu', 'sort']).indexOf(evName) !== -1 ) {

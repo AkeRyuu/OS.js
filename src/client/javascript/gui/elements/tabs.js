@@ -115,6 +115,12 @@ function createTab(el, tabs, label, prog) {
  * </code></pre>
  */
 class GUITabs extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-tabs'
+    }, this);
+  }
+
   on(evName, callback, params) {
     if ( (['select', 'activate']).indexOf(evName) !== -1 ) {
       evName = 'change';

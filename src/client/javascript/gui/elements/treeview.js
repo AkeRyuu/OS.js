@@ -174,6 +174,12 @@ function initEntry(cls, sel) {
  *   })
  */
 class GUITreeView extends GUIDataView {
+  static register() {
+    return super.register({
+      parent: GUIDataView,
+      tagName: 'gui-tree-view'
+    }, this);
+  }
 
   values() {
     const el = this.$element;

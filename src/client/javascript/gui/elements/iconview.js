@@ -83,6 +83,12 @@ function initEntry(cls, cel) {
  *   }])
  */
 class GUIIconView extends GUIDataView {
+  static register() {
+    return super.register({
+      parent: GUIDataView,
+      tagName: 'gui-icon-view'
+    }, this);
+  }
 
   values() {
     return this.getSelected(this.$element.querySelectorAll('gui-icon-view-entry'));

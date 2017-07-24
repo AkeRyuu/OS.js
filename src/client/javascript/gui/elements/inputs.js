@@ -269,6 +269,12 @@ class _GUIInput extends GUIElement {
  * </code></pre>
  */
 class GUILabel extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-label'
+    }, this);
+  }
+
   set(param, value, isHTML) {
     const el = this.$element;
     if ( param === 'value' || param === 'label' ) {
@@ -318,6 +324,12 @@ class GUILabel extends GUIElement {
  * </code></pre>
  */
 class GUITextarea extends _GUIInput {
+  static register() {
+    return super.register({
+      tagName: 'gui-textarea',
+      type: 'input'
+    }, this);
+  }
 
   build() {
     createInputOfType(this.$element, 'textarea');
@@ -357,6 +369,13 @@ class GUITextarea extends _GUIInput {
  * </code></pre>
  */
 class GUIText extends _GUIInput {
+  static register() {
+    return super.register({
+      tagName: 'gui-text',
+      type: 'input'
+    }, this);
+  }
+
   build() {
     createInputOfType(this.$element, 'text');
     return this;
@@ -382,6 +401,13 @@ class GUIText extends _GUIInput {
  * </code></pre>
  */
 class GUIPassword extends _GUIInput {
+  static register() {
+    return super.register({
+      tagName: 'gui-password',
+      type: 'input'
+    }, this);
+  }
+
   build() {
     createInputOfType(this.$element, 'password');
     return this;
@@ -404,6 +430,13 @@ class GUIPassword extends _GUIInput {
  * </code></pre>
  */
 class GUIFileUpload extends _GUIInput {
+  static register() {
+    return super.register({
+      tagName: 'gui-file-upload',
+      type: 'input'
+    }, this);
+  }
+
   build() {
     const input = document.createElement('input');
     input.setAttribute('role', 'button');
@@ -435,6 +468,13 @@ class GUIFileUpload extends _GUIInput {
  * </code></pre>
  */
 class GUIRadio extends _GUIInput {
+  static register() {
+    return super.register({
+      tagName: 'gui-radio',
+      type: 'input'
+    }, this);
+  }
+
   build() {
     createInputOfType(this.$element, 'radio');
     return this;
@@ -459,6 +499,13 @@ class GUIRadio extends _GUIInput {
  * </code></pre>
  */
 class GUICheckbox extends _GUIInput {
+  static register() {
+    return super.register({
+      tagName: 'gui-checkbox',
+      type: 'input'
+    }, this);
+  }
+
   build() {
     createInputOfType(this.$element, 'checkbox');
     return this;
@@ -481,6 +528,13 @@ class GUICheckbox extends _GUIInput {
  * </code></pre>
  */
 class GUISwitch extends _GUIInput {
+  static register() {
+    return super.register({
+      tagName: 'gui-switch',
+      type: 'input'
+    }, this);
+  }
+
   set(param, value) {
     if ( param === 'value' ) {
       const input = this.$element.querySelector('input');
@@ -547,6 +601,13 @@ class GUISwitch extends _GUIInput {
  * </code></pre>
  */
 class GUIButton extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-button',
+      type: 'input'
+    }, this);
+  }
+
   set(param, value, isHTML) {
     if ( param === 'value' || param === 'label' ) {
       const lbl = this.$element.querySelector('button');
@@ -657,6 +718,33 @@ class GUIButton extends GUIElement {
   }
 }
 
+class _GUISelect extends _GUIInput {
+  add(arg) {
+    addToSelectBox(this.$element, arg);
+    return this;
+  }
+
+  remove(arg) {
+    removeFromSelectBox(this.$element, arg);
+    return this;
+  }
+
+  clear() {
+    const target = this.$element.querySelector('select');
+    DOM.$empty(target);
+    return this;
+  }
+
+  build() {
+    const el = this.$element;
+    const multiple = (el.tagName.toLowerCase() === 'gui-select-list');
+    createSelectInput(el, multiple);
+
+    return this;
+  }
+
+}
+
 /**
  * Element: 'gui-select'
  *
@@ -681,30 +769,12 @@ class GUIButton extends GUIElement {
  *    value: "Value"
  *   })
  */
-class GUISelect extends _GUIInput {
-
-  add(arg) {
-    addToSelectBox(this.$element, arg);
-    return this;
-  }
-
-  remove(arg) {
-    removeFromSelectBox(this.$element, arg);
-    return this;
-  }
-
-  clear() {
-    const target = this.$element.querySelector('select');
-    DOM.$empty(target);
-    return this;
-  }
-
-  build() {
-    const el = this.$element;
-    const multiple = (el.tagName.toLowerCase() === 'gui-select-list');
-    createSelectInput(el, multiple);
-
-    return this;
+class GUISelect extends _GUISelect {
+  static register() {
+    return super.register({
+      tagName: 'gui-select',
+      type: 'input'
+    }, this);
   }
 }
 
@@ -726,8 +796,13 @@ class GUISelect extends _GUIInput {
  *   action    remove                  Removes element => fn(arg)
  * </code></pre>
  */
-class GUISelectList extends GUISelect {
-
+class GUISelectList extends _GUISelect {
+  static register() {
+    return super.register({
+      tagName: 'gui-select-list',
+      type: 'input'
+    }, this);
+  }
 }
 
 /**
@@ -748,6 +823,13 @@ class GUISelectList extends GUISelect {
  * </code></pre>
  */
 class GUISlider extends _GUIInput {
+  static register() {
+    return super.register({
+      tagName: 'gui-slider',
+      type: 'input'
+    }, this);
+  }
+
   get(param) {
     const val = GUI.getProperty(this.$element, param);
     if ( param === 'value' ) {
@@ -775,6 +857,13 @@ class GUISlider extends _GUIInput {
  * </code></pre>
  */
 class GUIInputModal extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-input-modal',
+      type: 'input'
+    }, this);
+  }
+
   on(evName, callback, params) {
     if ( evName === 'open' ) {
       evName = '_open';

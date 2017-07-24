@@ -48,6 +48,12 @@ import GUIElement from 'gui/element';
  * </code></pre>
  */
 class GUIColorBox extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-color-box'
+    }, this);
+  }
+
   on(evName, callback, params) {
     const el = this.$element;
     const target = el.querySelector('div');
@@ -85,6 +91,12 @@ class GUIColorBox extends GUIElement {
  * </code></pre>
  */
 class GUIColorSwatch extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-color-swatch'
+    }, this);
+  }
+
   on(evName, callback, params) {
     const el = this.$element;
     const target = el.querySelector('canvas');
@@ -166,6 +178,11 @@ class GUIColorSwatch extends GUIElement {
  * </code></pre>
  */
 class GUIIframe extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-iframe'
+    }, this);
+  }
 
   static get _tagName() {
     let tagName = 'iframe';
@@ -206,6 +223,12 @@ class GUIIframe extends GUIElement {
  * </code></pre>
  */
 class GUIProgressBar extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-progress-bar'
+    }, this);
+  }
+
   set(param, value) {
     const el = this.$element;
     el.setAttribute('data-' + param, value);
@@ -262,6 +285,12 @@ class GUIProgressBar extends GUIElement {
  * </code></pre>
  */
 class GUIStatusBar extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-statusbar'
+    }, this);
+  }
+
   set(param, value) {
     if ( param === 'label' || param === 'value' ) {
       const span = this.$element.getElementsByTagName('gui-statusbar-label')[0];

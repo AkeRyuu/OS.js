@@ -136,6 +136,12 @@ function createTyped(child, par) {
  * <pre><code>
  */
 class GUIMenuEntry extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-menu-entry'
+    }, this);
+  }
+
   on(evName, callback, params) {
     evName = getEventName(evName);
     const target = this.$element.querySelector('gui-menu-entry > label');
@@ -194,6 +200,12 @@ class GUIMenuEntry extends GUIElement {
  * </code></pre>
  */
 class GUIMenu extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-menu'
+    }, this);
+  }
+
   on(evName, callback, params) {
     evName = getEventName(evName);
 
@@ -276,6 +288,12 @@ class GUIMenu extends GUIElement {
  * </code></pre>
  */
 class GUIMenuBar extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-menu-bar'
+    }, this);
+  }
+
   on(evName, callback, params) {
     evName = getEventName(evName);
 

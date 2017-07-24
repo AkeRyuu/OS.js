@@ -46,7 +46,6 @@ import {getConfig} from 'core/config';
 import {playSound} from 'core/assets';
 import * as GUI from 'utils/gui';
 import * as Utils from 'utils/misc';
-import GUIElement from 'gui/element';
 import Preloader from 'utils/preloader';
 import Broadway from 'broadway/broadway';
 import BroadwayConnection from 'broadway/connection';
@@ -256,19 +255,14 @@ const initSearchEngine = (config) => new Promise((resolve, reject) => {
  * @return {Promise}
  */
 const initGUI = (config) => new Promise((resolve, reject) => {
-  // FIXME
-  const GUIDataView = require('gui/dataview.js').default;
-  const GUIContainers = require('gui/elements/containers.js').default;
-  const GUIVisual = require('gui/elements/visual.js').default;
-  const GUITabs = require('gui/elements/tabs.js').default;
-  const GUIRichText = require('gui/elements/richtext.js').default;
-  const GUIMisc = require('gui/elements/misc.js').default;
-  const GUIInputs = require('gui/elements/inputs.js').default;
-  const GUITreeView = require('gui/elements/treeview.js').default;
-  const GUIListView = require('gui/elements/listview.js').default;
-  const GUIIconView = require('gui/elements/iconview.js').default;
-  const GUIFileView = require('gui/elements/fileview.js').default;
-  const GUIMenus = require('gui/elements/menus.js').default;
+
+  const guiElements = ['containers', 'visual', 'tabs', 'richtext', 'misc', 'inputs', 'treeview', 'listview', 'iconview', 'fileview', 'menus'];
+  guiElements.forEach((f) => {
+    const gel = require('gui/elements/' + f + '.js').default;
+    Object.keys(gel).forEach((name) => {
+      gel[name].register();
+    });
+  });
 
   OSjs.Dialogs.Alert = AlertDialog;
   OSjs.Dialogs.ApplicationChooser = ApplicationChooserDialog;
@@ -281,215 +275,6 @@ const initGUI = (config) => new Promise((resolve, reject) => {
   OSjs.Dialogs.FileUpload = FileUploadDialog;
   OSjs.Dialogs.Font = FontDialog;
   OSjs.Dialogs.Input = InputDialog;
-
-  GUIElement.register({
-    tagName: 'gui-paned-view',
-    type: 'container',
-    allowedChildren: ['gui-paned-view-container']
-  }, GUIContainers.GUIPanedView);
-
-  GUIElement.register({
-    tagName: 'gui-paned-view-container',
-    type: 'container',
-    allowedParents: ['gui-paned-view']
-  }, GUIContainers.GUIPanedViewContainer);
-
-  GUIElement.register({
-    tagName: 'gui-button-bar',
-    type: 'container'
-  }, GUIContainers.GUIButtonBar);
-
-  GUIElement.register({
-    tagName: 'gui-toolbar',
-    type: 'container'
-  }, GUIContainers.GUIToolBar);
-
-  GUIElement.register({
-    tagName: 'gui-grid',
-    type: 'container',
-    allowedChildren: ['gui-grid-row']
-  }, GUIContainers.GUIGrid);
-
-  GUIElement.register({
-    tagName: 'gui-grid-row',
-    type: 'container',
-    allowedChildren: ['gui-grid-entry'],
-    allowedParents: ['gui-grid-row']
-  }, GUIContainers.GUIGridRow);
-
-  GUIElement.register({
-    tagName: 'gui-grid-entry',
-    type: 'container',
-    allowedParents: ['gui-grid-row']
-  }, GUIContainers.GUIGridEntry);
-
-  GUIElement.register({
-    tagName: 'gui-vbox',
-    type: 'container',
-    allowedChildren: ['gui-vbox-container']
-  }, GUIContainers.GUIVBox);
-
-  GUIElement.register({
-    tagName: 'gui-vbox-container',
-    type: 'container',
-    allowedParents: ['gui-vbox']
-  }, GUIContainers.GUIVBoxContainer);
-
-  GUIElement.register({
-    tagName: 'gui-hbox',
-    type: 'container',
-    allowedChildren: ['gui-hbox-container']
-  }, GUIContainers.GUIHBox);
-
-  GUIElement.register({
-    tagName: 'gui-hbox-container',
-    type: 'container',
-    allowedParents: ['gui-hbox']
-  }, GUIContainers.GUIHBoxContainer);
-
-  GUIElement.register({
-    tagName: 'gui-expander',
-    type: 'container'
-  }, GUIContainers.GUIExpander);
-
-  GUIElement.register({
-    tagName: 'gui-audio'
-  }, GUIVisual.GUIAudio);
-
-  GUIElement.register({
-    tagName: 'gui-video'
-  }, GUIVisual.GUIVideo);
-
-  GUIElement.register({
-    tagName: 'gui-image'
-  }, GUIVisual.GUIImage);
-
-  GUIElement.register({
-    tagName: 'gui-canvas'
-  }, GUIVisual.GUICanvas);
-
-  GUIElement.register({
-    tagName: 'gui-tabs'
-  }, GUITabs.GUITabs);
-
-  GUIElement.register({
-    tagName: 'gui-richtext'
-  }, GUIRichText.GUIRichText);
-
-  GUIElement.register({
-    tagName: 'gui-color-box'
-  }, GUIMisc.GUIColorBox);
-
-  GUIElement.register({
-    tagName: 'gui-color-swatch'
-  }, GUIMisc.GUIColorSwatch);
-
-  GUIElement.register({
-    tagName: 'gui-iframe'
-  }, GUIMisc.GUIIframe);
-
-  GUIElement.register({
-    tagName: 'gui-progress-bar'
-  }, GUIMisc.GUIProgressBar);
-
-  GUIElement.register({
-    tagName: 'gui-statusbar'
-  }, GUIMisc.GUIStatusBar);
-
-  GUIElement.register({
-    tagName: 'gui-label'
-  }, GUIInputs.GUILabel);
-
-  GUIElement.register({
-    tagName: 'gui-textarea',
-    type: 'input'
-  }, GUIInputs.GUITextarea);
-
-  GUIElement.register({
-    tagName: 'gui-text',
-    type: 'input'
-  }, GUIInputs.GUIText);
-
-  GUIElement.register({
-    tagName: 'gui-password',
-    type: 'input'
-  }, GUIInputs.GUIPassword);
-
-  GUIElement.register({
-    tagName: 'gui-file-upload',
-    type: 'input'
-  }, GUIInputs.GUIFileUpload);
-
-  GUIElement.register({
-    tagName: 'gui-radio',
-    type: 'input'
-  }, GUIInputs.GUIRadio);
-
-  GUIElement.register({
-    tagName: 'gui-checkbox',
-    type: 'input'
-  }, GUIInputs.GUICheckbox);
-
-  GUIElement.register({
-    tagName: 'gui-switch',
-    type: 'input'
-  }, GUIInputs.GUISwitch);
-
-  GUIElement.register({
-    tagName: 'gui-button',
-    type: 'input'
-  }, GUIInputs.GUIButton);
-
-  GUIElement.register({
-    tagName: 'gui-select',
-    type: 'input'
-  }, GUIInputs.GUISelect);
-
-  GUIElement.register({
-    tagName: 'gui-select-list',
-    type: 'input'
-  }, GUIInputs.GUISelectList);
-
-  GUIElement.register({
-    tagName: 'gui-slider',
-    type: 'input'
-  }, GUIInputs.GUISlider);
-
-  GUIElement.register({
-    tagName: 'gui-input-modal',
-    type: 'input'
-  }, GUIInputs.GUIInputModal);
-
-  GUIElement.register({
-    parent: GUIDataView,
-    tagName: 'gui-tree-view'
-  }, GUITreeView.GUITreeView);
-
-  GUIElement.register({
-    parent: GUIDataView,
-    tagName: 'gui-list-view'
-  }, GUIListView.GUIListView);
-
-  GUIElement.register({
-    parent: GUIDataView,
-    tagName: 'gui-icon-view'
-  }, GUIIconView.GUIIconView);
-
-  GUIElement.register({
-    tagName: 'gui-file-view'
-  }, GUIFileView.GUIFileView);
-
-  GUIElement.register({
-    tagName: 'gui-menu-bar'
-  }, GUIMenus.GUIMenuBar);
-
-  GUIElement.register({
-    tagName: 'gui-menu'
-  }, GUIMenus.GUIMenu);
-
-  GUIElement.register({
-    tagName: 'gui-menu-entry'
-  }, GUIMenus.GUIMenuEntry);
 
   resolve();
 });

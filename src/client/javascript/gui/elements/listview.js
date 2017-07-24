@@ -219,6 +219,13 @@ function createRow(cls, e) {
  * ])
  */
 class GUIListView extends GUIDataView {
+  static register() {
+    return super.register({
+      parent: GUIDataView,
+      tagName: 'gui-list-view'
+    }, this);
+  }
+
   values() {
     const body = this.$element.querySelector('gui-list-view-body');
     const values = this.getSelected(body.querySelectorAll('gui-list-view-row'));

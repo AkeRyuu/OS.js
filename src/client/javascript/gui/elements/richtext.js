@@ -141,6 +141,12 @@ function setDocumentData(el, text) {
  * </code></pre>
  */
 class GUIRichText extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-richtext'
+    }, this);
+  }
+
   on(evName, callback, params) {
     if ( (['selection']).indexOf(evName) !== -1 ) {
       evName = '_' + evName;

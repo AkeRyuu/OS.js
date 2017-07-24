@@ -52,6 +52,15 @@ function toggleState(el, expanded) {
  * A view with resizable content boxes
  */
 class GUIPanedView extends GUIElement {
+
+  static register() {
+    return super.register({
+      tagName: 'gui-paned-view',
+      type: 'container',
+      allowedChildren: ['gui-paned-view-container']
+    }, this);
+  }
+
   on(evName, callback, params) {
     const el = this.$element;
     if ( evName === 'resize' ) {
@@ -143,6 +152,14 @@ class GUIPanedView extends GUIElement {
  * </code></pre>
  */
 class GUIPanedViewContainer extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-paned-view-container',
+      type: 'container',
+      allowedParents: ['gui-paned-view']
+    }, this);
+  }
+
   build() {
     GUI.setFlexbox(this.$element);
     return this;
@@ -153,6 +170,13 @@ class GUIPanedViewContainer extends GUIElement {
  * Element: 'gui-button-bar'
  */
 class GUIButtonBar extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-button-bar',
+      type: 'container'
+    }, this);
+  }
+
   build() {
     this.$element.setAttribute('role', 'toolbar');
     return this;
@@ -163,6 +187,13 @@ class GUIButtonBar extends GUIElement {
  * Element: 'gui-toolbar'
  */
 class GUIToolBar extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-toolbar',
+      type: 'container'
+    }, this);
+  }
+
   build() {
     this.$element.setAttribute('role', 'toolbar');
     return this;
@@ -175,6 +206,14 @@ class GUIToolBar extends GUIElement {
  * A grid-type container with equal-sized containers
  */
 class GUIGrid extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-grid',
+      type: 'container',
+      allowedChildren: ['gui-grid-row']
+    }, this);
+  }
+
   build() {
     const rows = this.$element.querySelectorAll('gui-grid-row');
     const p = 100 / rows.length;
@@ -191,14 +230,27 @@ class GUIGrid extends GUIElement {
  * Element: 'gui-grid-row'
  */
 class GUIGridRow extends GUIElement {
-
+  static register() {
+    return super.register({
+      tagName: 'gui-grid-row',
+      type: 'container',
+      allowedChildren: ['gui-grid-entry'],
+      allowedParents: ['gui-grid-row']
+    }, this);
+  }
 }
 
 /**
  * Element: 'gui-grid-entry'
  */
 class GUIGridEntry extends GUIElement {
-
+  static register() {
+    return super.register({
+      tagName: 'gui-grid-entry',
+      type: 'container',
+      allowedParents: ['gui-grid-row']
+    }, this);
+  }
 }
 
 /**
@@ -207,7 +259,13 @@ class GUIGridEntry extends GUIElement {
  * Vertical boxed layout
  */
 class GUIVBox extends GUIElement {
-
+  static register() {
+    return super.register({
+      tagName: 'gui-vbox',
+      type: 'container',
+      allowedChildren: ['gui-vbox-container']
+    }, this);
+  }
 }
 
 /**
@@ -224,6 +282,14 @@ class GUIVBox extends GUIElement {
  * </code></pre>
  */
 class GUIVBoxContainer extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-vbox-container',
+      type: 'container',
+      allowedParents: ['gui-vbox']
+    }, this);
+  }
+
   build() {
     GUI.setFlexbox(this.$element);
 
@@ -237,7 +303,13 @@ class GUIVBoxContainer extends GUIElement {
  * Horizontal boxed layout
  */
 class GUIHBox extends GUIElement {
-
+  static register() {
+    return super.register({
+      tagName: 'gui-hbox',
+      type: 'container',
+      allowedChildren: ['gui-hbox-container']
+    }, this);
+  }
 }
 
 /**
@@ -254,6 +326,14 @@ class GUIHBox extends GUIElement {
  * </code></pre>
  */
 class GUIHBoxContainer extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-hbox-container',
+      type: 'container',
+      allowedParents: ['gui-hbox']
+    }, this);
+  }
+
   build() {
     GUI.setFlexbox(this.$element);
 
@@ -273,6 +353,12 @@ class GUIHBoxContainer extends GUIElement {
  */
 
 class GUIExpander extends GUIElement {
+  static register() {
+    return super.register({
+      tagName: 'gui-expander',
+      type: 'container'
+    }, this);
+  }
 
   set(param, value) {
     if ( param === 'expanded' ) {
