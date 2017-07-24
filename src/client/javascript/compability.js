@@ -80,18 +80,6 @@ module.exports = function() {
   OSjs.Core.Process = Object.seal(Process.default);
   OSjs.Core.Application = Object.seal(require('core/application.js').default);
 
-  OSjs.Dialogs.Alert = Object.seal(require('dialogs/alert.js').default);
-  OSjs.Dialogs.ApplicationChooser = Object.seal(require('dialogs/applicationchooser.js').default);
-  OSjs.Dialogs.Color = Object.seal(require('dialogs/color.js').default);
-  OSjs.Dialogs.Confirm = Object.seal(require('dialogs/confirm.js').default);
-  OSjs.Dialogs.Error = Object.seal(require('dialogs/error.js').default);
-  OSjs.Dialogs.File = Object.seal(require('dialogs/file.js').default);
-  OSjs.Dialogs.FileInfo = Object.seal(require('dialogs/fileinfo.js').default);
-  OSjs.Dialogs.FileProgress = Object.seal(require('dialogs/fileprogress.js').default);
-  OSjs.Dialogs.FileUpload = Object.seal(require('dialogs/fileupload.js').default);
-  OSjs.Dialogs.Font = Object.seal(require('dialogs/font.js').default);
-  OSjs.Dialogs.Input = Object.seal(require('dialogs/input.js').default);
-
   OSjs.GUI.Element = Object.seal(UIElement.default);
   OSjs.GUI.DataView = Object.seal(UIDataView.default);
   OSjs.GUI.Scheme = Object.seal(UIScheme.default);

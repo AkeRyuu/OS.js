@@ -52,6 +52,18 @@ import Broadway from 'broadway/broadway';
 import BroadwayConnection from 'broadway/connection';
 import ServiceNotificationIcon from 'helpers/service-notification-icon';
 
+import AlertDialog from 'dialogs/alert';
+import ApplicationChooserDialog from 'dialogs/applicationchooser';
+import ColorDialog from 'dialogs/color';
+import ConfirmDialog from 'dialogs/confirm';
+import ErrorDialog from 'dialogs/error';
+import FileInfoDialog from 'dialogs/fileinfo';
+import FileDialog from 'dialogs/file';
+import FileProgressDialog from 'dialogs/fileprogress';
+import FileUploadDialog from 'dialogs/fileupload';
+import FontDialog from 'dialogs/font';
+import InputDialog from 'dialogs/input';
+
 let hasBooted = false;
 let hasShutDown = false;
 
@@ -257,6 +269,18 @@ const initGUI = (config) => new Promise((resolve, reject) => {
   const GUIIconView = require('gui/elements/iconview.js').default;
   const GUIFileView = require('gui/elements/fileview.js').default;
   const GUIMenus = require('gui/elements/menus.js').default;
+
+  OSjs.Dialogs.Alert = AlertDialog;
+  OSjs.Dialogs.ApplicationChooser = ApplicationChooserDialog;
+  OSjs.Dialogs.Color = ColorDialog;
+  OSjs.Dialogs.Confirm = ConfirmDialog;
+  OSjs.Dialogs.Error = ErrorDialog;
+  OSjs.Dialogs.File = FileDialog;
+  OSjs.Dialogs.FileInfo = FileInfoDialog;
+  OSjs.Dialogs.FileProgress = FileProgressDialog;
+  OSjs.Dialogs.FileUpload = FileUploadDialog;
+  OSjs.Dialogs.Font = FontDialog;
+  OSjs.Dialogs.Input = InputDialog;
 
   GUIElement.register({
     tagName: 'gui-paned-view',
