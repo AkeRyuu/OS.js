@@ -36,7 +36,7 @@
     "cookie": "^0.3.1",
     "cookie-parser": "^1.4.3",
     "diskspace": "^2.0.0",
-    "express-session": "^1.15.3",
+    "express-session": "^1.15.4",
     "findit": ">=2.0.0",
     "formidable": ">=1.0.17",
     "fs-extra": "^3.0.1",
@@ -69,11 +69,11 @@
     "less": "^2.7.2",
     "less-loader": "^4.0.4",
     "mocha": "^3.4.2",
-    "osjs-build": "^0.5.9",
+    "osjs-build": "^0.6.0",
     "osjs-scheme-loader": "^1.0.5",
     "promise-limit": "^2.4.0",
     "style-loader": "^0.18.2",
     "then-jsonp": "^1.0.3",
-    "webpack": "^3.1.0"
+    "webpack": "^3.3.0"
   }
 }
