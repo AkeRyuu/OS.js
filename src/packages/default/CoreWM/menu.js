@@ -85,7 +85,7 @@ class CategorizedApplicationMenu {
         var iter = cats[c][a];
         submenu.push({
           title: iter.data.name,
-          icon: Assets.getIcon(iter.data.icon, iter.name, iter.data.className),
+          icon: Assets.getIcon(iter.data.icon, '16x16', iter.data.className),
           tooltip: iter.data.description,
           onCreated: createEvent(iter),
           onClick: clickEvent(iter)
