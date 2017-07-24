@@ -42,7 +42,7 @@ import Storage from 'core/storage';
 import Process from 'core/process';
 import Connection from 'core/connection';
 import {addHook, triggerHook} from 'helpers/hooks';
-import {getConfig, setConfig} from 'core/config';
+import {getConfig} from 'core/config';
 import {playSound} from 'core/assets';
 import * as GUI from 'utils/gui';
 import * as Utils from 'utils/misc';
@@ -597,8 +597,6 @@ export function start() {
 
   SplashScreen.watermark(config);
   SplashScreen.show();
-
-  setConfig(config);
 
   triggerHook('onInitialize');
 

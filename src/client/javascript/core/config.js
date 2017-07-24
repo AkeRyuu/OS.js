@@ -29,17 +29,6 @@
  */
 import * as SimpleJSON from 'simplejsonconf';
 
-let _CONFIG = {};
-
-/**
- * Sets the configuration tree
- *
- * @param {Object} config Configuration tree
- */
-export function setConfig(config) {
-  _CONFIG = config;
-}
-
 /**
  * Method for getting a config parameter by path (Ex: "VFS.Mountpoints.shared.enabled")
  *
@@ -49,10 +38,12 @@ export function setConfig(config) {
  * @return  {Mixed}             Parameter value or entire tree on no path
  */
 export function getConfig(path, defaultValue) {
+  const config = OSjs.getConfig();
   if ( !path ) {
-    return Object.assign({}, _CONFIG);
+    return config;
   }
-  const result = SimpleJSON.getJSON(_CONFIG, path, defaultValue);
+
+  const result = SimpleJSON.getJSON(config, path, defaultValue);
   return (typeof result === 'object' && !(result instanceof Array)) ? Object.assign({}, result) : result;
 }
 

@@ -138,7 +138,7 @@ module.exports = function() {
   OSjs.API.createMenu = GUIHelpers.createMenu;
   OSjs.API.blurMenu = GUIHelpers.blurMenu;
   OSjs.API.signOut = Init.logout;
-  OSjs.API.createNotification = (opts) => WindowManager.instance.notification(opts);
+  OSjs.API.createNotification = (opts) => WindowManager.default.instance.notification(opts);
   assignInto(Assets, OSjs.API);
   assignInto(Main, OSjs.API);
   assignInto(Clipboard, OSjs.API);
