@@ -239,7 +239,7 @@ export default {
 
     addMounts.forEach(function(iter) {
       try {
-        mm.add(Object.assign({}, iter));
+        MountManager.add(Object.assign({}, iter));
 
         mounts.push(iter); // FIXME: Move this  down ?
       } catch ( e ) {
