@@ -587,8 +587,8 @@ const VFS = {
     if ( resolved.protocol === 'osjs' ) {
       reject('Not supported');
     } else {
-      _diskspace.check(resolved.real, (err, total, free, stat) => {
-        resolve(free);
+      _diskspace.check(resolved.real, (err, result) => {
+        resolve(result.free);
       });
     }
   }

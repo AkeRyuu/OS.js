@@ -33,7 +33,7 @@ import Connection from 'core/connection';
 
 /**
  * HTTP Connection Handler
- * @xtends Connection
+ * @extends Connection
  */
 export default class HttpConnection extends Connection {
 

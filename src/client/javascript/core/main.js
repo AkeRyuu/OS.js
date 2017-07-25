@@ -179,17 +179,15 @@ export function error(title, message, error, exception, bugreport) {
       exception: exception
     });
     return;
+  } else {
+    console.error(title, message, error, exception);
   }
 
-  if ( getConfig('MOCHAMODE') ) {
-    console.error(title, message, error, exception);
-  } else {
-    console.warn(title, message, error, exception);
-    if ( _dialog() ) {
-      return;
+  const testMode = getConfig('Debug') && window.location.hash.match(/mocha=true/);
+  if ( !testMode ) {
+    if ( !_dialog() ) {
+      window.alert(title + '\n\n' + message + '\n\n' + error);
     }
-
-    window.alert(title + '\n\n' + message + '\n\n' + error);
   }
 }
 

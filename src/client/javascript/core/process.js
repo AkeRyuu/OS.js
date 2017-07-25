@@ -295,7 +295,7 @@ export default class Process {
         return false;
       }).catch((err) => {
         if ( !this.__destroyed ) {
-          reject(err);
+          reject(err instanceof Error ? err : new Error(err));
         }
       });
     });

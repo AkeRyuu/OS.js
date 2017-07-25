@@ -156,6 +156,14 @@ module.exports = new Promise((resolve, reject) => {
     const webpackConfig = Object.assign({}, cfg.build.webpack);
     webpackConfig.entry.themes = getThemeFiles(cfg);
 
+    if ( options.debug ) {
+      webpackConfig.entry.test = [
+        getAbsolute('node_modules/mocha/mocha.js'),
+        getAbsolute('node_modules/mocha/mocha.css'),
+        getAbsolute('src/client/test/test.js')
+      ];
+    }
+
     Object.keys(webpackConfig.entry).forEach((k) => {
       webpackConfig.entry[k] = webpackConfig.entry[k]
         .filter(getFiltered)

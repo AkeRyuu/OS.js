@@ -44,7 +44,7 @@ export default class DistTransport extends OSjsTransport {
 
   request(method, args, options) {
     if ( ['url', 'scandir', 'read'].indexOf(method) === -1 ) {
-      return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+      return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
     }
 
     return super.request(...arguments);

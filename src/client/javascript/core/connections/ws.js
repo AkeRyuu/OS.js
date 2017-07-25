@@ -79,7 +79,7 @@ export default class WSConnection extends Connection {
     return new Promise((resolve, reject) => {
       this._connect(false, (err, res) => {
         if ( err ) {
-          reject(err);
+          reject(err instanceof Error ? err : new Error(err));
         } else {
           resolve(res);
         }
@@ -167,7 +167,7 @@ export default class WSConnection extends Connection {
 
   createRequest(method, args, options) {
     if ( !this.ws ) {
-      return Promise.reject('No websocket connection');
+      return Promise.reject(new Error('No websocket connection'));
     }
 
     if ( ['FS:upload', 'FS:get'].indexOf(method) !== -1 ) {

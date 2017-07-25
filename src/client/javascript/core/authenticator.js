@@ -120,7 +120,7 @@ export default class Authenticator {
       Connection.request('login', data).then((result) => {
         return resolve(result ? result : _('ERR_LOGIN_INVALID'));
       }).catch((error) => {
-        reject(_('ERR_LOGIN_FMT', error));
+        reject(new Error(_('ERR_LOGIN_FMT', error)));
       });
     });
   }
@@ -134,7 +134,7 @@ export default class Authenticator {
       Connection.request('logout', {}).then((result) => {
         return resolve(!!result);
       }).catch((err) => {
-        reject('An error occured: ' + err);
+        reject(new Error('An error occured: ' + err));
       });
     });
   }

@@ -318,6 +318,10 @@ function convertWriteData(data, mime) {
 
 function requestWrapper(mountpoint, method, args, options, appRef) {
   console.info('VFS operation', method, args);
+  if ( !mountpoint ) {
+    return Promise.reject(new Error(_('ERR_VFSMODULE_INVALID')));
+  }
+
   return new Promise((resolve, reject) => {
     mountpoint.request(method, args, options).then((response) => {
       return Connection.instance.onVFSRequestCompleted(mountpoint, method, args, response)
@@ -595,7 +599,7 @@ export function read(item, options) {
 
       return resolve(response);
     }).catch((e) => {
-      reject(_('ERR_VFSMODULE_READ_FMT', e));
+      reject(new Error(_('ERR_VFSMODULE_READ_FMT', e)));
     });
   });
 }
@@ -667,7 +671,8 @@ export function copy(src, dest, options, appRef) {
   return new Promise((resolve, reject) => {
     promise.then(resolve).catch((e) => {
       dialogProgress(100);
-      reject(_('ERR_VFSMODULE_COPY_FMT', e));
+
+      reject(new Error(_('ERR_VFSMODULE_COPY_FMT', e)));
     });
   });
 }
@@ -688,7 +693,14 @@ export function move(src, dest, options, appRef) {
   options = options || {};
 
   if ( arguments.length < 2 ) {
-    return Promise.reject(_('ERR_VFS_NUM_ARGS'));
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
+  }
+
+  try {
+    src = checkMetadataArgument(src, _('ERR_VFS_EXPECT_SRC_FILE'));
+    dest = checkMetadataArgument(dest, _('ERR_VFS_EXPECT_DST_FILE'), true);
+  } catch ( e ) {
+    return Promise.reject(e);
   }
 
   function dialogProgress(prog) {
@@ -728,7 +740,7 @@ export function move(src, dest, options, appRef) {
     promise.then(resolve).catch((e) => {
       dialogProgress(100);
 
-      reject(_('ERR_VFSMODULE_MOVE_FMT', e));
+      reject(new Error(_('ERR_VFSMODULE_MOVE_FMT', e)));
     });
   });
 }
@@ -851,7 +863,7 @@ export function exists(item) {
  */
 export function fileinfo(item) {
   if ( arguments.length < 1 ) {
-    return Promise.reject(_('ERR_VFS_NUM_ARGS'));
+    return Promise.reject(new Error(_('ERR_VFS_NUM_ARGS')));
   }
 
   try {
@@ -929,7 +941,7 @@ export function upload(args, options, appRef) {
         }).catch(reject);
       });
     })).then(resolve).catch((e) => {
-      reject(_('ERR_VFS_UPLOAD_FAIL_FMT', e));
+      reject(new Error(_('ERR_VFS_UPLOAD_FAIL_FMT', e)));
     });
   });
 }
@@ -973,7 +985,7 @@ export function download(file) {
 
   return new Promise((resolve, reject) => {
     promise.then(resolve).catch((e) => {
-      reject(_('ERR_VFS_DOWNLOAD_FAILED', e));
+      reject(new Error(_('ERR_VFS_DOWNLOAD_FAILED', e)));
     });
   });
 }
@@ -1050,12 +1062,12 @@ export function freeSpace(item) {
   try {
     item = checkMetadataArgument(item);
   } catch ( e ) {
-    return Promise.resolve(e);
+    return Promise.reject(e);
   }
 
   const m = MountManager.getModuleFromPath(item.path, false, true);
 
-  return performRequest('freeSpace', [m.root], {}, item.path, null, 'ERR_VFSMODULE_FREESPACE_FMT');
+  return performRequest('freeSpace', [m.option('root')], {}, item.path, null, 'ERR_VFSMODULE_FREESPACE_FMT');
 }
 
 /**

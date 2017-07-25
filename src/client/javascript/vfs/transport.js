@@ -51,7 +51,7 @@ export default class Transport {
     const readOnly = ['upload', 'unlink', 'write', 'mkdir', 'move', 'trash', 'untrash', 'emptyTrash'];
     if ( mount.isReadOnly() ) {
       if ( readOnly.indexOf(method) !== -1 ) {
-        return Promise.reject(_('ERR_VFSMODULE_READONLY'));
+        return Promise.reject(new Error(_('ERR_VFSMODULE_READONLY')));
       }
     }
 
@@ -60,43 +60,43 @@ export default class Transport {
   }
 
   scandir(item, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   read(item, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   write(file, data, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   unlink(src, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   copy(src, dest, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   move(src, dest, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   exists(item, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   fileinfo(item, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   mkdir(dir, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   upload(file, dest, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   download(item, options, mount) {
@@ -116,27 +116,27 @@ export default class Transport {
   }
 
   url(item, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   find(file, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   trash(file, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   untrash(file, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   emptyTrash(options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   freeSpace(root, options, mount) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
 }

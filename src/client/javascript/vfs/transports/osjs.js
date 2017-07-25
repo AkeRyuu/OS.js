@@ -158,15 +158,15 @@ export default class OSjsTransport extends Transport {
   }
 
   trash(file) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   untrash(file) {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   emptyTrash() {
-    return Promise.reject(_('ERR_VFS_UNAVAILABLE'));
+    return Promise.reject(new Error(_('ERR_VFS_UNAVAILABLE')));
   }
 
   freeSpace(root) {

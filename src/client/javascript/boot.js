@@ -32,6 +32,9 @@
 // Makes sure a global namespace is available
 //
 window.OSjs = Object.assign({
+  runTests: () => {
+    // void
+  },
   getConfig: () => {
     return {};
   },

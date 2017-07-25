@@ -217,7 +217,7 @@ class MountManager {
    */
   getModuleFromPath(test) {
     return this.mountpoints.find((mount) => {
-      if ( mount.enabled() ) {
+      if ( typeof test === 'string' && mount.enabled() ) {
         if ( mount.option('match') && test.match(mount.option('match')) ) {
           return true;
         }

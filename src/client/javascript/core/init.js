@@ -298,6 +298,29 @@ const initWindowManager = (config) => new Promise((resolve, reject) => {
   }
 });
 
+/**
+ * Initialize: Mocha
+ * @param {Object} config Configuration
+ * @return {Promise}
+ */
+const initMocha = (config) => new Promise((resolve, reject) => {
+
+  const div = document.createElement('div');
+  div.id = 'mocha';
+  document.body.appendChild(div);
+  document.body.style.overflow = 'auto';
+  document.body.style.backgroundColor = '#ffffff';
+
+  Preloader.preload([
+    '/test.css',
+    '/test.js'
+  ]).then(() => {
+    OSjs.runTests();
+  });
+
+  resolve(true);
+});
+
 ///////////////////////////////////////////////////////////////////////////////
 // MISC
 ///////////////////////////////////////////////////////////////////////////////
@@ -401,6 +424,7 @@ export function start() {
   console.info('Starting OS.js');
 
   const config = OSjs.getConfig();
+  const testMode = config.Debug && window.location.hash.match(/mocha=true/);
   const total = 9;
 
   Locales.init(config.Locale, config.LocaleOptions, config.Languages);
@@ -419,7 +443,7 @@ export function start() {
     initExtensions,
     initSearchEngine,
     initGUI,
-    initWindowManager
+    testMode ? initMocha : initWindowManager
   ], (fn, index) => {
     return new Promise((resolve, reject) => {
       console.group('Initializing', index + 1, 'of', total);
@@ -434,19 +458,23 @@ export function start() {
       });
     });
   }).then(() => {
+    console.info('Done!');
+
     window.addEventListener('message', onMessage, false);
 
     triggerHook('onInited');
     SplashScreen.hide();
 
-    var wm = WindowManager.instance;
-    if ( wm ) {
-      wm._fullyLoaded = true;
-    }
+    if ( !testMode ) {
+      var wm = WindowManager.instance;
+      if ( wm ) {
+        wm._fullyLoaded = true;
+      }
 
-    initSession(config).then(() => {
-      return triggerHook('onSessionLoaded');
-    });
+      initSession(config).then(() => {
+        return triggerHook('onSessionLoaded');
+      });
+    }
 
     return true;
   }).catch((err) => {

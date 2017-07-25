@@ -245,17 +245,13 @@ export default class Connection {
     if ( this.offline ) {
       return Promise.reject(new Error('You are currently off-line and cannot perform this operation!'));
     } else if ( getConfig('Connection.Type') === 'standalone' ) {
-      return Promise.reject('You are currently running locally and cannot perform this operation!');
+      return Promise.reject(new Error('You are currently running locally and cannot perform this operation!'));
     }
 
     const {raw, requestOptions} = this.createRequestOptions(method, args);
 
     return new Promise((resolve, reject) => {
       axios(appendRequestOptions(requestOptions, options)).then((result) => {
-        // FIXME
-        if ( result.status === 404 || result.status === 500 ) {
-          return reject({error: result.statusText || result.status, result: null});
-        }
         return resolve(raw ? result.data : {error: false, result: result.data});
       }).catch((error) => {
         reject(new Error(error.message || error));
