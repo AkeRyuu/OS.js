@@ -46,7 +46,7 @@
     "minimist": "^1.2.0",
     "request": "^2.81.0",
     "session-file-store": "^1.0.0",
-    "simplejsonconf": "^1.0.5",
+    "simplejsonconf": "^1.0.6",
     "unzip-stream": "^0.1.2",
     "ws": "^3.0.0",
     "ygor": "^4.0.4",
