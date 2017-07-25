@@ -191,10 +191,9 @@ function existsWrapper(item, options) {
   return new Promise((resolve, reject) => {
     exists(item).then((result) => {
       if ( result ) {
-        reject(new Error(_('ERR_VFS_FILE_EXISTS')));
-      } else {
-        resolve();
+        return reject(new Error(_('ERR_VFS_FILE_EXISTS')));
       }
+      return resolve();
     }).catch((error) => {
       if ( error ) {
         console.warn('existsWrapper() error', error);
@@ -526,6 +525,7 @@ export function write(item, data, options, appRef) {
       requestWrapper(mountpoint, 'write', [item, ab], options, appRef).then(resolve).catch((e) => {
         reject(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));
       });
+
       return true;
     }).catch((e) => {
       reject(new Error(_('ERR_VFSMODULE_WRITE_FMT', e)));

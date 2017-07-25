@@ -142,7 +142,7 @@ export default class FileUploadDialog extends DialogWindow {
         }
       }).then(() => {
         progressDialog._close(true);
-        this.onClose(null, 'ok', file);
+        return this.onClose(null, 'ok', file);
       }).catch(error);
 
       setTimeout(() => {

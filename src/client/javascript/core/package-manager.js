@@ -123,7 +123,7 @@ class PackageManager {
       this._loadMetadata().then(() => {
         const len = Object.keys(this.packages).length;
         if ( len ) {
-          return resolve();
+          return resolve(true);
         }
         return reject(new Error(_('ERR_PACKAGE_ENUM_FAILED')));
       }).catch(reject);

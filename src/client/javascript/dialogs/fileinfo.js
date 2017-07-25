@@ -65,7 +65,7 @@ export default class FileInfoDialog extends DialogWindow {
     const txt = this._find('Info').set('value', _('LBL_LOADING'));
     const file = this.args.file;
 
-    VFS.fileinfo(file).catch((data) => {
+    VFS.fileinfo(file).then((data) => {
       const info = [];
       Object.keys(data).forEach((i) => {
         if ( i === 'exif' ) {
@@ -75,7 +75,8 @@ export default class FileInfoDialog extends DialogWindow {
         }
       });
       txt.set('value', info.join('\n\n'));
-    }).then((error) => {
+      return true;
+    }).catch((error) => {
       txt.set('value', _('DIALOG_FILEINFO_ERROR_LOOKUP_FMT', file.path));
     });
 

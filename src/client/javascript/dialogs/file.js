@@ -147,7 +147,7 @@ export default class FileDialog extends DialogWindow {
         if ( btn === 'ok' && value ) {
           const path = FS.pathJoin(this.path, value);
           VFS.mkdir(new FileMetadata(path, 'dir')).then(() => {
-            this.changePath(path);
+            return this.changePath(path);
           }).catch((err) => {
             Main.error(_('DIALOG_FILE_ERROR'), _('ERR_VFSMODULE_MKDIR'), err);
           });
@@ -346,7 +346,7 @@ export default class FileDialog extends DialogWindow {
       VFS.exists(this.selected).then((result) => {
         this._toggleDisabled(false);
         if ( this._destroyed ) {
-          return;
+          return false;
         }
 
         if ( result ) {
@@ -367,6 +367,8 @@ export default class FileDialog extends DialogWindow {
         } else {
           this.closeCallback(ev, 'ok', this.selected);
         }
+
+        return true;
       }).catch((error) => {
         this._toggleDisabled(false);
         if ( this._destroyed ) {
