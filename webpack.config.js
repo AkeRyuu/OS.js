@@ -120,7 +120,7 @@ function getStaticFiles(cfg) {
 
 module.exports = new Promise((resolve, reject) => {
   osjs.webpack.createConfiguration({
-    exclude: /node_modules\/(?![axios|bluebird|simplejsonconf])/
+    exclude: /node_modules\/(?![axios|bluebird])/
   }).then((result) => {
     let {cfg, webpack, options} = result;
 
